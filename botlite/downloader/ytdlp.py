@@ -16,7 +16,7 @@ from botlite.config import MAX_FILE_SIZE
 from botlite.downloader.cookies import resolve as resolve_cookie
 
 log = logging.getLogger("botlite.ytdlp")
-_LOG_FMT = _LOG_FMT
+_LOG_FMT = "[yt-dlp] %s"
 
 _VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".flv", ".m4v"}
 _AUDIO_EXTS = {".mp3", ".m4a", ".ogg", ".opus", ".flac", ".wav", ".aac"}
