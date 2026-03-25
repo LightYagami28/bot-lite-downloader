@@ -23,6 +23,8 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: pip install -r requirements.txt
+      - name: Add repository root to PYTHONPATH
+        run: echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
       - name: Run tests with coverage
         run: pytest --cov=botlite --cov-report=xml:coverage.xml --cov-report=term-missing
       - name: Check coverage artifact and SONAR_TOKEN
