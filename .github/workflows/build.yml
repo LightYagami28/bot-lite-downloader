@@ -34,7 +34,7 @@ jobs:
           if [ -z "${SONAR_TOKEN}" ]; then echo "SONAR_TOKEN is not set"; else echo "SONAR_TOKEN is set"; fi
       - name: SonarCloud Scan
         if: env.SONAR_TOKEN != ''
-        uses: SonarSource/sonarcloud-github-action@ffc3010689be73b8e5ae0c57ce35968afd7909e8  # v5
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
