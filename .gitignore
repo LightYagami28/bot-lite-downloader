@@ -19,3 +19,4 @@ venv/
 *.zip
 .claude/
 .vscode/
+.pytest_cache/
