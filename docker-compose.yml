@@ -1,0 +1,14 @@
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - bot_data:/data
+      # Optional: mount cookie files
+      # - ./cookies:/app/cookies:ro
+    environment:
+      - DB_FILE=/data/media_bot.db
+
+volumes:
+  bot_data:

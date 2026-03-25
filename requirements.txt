@@ -1,0 +1,4 @@
+telethon>=1.36
+yt-dlp>=2024.1.1
+gallery-dl>=1.27
+python-dotenv>=1.0
