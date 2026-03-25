@@ -3,14 +3,16 @@
 # To refresh: docker scout recommendations botlite-downloader:dev
 FROM python:3.14-alpine@sha256:faee120f7885a06fcc9677922331391fa690d911c020abb9e8025ff3d908e510
 
-# System deps: ffmpeg for HLS muxing
-RUN apk add --no-cache ffmpeg
+# System deps: ffmpeg for HLS muxing; upgrade zlib to fix CVE-2026-22184
+RUN apk add --no-cache ffmpeg \
+    && apk upgrade --no-cache zlib
 
 WORKDIR /app
 
 # Install Python deps
 COPY requirements.txt .
-RUN pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
+RUN pip install --no-cache-dir --root-user-action=ignore --upgrade pip \
+    && pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
 
 COPY bot.py config.py ./
 
