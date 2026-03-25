@@ -1,11 +1,11 @@
 # python:3.14-alpine — 0 critical/high CVEs (Docker Scout 2026-03-25)
-# ncurses CVE-2025-69720 not fixable on Debian trixie; Alpine avoids it entirely.
-# To refresh: docker scout recommendations botlite-downloader:dev
+# Debian trixie has 87 CVEs (incl. ncurses 9.8 unfixable); Alpine avoids them entirely.
+# To refresh digest: docker scout recommendations botlite-downloader:dev
 FROM python:3.14-alpine@sha256:faee120f7885a06fcc9677922331391fa690d911c020abb9e8025ff3d908e510
 
-# System deps: ffmpeg for HLS muxing; upgrade zlib to fix CVE-2026-22184
+# System deps + full package upgrade to clear all fixable CVEs
 RUN apk add --no-cache ffmpeg \
-    && apk upgrade --no-cache zlib
+    && apk upgrade --no-cache
 
 WORKDIR /app
 
