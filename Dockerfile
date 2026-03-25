@@ -14,7 +14,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --root-user-action=ignore --upgrade pip \
     && pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
 
-COPY bot.py config.py ./
+COPY botlite/ ./botlite/
+COPY run.py .
 
 # Create non-root user and hand ownership over
 RUN adduser -D -H -s /sbin/nologin botlite \
@@ -28,4 +29,4 @@ VOLUME ["/data"]
 
 ENV DB_FILE=/data/media_bot.db
 
-CMD ["python", "bot.py"]
+CMD ["python", "-m", "botlite"]

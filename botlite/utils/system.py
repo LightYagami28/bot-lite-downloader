@@ -1,0 +1,62 @@
+"""
+botlite.utils.system
+~~~~~~~~~~~~~~~~~~~~
+OS-level helpers: disk space, temp cleanup, signal handling.
+"""
+
+from __future__ import annotations
+
+import glob
+import logging
+import os
+import shutil
+import signal
+import sys
+import tempfile
+import time
+
+from botlite.config import USER_COOLDOWN
+
+log = logging.getLogger("botlite.system")
+
+
+def free_disk(path: str = ".") -> int:
+    """Return free disk space in bytes for the filesystem at *path*."""
+    try:
+        return shutil.disk_usage(path).free
+    except Exception:
+        return 0
+
+
+def cleanup_old_temps() -> None:
+    """Remove stale botlite_ temp dirs older than 1 hour left by crashes."""
+    pattern = os.path.join(tempfile.gettempdir(), "botlite_*")
+    for d in glob.glob(pattern):
+        try:
+            if os.path.isdir(d) and (time.time() - os.path.getmtime(d)) > 3600:
+                shutil.rmtree(d, ignore_errors=True)
+                log.info("Cleaned stale temp dir: %s", d)
+        except Exception:
+            pass
+
+
+def check_cooldown(user_cooldowns: dict[int, float], user_id: int) -> float:
+    """Return remaining cooldown seconds (0.0 if ready)."""
+    if USER_COOLDOWN <= 0:
+        return 0.0
+    last = user_cooldowns.get(user_id, 0.0)
+    return max(0.0, USER_COOLDOWN - (time.time() - last))
+
+
+def setup_signals(disconnect_fn) -> None:
+    """Register SIGTERM/SIGINT for graceful Docker/systemd shutdown."""
+    def _handler(signum, frame):
+        log.info("Received signal %s, shutting down…", signum)
+        disconnect_fn()
+        sys.exit(0)
+
+    try:
+        signal.signal(signal.SIGTERM, _handler)
+        signal.signal(signal.SIGINT,  _handler)
+    except (OSError, ValueError):
+        pass
