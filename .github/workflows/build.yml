@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-      fail-fast: false   # let all three finish even if one fails
+      fail-fast: false # let all three finish even if one fails
 
     steps:
       - uses: actions/checkout@v4
@@ -32,21 +32,21 @@ jobs:
       - name: Verify syntax (all modules)
         run: python -m compileall botlite/ run.py -q
 
-  # ── SonarQube Cloud analysis ─────────────────────────────────────────────────
+  # ── SonarCloud analysis ──────────────────────────────────────────────────────
   # Runs on Ubuntu only after all three platform builds pass.
   # Requires SONAR_TOKEN in repo Settings → Secrets → Actions.
-  sonarqube:
-    name: SonarQube
+  sonarcloud:
+    name: SonarCloud
     runs-on: ubuntu-latest
     needs: build
-    if: ${{ secrets.SONAR_TOKEN != '' }}
 
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # full history for blame & SCM data
+          fetch-depth: 0 # full history for blame & SCM data
 
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v6
+      - name: SonarCloud Scan
+        if: ${{ secrets.SONAR_TOKEN != '' }}
+        uses: SonarSource/sonarcloud-github-action@v3
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

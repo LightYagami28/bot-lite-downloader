@@ -4,15 +4,12 @@ name: SonarCloud Analysis
 # This workflow runs a standalone weekly deep scan.
 on:
   schedule:
-    - cron: "0 5 * * 1"   # every Monday 05:00 UTC
+    - cron: "0 5 * * 1" # every Monday 05:00 UTC
 
 jobs:
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
-    # Skip when SONAR_TOKEN is not yet configured (e.g. before project setup on sonarcloud.io).
-    # Once the secret is added in repo Settings → Secrets, this guard can be removed.
-    if: ${{ secrets.SONAR_TOKEN != '' }}
 
     steps:
       - name: Checkout (full history for SCM data)
@@ -29,6 +26,7 @@ jobs:
         run: pip install --quiet -r requirements.txt
 
       - name: SonarCloud Scan
+        if: ${{ secrets.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarcloud-github-action@v3
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

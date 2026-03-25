@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: "0 6 * * 1"   # every Monday 06:00 UTC
+    - cron: "0 6 * * 1" # every Monday 06:00 UTC
 
 # Skip the whole workflow when SNYK_TOKEN is not configured (e.g. forks).
 # Remove this block once the secret is added in repo Settings → Secrets.
@@ -18,7 +18,6 @@ jobs:
   snyk-python:
     name: Snyk — Python deps
     runs-on: ubuntu-latest
-    if: ${{ secrets.SNYK_TOKEN != '' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -32,17 +31,18 @@ jobs:
         run: pip install --quiet -r requirements.txt
 
       - name: Set up Snyk CLI
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         uses: snyk/actions/setup@master
 
       - name: Snyk test (pip)
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         run: snyk test --file=requirements.txt --package-manager=pip --severity-threshold=high
-        continue-on-error: false   # fail the check on high/critical findings
+        continue-on-error: false # fail the check on high/critical findings
 
   # ── Docker image scan ───────────────────────────────────────────────────────
   snyk-docker:
     name: Snyk — Docker image
     runs-on: ubuntu-latest
-    if: ${{ secrets.SNYK_TOKEN != '' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -51,9 +51,11 @@ jobs:
         run: docker build -t botlite-downloader:ci .
 
       - name: Set up Snyk CLI
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         uses: snyk/actions/setup@master
 
       - name: Snyk container test
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         run: |
           snyk container test botlite-downloader:ci \
             --file=Dockerfile \
