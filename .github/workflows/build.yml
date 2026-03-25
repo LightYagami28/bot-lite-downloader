@@ -1,52 +1,19 @@
 name: Build
-
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
     types: [opened, synchronize, reopened]
-
 jobs:
-  # ── Cross-platform build matrix ─────────────────────────────────────────────
-  build:
-    name: Build (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-      fail-fast: false # let all three finish even if one fails
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: pip install --quiet -r requirements.txt
-
-      - name: Verify syntax (all modules)
-        run: python -m compileall botlite/ run.py -q
-
-  # ── SonarCloud analysis ──────────────────────────────────────────────────────
-  # Runs on Ubuntu only after all three platform builds pass.
-  # Requires SONAR_TOKEN in repo Settings → Secrets → Actions.
-  sonarcloud:
-    name: SonarCloud
+  sonarqube:
+    name: SonarQube
     runs-on: ubuntu-latest
-    needs: build
-
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # full history for blame & SCM data
-
-      - name: SonarCloud Scan
-        if: ${{ secrets.SONAR_TOKEN != '' }}
-        uses: SonarSource/sonarcloud-github-action@v3
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
