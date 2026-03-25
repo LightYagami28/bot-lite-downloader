@@ -16,6 +16,7 @@ from botlite.config import MAX_FILE_SIZE
 from botlite.downloader.cookies import resolve as resolve_cookie
 
 log = logging.getLogger("botlite.ytdlp")
+_LOG_FMT = _LOG_FMT
 
 _VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".flv", ".m4v"}
 _AUDIO_EXTS = {".mp3", ".m4a", ".ogg", ".opus", ".flac", ".wav", ".aac"}
@@ -28,16 +29,16 @@ MediaResult = tuple[str, dict, str]   # (filepath, meta, mediatype)
 class _Logger:
     def debug(self, msg: str) -> None:
         if not msg.startswith("[debug] "):
-            log.debug("[yt-dlp] %s", msg)
+            log.debug(_LOG_FMT, msg)
 
     def info(self, msg: str) -> None:
-        log.info("[yt-dlp] %s", msg)
+        log.info(_LOG_FMT, msg)
 
     def warning(self, msg: str) -> None:
-        log.warning("[yt-dlp] %s", msg)
+        log.warning(_LOG_FMT, msg)
 
     def error(self, msg: str) -> None:
-        log.error("[yt-dlp] %s", msg)
+        log.error(_LOG_FMT, msg)
 
 
 def _guess_mtype(path: str) -> str:
