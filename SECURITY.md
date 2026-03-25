@@ -15,7 +15,7 @@ Only the latest release on the `main` branch receives security fixes.
 
 If you discover a security vulnerability, **please do not open a public GitHub issue.**
 
-Report it privately via Telegram: **[@linuxuser825](https://t.me/LinuxBotsNews)**
+Report it privately via Telegram: **[@lightyagami28](https://t.me/LightYagami28)**
 
 Please include:
 
