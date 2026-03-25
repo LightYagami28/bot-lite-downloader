@@ -1,7 +1,7 @@
 # python:3.14-alpine — 0 critical/high CVEs (Docker Scout 2026-03-25)
 # Debian trixie has 87 CVEs (incl. ncurses 9.8 unfixable); Alpine avoids them entirely.
 # To refresh digest: docker scout recommendations botlite-downloader:dev
-FROM python:3.14-alpine@sha256:faee120f7885a06fcc9677922331391fa690d911c020abb9e8025ff3d908e510
+FROM python@sha256:faee120f7885a06fcc9677922331391fa690d911c020abb9e8025ff3d908e510
 
 # System deps + full package upgrade to clear all fixable CVEs
 RUN apk add --no-cache ffmpeg \
@@ -23,6 +23,9 @@ RUN adduser -D -H -s /sbin/nologin botlite \
     && chown -R botlite:botlite /app /data
 
 USER botlite
+
+# WebApp dashboard port (only relevant when WEBAPP_PUBLIC_URL is set)
+EXPOSE 8080
 
 # Data directory for session file, DB and logs
 VOLUME ["/data"]

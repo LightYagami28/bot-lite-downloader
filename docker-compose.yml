@@ -9,6 +9,9 @@ services:
       # - ./cookies:/app/cookies:ro
     environment:
       - DB_FILE=/data/media_bot.db
+    # Uncomment to expose the WebApp dashboard (requires WEBAPP_PUBLIC_URL in .env)
+    # ports:
+    #   - "8080:8080"
 
 volumes:
   bot_data:

@@ -45,6 +45,14 @@ USER_COOLDOWN            = _int("USER_COOLDOWN",            5)
 # ── Storage ───────────────────────────────────────────────────────────────────
 DB_FILE = os.getenv("DB_FILE", "media_bot.db")
 
+# ── WebApp dashboard (optional) ───────────────────────────────────────────────
+# Set WEBAPP_PUBLIC_URL to enable the embedded web server and add dashboard
+# buttons to bot replies.  The URL must be HTTPS for Telegram to open it as
+# a WebApp (use a reverse proxy / Cloudflare Tunnel for self-hosted setups).
+WEBAPP_PUBLIC_URL = os.getenv("WEBAPP_PUBLIC_URL", "")
+WEBAPP_HOST       = os.getenv("WEBAPP_HOST", "0.0.0.0")
+WEBAPP_PORT       = _int("WEBAPP_PORT", 8080)
+
 
 def validate() -> None:
     """Abort with a clear message if required credentials are missing."""

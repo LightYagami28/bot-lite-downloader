@@ -6,13 +6,14 @@ Application bootstrap: wires all modules together and starts the bot.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import sys
 
 from botlite import VERSION
 from botlite import config, db
 from botlite.client import client
-from botlite.config import BOT_TOKEN, MAX_CONCURRENT_DOWNLOADS
+from botlite.config import BOT_TOKEN, MAX_CONCURRENT_DOWNLOADS, WEBAPP_PUBLIC_URL
 from botlite.utils.system import cleanup_old_temps, setup_signals
 
 # Register all handlers (side-effect import)
@@ -29,15 +30,26 @@ logging.basicConfig(
 log = logging.getLogger("botlite.app")
 
 
-def run() -> None:
+async def _main() -> None:
     config.validate()
     setup_signals(client.disconnect)
     cleanup_old_temps()
     db.init()
 
-    client.start(bot_token=BOT_TOKEN)
+    await client.start(bot_token=BOT_TOKEN)
+
+    if WEBAPP_PUBLIC_URL:
+        from botlite.webapp import start_webapp
+        await start_webapp()
+
     log.info(
-        "Bot Lite Downloader v%s started. Max concurrent: %d",
-        VERSION, MAX_CONCURRENT_DOWNLOADS,
+        "Bot Lite Downloader v%s started. Max concurrent: %d%s",
+        VERSION,
+        MAX_CONCURRENT_DOWNLOADS,
+        f" | WebApp: {WEBAPP_PUBLIC_URL}" if WEBAPP_PUBLIC_URL else "",
     )
-    client.run_until_disconnected()
+    await client.run_until_disconnected()
+
+
+def run() -> None:
+    asyncio.run(_main())

@@ -1,29 +1,32 @@
 name: SonarCloud Analysis
 
+# Push/PR analysis is handled by build.yml (matrix + sonarqube job).
+# This workflow runs a standalone weekly deep scan.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  schedule:
+    - cron: "0 5 * * 1"   # every Monday 05:00 UTC
 
 jobs:
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
+    # Skip when SONAR_TOKEN is not yet configured (e.g. before project setup on sonarcloud.io).
+    # Once the secret is added in repo Settings → Secrets, this guard can be removed.
+    if: ${{ secrets.SONAR_TOKEN != '' }}
 
     steps:
-      - name: Checkout
+      - name: Checkout (full history for SCM data)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0          # full history for blame & SCM data
+          fetch-depth: 0
 
-      - name: Set up Python
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install deps
-        run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install --quiet -r requirements.txt
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3

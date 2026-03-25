@@ -10,12 +10,13 @@ import os
 import time
 
 from telethon import events
+from telethon.tl.custom import Button
 
 from botlite import db
 from botlite.client import active_downloads, client
 from botlite.config import (
     DB_FILE, MAX_CONCURRENT_DOWNLOADS, MAX_FILE_SIZE,
-    SUDO_USERS, USER_COOLDOWN,
+    SUDO_USERS, USER_COOLDOWN, WEBAPP_PUBLIC_URL,
 )
 from botlite.utils.format import fmt_size, fmt_uptime
 from botlite.utils.system import free_disk
@@ -25,6 +26,13 @@ _start_time = time.time()
 
 def is_sudo(uid: int) -> bool:
     return uid in SUDO_USERS
+
+
+def _dashboard_button() -> list | None:
+    """Return a one-row inline keyboard with the WebApp button, or None."""
+    if not WEBAPP_PUBLIC_URL:
+        return None
+    return [[Button.web_app("📊 Open Dashboard", url=WEBAPP_PUBLIC_URL)]]
 
 
 # ── /start ────────────────────────────────────────────────────────────────────
@@ -39,8 +47,10 @@ async def cmd_start(event):
         "**Supported sites:** YouTube, Instagram, TikTok, Twitter/X, Reddit, "
         "Pinterest, Vimeo, SoundCloud, and [hundreds more]"
         "(https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md).\n\n"
-        "**Commands:** `/help`",
-        parse_mode="md", link_preview=False,
+        "**Commands:** `/help` `/status`",
+        parse_mode="md",
+        link_preview=False,
+        buttons=_dashboard_button(),
     )
 
 
@@ -65,7 +75,9 @@ async def cmd_help(event):
         f"• Max file size: {fmt_size(MAX_FILE_SIZE)}\n"
         f"{cooldown_line}"
         "• Some sites actively block bots",
-        parse_mode="md", link_preview=False,
+        parse_mode="md",
+        link_preview=False,
+        buttons=_dashboard_button(),
     )
 
 
@@ -76,7 +88,7 @@ async def cmd_status(event):
     if not event.is_private:
         return
     from botlite import VERSION
-    disk     = free_disk()
+    disk      = free_disk()
     disk_warn = " ⚠️" if disk < 500 * 1024 * 1024 * 2 else ""
     await event.reply(
         f"**🤖 Bot Lite Downloader v{VERSION}**\n\n"
@@ -84,6 +96,7 @@ async def cmd_status(event):
         f"🔄 Active downloads: `{len(active_downloads)}`\n"
         f"💿 Free disk: `{fmt_size(disk)}`{disk_warn}",
         parse_mode="md",
+        buttons=_dashboard_button(),
     )
 
 
@@ -105,6 +118,7 @@ async def cmd_stats(event):
         f"🔄 Active:    `{len(active_downloads)}/{MAX_CONCURRENT_DOWNLOADS}`\n"
         f"💿 Free disk: `{fmt_size(free_disk())}`",
         parse_mode="md",
+        buttons=_dashboard_button(),
     )
 
 

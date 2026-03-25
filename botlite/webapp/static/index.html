@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BotLite Dashboard</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg:           var(--tg-theme-bg-color,            #ffffff);
+      --text:         var(--tg-theme-text-color,          #000000);
+      --hint:         var(--tg-theme-hint-color,          #888888);
+      --btn-bg:       var(--tg-theme-button-color,        #2481cc);
+      --btn-text:     var(--tg-theme-button-text-color,   #ffffff);
+      --secondary-bg: var(--tg-theme-secondary-bg-color,  #f1f1f1);
+      --section-sep:  rgba(128, 128, 128, 0.15);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      padding: 12px 16px 32px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-top: 4px;
+    }
+    .header-icon { font-size: 32px; line-height: 1; }
+    .header h1  { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+    .header .version { font-size: 13px; color: var(--hint); margin-top: 1px; }
+
+    .card {
+      background: var(--secondary-bg);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--hint);
+      margin-bottom: 10px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--section-sep);
+      font-size: 15px;
+    }
+    .stat-row:last-child { border-bottom: none; padding-bottom: 2px; }
+    .stat-label { color: var(--hint); }
+    .stat-value { font-weight: 500; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    /* Fully opaque backgrounds so SonarQube S7924 can verify contrast against a known color.
+       Text/bg pairs all pass WCAG AA (>= 4.5:1). */
+    .badge-green  { background: #d1f0db; color: #0d5225; }
+    .badge-orange { background: #fde8c0; color: #6b3d00; }
+    .badge-red    { background: #fde0de; color: #7a1c1c; }
+    .badge-blue   { background: #d8eaf8; color: #1a4d80; }
+
+    .disk-bar-wrap {
+      margin-top: 6px;
+      background: var(--section-sep);
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .disk-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+      background: #0d5225;
+    }
+    .disk-bar-fill.warn { background: #6b3d00; }
+    .disk-bar-fill.crit { background: #7a1c1c; }
+
+    input[type="number"] {
+      display: block;
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--section-sep);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      margin-bottom: 8px;
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type="number"]::placeholder { color: var(--hint); }
+
+    .btn-row { display: flex; gap: 8px; }
+    button {
+      flex: 1;
+      padding: 11px 8px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.12s;
+    }
+    button:active { opacity: 0.65; }
+    /* Opaque backgrounds — same WCAG AA-compliant palette as badges */
+    .btn-danger  { background: #fde0de; color: #7a1c1c; }
+    .btn-success { background: #d1f0db; color: #0d5225; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.78);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 22px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.25s;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 100;
+    }
+    .toast.show { opacity: 1; }
+
+    #admin-section { display: none; }
+    .hidden        { display: none; }
+
+    .shimmer {
+      display: inline-block;
+      width: 64px; height: 14px;
+      border-radius: 6px;
+      background: linear-gradient(90deg,
+        var(--section-sep) 25%,
+        rgba(128,128,128,0.25) 50%,
+        var(--section-sep) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      vertical-align: middle;
+    }
+    @keyframes shimmer {
+      0%   { background-position:  200% center; }
+      100% { background-position: -200% center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-icon">⚡</div>
+    <div>
+      <h1>BotLite Dashboard</h1>
+      <div class="version" id="ver"><span class="shimmer"></span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Status</div>
+    <div class="stat-row">
+      <span class="stat-label">Uptime</span>
+      <span class="stat-value" id="uptime"><span class="shimmer"></span></span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Active downloads</span>
+      <span class="stat-value" id="active"><span class="shimmer"></span></span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Max concurrent</span>
+      <span class="stat-value" id="max-dl"><span class="shimmer"></span></span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Free disk</span>
+      <span class="stat-value" id="disk"><span class="shimmer"></span></span>
+    </div>
+    <div class="disk-bar-wrap hidden" id="disk-bar-wrap">
+      <div class="disk-bar-fill" id="disk-bar"></div>
+    </div>
+  </div>
+
+  <div id="admin-section">
+    <div class="card">
+      <div class="card-title">Statistics</div>
+      <div class="stat-row">
+        <span class="stat-label">✅ Succeeded</span>
+        <span class="stat-value" id="total-dl">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">❌ Failed</span>
+        <span class="stat-value" id="failed-dl">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Success rate</span>
+        <span class="stat-value" id="success-rate">—</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">User Management</div>
+      <input type="number" id="ban-uid" placeholder="Telegram User ID" min="1">
+      <div class="btn-row">
+        <button class="btn-danger"  id="btn-ban">🚫 Ban</button>
+        <button class="btn-success" id="btn-unban">✅ Unban</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    const tg = globalThis.Telegram.WebApp;
+    tg.expand();
+    tg.ready();
+    const initData = tg.initData || "";
+
+    let _toastTimer;
+    function toast(msg, ms = 2800) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => el.classList.remove("show"), ms);
+    }
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = String(value);
+    }
+
+    function setBadge(id, cls, content) {
+      const wrap = document.getElementById(id);
+      const span = document.createElement("span");
+      span.className = `badge ${cls}`;
+      span.textContent = String(content);
+      wrap.replaceChildren(span);
+    }
+
+    try {
+      const r = await fetch("/api/status");
+      if (!r.ok) { throw new Error(String(r.status)); }
+      const d = await r.json();
+
+      setText("ver",   "v" + d.version);
+      setText("uptime", d.uptime);
+      setText("max-dl", d.max_concurrent);
+
+      const active    = d.active_downloads;
+      const activeCls = active > 0 ? "badge-orange" : "badge-green";
+      setBadge("active", activeCls, `${active} / ${d.max_concurrent}`);
+
+      const bytes = d.free_disk_bytes;
+      let diskCls = "badge-green";
+      let barCls  = "";
+      if (bytes < 500 * 1024 * 1024) {
+        diskCls = "badge-red";
+        barCls  = "crit";
+      } else if (bytes < 2 * 1024 * 1024 * 1024) {
+        diskCls = "badge-orange";
+        barCls  = "warn";
+      }
+      setBadge("disk", diskCls, d.free_disk);
+
+      const ref = 50 * 1024 * 1024 * 1024;
+      const pct = Math.min(100, Math.round((bytes / ref) * 100));
+      const bar = document.getElementById("disk-bar");
+      bar.style.width = pct + "%";
+      if (barCls) { bar.classList.add(barCls); }
+      document.getElementById("disk-bar-wrap").classList.remove("hidden");
+    } catch {
+      toast("⚠️ Could not load status");
+    }
+
+    if (initData) {
+      try {
+        const r = await fetch("/api/stats", {
+          headers: { "X-Telegram-Init-Data": initData },
+        });
+        if (r.ok) {
+          const d = await r.json();
+          document.getElementById("admin-section").style.display = "block";
+          setText("total-dl",  d.total_downloads);
+          setText("failed-dl", d.failed_downloads);
+
+          const total       = d.total_downloads + d.failed_downloads;
+          const rate        = total ? Math.round((d.total_downloads / total) * 100) : 100;
+          const fallbackCls = rate >= 70 ? "badge-orange" : "badge-red";
+          const rateCls     = rate >= 90 ? "badge-green"  : fallbackCls;
+          setBadge("success-rate", rateCls, `${rate}%`);
+        }
+      } catch {
+        /* stats endpoint inaccessible — admin section stays hidden */
+      }
+    }
+
+    async function doAction(action) {
+      const raw = document.getElementById("ban-uid").value.trim();
+      if (!raw) { toast("Enter a Telegram User ID"); return; }
+      const uid = Number.parseInt(raw, 10);
+      if (!uid) { toast("Invalid User ID"); return; }
+
+      try {
+        const resp = await fetch(`/api/${action}`, {
+          method: "POST",
+          headers: {
+            "Content-Type":         "application/json",
+            "X-Telegram-Init-Data": initData,
+          },
+          body: JSON.stringify({ user_id: uid }),
+        });
+        if (resp.ok) {
+          toast(action === "ban" ? `🚫 User ${uid} banned` : `✅ User ${uid} unbanned`);
+          document.getElementById("ban-uid").value = "";
+        } else {
+          toast("❌ " + (resp.status === 403 ? "Not authorized" : "Failed"));
+        }
+      } catch {
+        toast("❌ Network error");
+      }
+    }
+
+    document.getElementById("btn-ban").addEventListener("click",   () => doAction("ban"));
+    document.getElementById("btn-unban").addEventListener("click", () => doAction("unban"));
+  </script>
+
+</body>
+</html>

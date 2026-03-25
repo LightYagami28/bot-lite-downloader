@@ -10,8 +10,13 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+      - python
     commit-message:
-      prefix: "deps"
+      prefix: "deps(pip)"
+    ignore:
+      # Only allow patch / minor for telethon to avoid breaking API changes
+      - dependency-name: telethon
+        update-types: ["version-update:semver-major"]
 
   # Docker base image
   - package-ecosystem: docker
@@ -19,8 +24,22 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    open-pull-requests-limit: 3
     labels:
       - dependencies
       - docker
     commit-message:
-      prefix: "docker"
+      prefix: "deps(docker)"
+
+  # GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: "deps(actions)"

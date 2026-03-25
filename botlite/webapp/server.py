@@ -1,0 +1,111 @@
+"""
+botlite.webapp.server
+~~~~~~~~~~~~~~~~~~~~~
+aiohttp application: JSON API + static dashboard.
+
+Endpoints
+---------
+GET  /                -> index.html (Telegram WebApp frontend)
+GET  /api/status      -> public bot health (version, uptime, disk, downloads)
+GET  /api/stats       -> sudo-only download counters
+POST /api/ban         -> sudo-only; body: {"user_id": <int>}
+POST /api/unban       -> sudo-only; body: {"user_id": <int>}
+
+Authentication
+--------------
+All /api/stats, /api/ban, /api/unban require the caller to send the
+Telegram WebApp initData in the ``X-Telegram-Init-Data`` header.
+The user ID extracted from initData must be in SUDO_USERS.
+"""
+
+from __future__ import annotations
+
+import logging
+import time
+from pathlib import Path
+
+from aiohttp import web
+
+from botlite import VERSION, db
+from botlite.client import active_downloads
+from botlite.config import MAX_CONCURRENT_DOWNLOADS, SUDO_USERS
+from botlite.utils.format import fmt_size, fmt_uptime
+from botlite.utils.system import free_disk
+from botlite.webapp.auth import validate_init_data
+
+log = logging.getLogger("botlite.webapp")
+_start_time = time.time()
+_STATIC = Path(__file__).parent / "static"
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _require_sudo(request: web.Request) -> dict:
+    """
+    Validate initData and check sudo membership.
+    Raises HTTP 401 / 403 on failure; returns the user dict on success.
+    """
+    init_data = request.headers.get("X-Telegram-Init-Data", "")
+    user = validate_init_data(init_data)
+    if user is None:
+        raise web.HTTPUnauthorized(reason="Invalid initData")
+    if user.get("id") not in SUDO_USERS:
+        raise web.HTTPForbidden(reason="Not a sudo user")
+    return user
+
+
+# ── API handlers ──────────────────────────────────────────────────────────────
+
+def api_status(_request: web.Request) -> web.Response:
+    return web.json_response({
+        "version": VERSION,
+        "uptime": fmt_uptime(time.time() - _start_time),
+        "active_downloads": len(active_downloads),
+        "max_concurrent": MAX_CONCURRENT_DOWNLOADS,
+        "free_disk": fmt_size(free_disk()),
+        "free_disk_bytes": free_disk(),
+    })
+
+
+def api_stats(request: web.Request) -> web.Response:
+    _require_sudo(request)
+    return web.json_response({
+        "total_downloads": db.get_stat("total_downloads"),
+        "failed_downloads": db.get_stat("failed_downloads"),
+    })
+
+
+async def api_ban(request: web.Request) -> web.Response:
+    user = _require_sudo(request)
+    data = await request.json()
+    uid = int(data["user_id"])
+    db.ban(uid)
+    log.info("WebApp: user %d banned by admin %d", uid, user.get("id"))
+    return web.json_response({"ok": True})
+
+
+async def api_unban(request: web.Request) -> web.Response:
+    user = _require_sudo(request)
+    data = await request.json()
+    uid = int(data["user_id"])
+    db.unban(uid)
+    log.info("WebApp: user %d unbanned by admin %d", uid, user.get("id"))
+    return web.json_response({"ok": True})
+
+
+# ── Static ────────────────────────────────────────────────────────────────────
+
+def index(_request: web.Request) -> web.FileResponse:
+    return web.FileResponse(_STATIC / "index.html")
+
+
+# ── App factory ───────────────────────────────────────────────────────────────
+
+def create_app() -> web.Application:
+    app = web.Application()
+    app.router.add_get("/", index)
+    app.router.add_get("/api/status", api_status)
+    app.router.add_get("/api/stats", api_stats)
+    app.router.add_post("/api/ban", api_ban)
+    app.router.add_post("/api/unban", api_unban)
+    return app
