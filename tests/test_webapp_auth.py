@@ -2,13 +2,10 @@ import hashlib
 import hmac
 import json
 import urllib.parse
-from typing import Any, Callable, cast
+from typing import Any
 from unittest.mock import patch
 
-from botlite.webapp import auth
-
-
-ValidateInitData = Callable[[str], dict[str, Any] | None]
+from botlite.webapp.auth import validate_init_data
 
 
 def _build_init_data(bot_token: str, user: dict[str, Any]) -> str:
@@ -29,16 +26,14 @@ def _build_init_data(bot_token: str, user: dict[str, Any]) -> str:
 
 
 def test_validate_init_data_success():
-    validate_init_data = cast(ValidateInitData, auth.validate_init_data)
     init_data = _build_init_data("token123", {"id": 42, "username": "admin"})
     with patch("botlite.webapp.auth.BOT_TOKEN", "token123"):
-        user_data = cast(dict[str, Any] | None, validate_init_data(init_data))
+        user_data = validate_init_data(init_data)
     assert user_data is not None
     assert user_data.get("id") == 42
 
 
 def test_validate_init_data_failures():
-    validate_init_data = cast(ValidateInitData, auth.validate_init_data)
     with patch("botlite.webapp.auth.BOT_TOKEN", ""):
         assert validate_init_data("a=b") is None
 
@@ -49,7 +44,6 @@ def test_validate_init_data_failures():
 
 
 def test_validate_init_data_invalid_user_json_returns_empty_dict():
-    validate_init_data = cast(ValidateInitData, auth.validate_init_data)
     params = {
         "auth_date": "1710000000",
         "query_id": "AAHx",

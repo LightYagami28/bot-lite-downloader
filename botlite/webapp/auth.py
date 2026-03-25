@@ -12,10 +12,12 @@ import hmac
 import json
 import urllib.parse
 
+from typing import Any
+
 from botlite.config import BOT_TOKEN
 
 
-def validate_init_data(init_data: str) -> dict | None:
+def validate_init_data(init_data: str) -> dict[str, Any] | None:
     """
     Validate the initData string sent by Telegram WebApp.
 
