@@ -1,0 +1,30 @@
+# Secrets
+.env
+cookies*.txt
+
+# Runtime artifacts
+*.session
+*.session-journal
+bot.log
+media_bot.db
+
+# Git
+.git
+.gitignore
+
+# Docs & CI (not needed in image)
+README.md
+LICENSE.md
+SECURITY.md
+.github/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Misc
+*.zip
+.vscode/
