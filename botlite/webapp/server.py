@@ -96,8 +96,13 @@ def api_stats(request: web.Request) -> web.Response:
 
 async def api_ban(request: web.Request) -> web.Response:
     user = _require_sudo(request)
-    data = await request.json()
-    uid = int(data["user_id"])
+    try:
+        data = await request.json()
+        uid = int(data["user_id"])
+    except (ValueError, TypeError, KeyError, web.HTTPException):
+        raise web.HTTPBadRequest(reason="user_id must be an integer") from None
+    if uid <= 0:
+        raise web.HTTPBadRequest(reason="user_id must be positive")
     db.ban(uid)
     log.info("WebApp: user %d banned by admin %d", uid, user.get("id"))
     return web.json_response({"ok": True})
@@ -105,8 +110,13 @@ async def api_ban(request: web.Request) -> web.Response:
 
 async def api_unban(request: web.Request) -> web.Response:
     user = _require_sudo(request)
-    data = await request.json()
-    uid = int(data["user_id"])
+    try:
+        data = await request.json()
+        uid = int(data["user_id"])
+    except (ValueError, TypeError, KeyError, web.HTTPException):
+        raise web.HTTPBadRequest(reason="user_id must be an integer") from None
+    if uid <= 0:
+        raise web.HTTPBadRequest(reason="user_id must be positive")
     db.unban(uid)
     log.info("WebApp: user %d unbanned by admin %d", uid, user.get("id"))
     return web.json_response({"ok": True})

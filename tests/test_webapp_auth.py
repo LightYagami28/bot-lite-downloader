@@ -44,7 +44,7 @@ def test_validate_init_data_failures():
         assert validate_init_data("hash=abc&auth_date=1") is None
 
 
-def test_validate_init_data_invalid_user_json_returns_empty_dict():
+def test_validate_init_data_invalid_user_json_is_rejected():
     params = {
         "auth_date": str(int(time.time())),
         "query_id": "AAHx",
@@ -56,11 +56,32 @@ def test_validate_init_data_invalid_user_json_returns_empty_dict():
     init_data = urllib.parse.urlencode({**params, "hash": digest})
 
     with patch("botlite.webapp.auth.BOT_TOKEN", "token123"):
-        assert validate_init_data(init_data) == {}
+        assert validate_init_data(init_data) is None
 
 
 def test_validate_init_data_rejects_expired_data():
     init_data = _build_init_data("token123", {"id": 42})
     with patch("botlite.webapp.auth.BOT_TOKEN", "token123"), \
          patch("botlite.webapp.auth.WEBAPP_INIT_DATA_MAX_AGE", 0):
+        assert validate_init_data(init_data) is None
+
+
+def test_validate_init_data_rejects_duplicate_parameters():
+    init_data = _build_init_data("token123", {"id": 42})
+    with patch("botlite.webapp.auth.BOT_TOKEN", "token123"):
+        assert validate_init_data(f"{init_data}&auth_date=invalid") is None
+
+
+def test_validate_init_data_rejects_invalid_user_payload():
+    params = {
+        "auth_date": str(int(time.time())),
+        "query_id": "AAHx",
+        "user": "[]",
+    }
+    data_check = "\n".join(f"{k}={v}" for k, v in sorted(params.items()))
+    secret_key = hmac.new(b"WebAppData", b"token123", hashlib.sha256).digest()
+    digest = hmac.new(secret_key, data_check.encode(), hashlib.sha256).hexdigest()
+    init_data = urllib.parse.urlencode({**params, "hash": digest})
+
+    with patch("botlite.webapp.auth.BOT_TOKEN", "token123"):
         assert validate_init_data(init_data) is None

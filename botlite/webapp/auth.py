@@ -27,7 +27,16 @@ def validate_init_data(init_data: str) -> dict[str, Any] | None:
     if not init_data or not BOT_TOKEN:
         return None
 
-    params = dict(urllib.parse.parse_qsl(init_data, keep_blank_values=True))
+    # Telegram signs the exact decoded key/value set. Reject duplicate keys
+    # instead of silently accepting whichever value happens to win in a dict;
+    # this prevents parser differentials between proxies and the application.
+    pairs = urllib.parse.parse_qsl(init_data, keep_blank_values=True)
+    if not pairs:
+        return None
+    keys = [key for key, _ in pairs]
+    if len(keys) != len(set(keys)):
+        return None
+    params = dict(pairs)
     received_hash = params.pop("hash", None)
     if not received_hash:
         return None
@@ -52,10 +61,14 @@ def validate_init_data(init_data: str) -> dict[str, Any] | None:
         auth_date = int(params["auth_date"])
     except (KeyError, TypeError, ValueError):
         return None
-    if auth_date > time.time() + 60 or time.time() - auth_date > WEBAPP_INIT_DATA_MAX_AGE:
+    now = time.time()
+    if auth_date > now + 60 or now - auth_date > WEBAPP_INIT_DATA_MAX_AGE:
         return None
 
     try:
-        return json.loads(params.get("user", "{}"))
+        user = json.loads(params.get("user", "{}"))
     except (json.JSONDecodeError, TypeError):
-        return {}
+        return None
+    if not isinstance(user, dict) or not isinstance(user.get("id"), int):
+        return None
+    return user
