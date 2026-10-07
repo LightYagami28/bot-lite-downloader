@@ -60,6 +60,7 @@ DB_FILE = os.getenv("DB_FILE", "media_bot.db")
 WEBAPP_PUBLIC_URL = os.getenv("WEBAPP_PUBLIC_URL", "")
 WEBAPP_HOST       = os.getenv("WEBAPP_HOST", "0.0.0.0")
 WEBAPP_PORT       = _int("WEBAPP_PORT", 8080)
+WEBAPP_INIT_DATA_MAX_AGE = _int("WEBAPP_INIT_DATA_MAX_AGE", 86400)
 
 
 def validate() -> None:

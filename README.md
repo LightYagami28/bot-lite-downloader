@@ -102,6 +102,7 @@ Copy `.env.example` to `.env` and fill in your values:
 | `WEBAPP_PUBLIC_URL` | _(empty)_ | Public HTTPS URL of the dashboard — enables the WebApp feature |
 | `WEBAPP_HOST` | `0.0.0.0` | Bind address for the embedded web server |
 | `WEBAPP_PORT` | `8080` | Listen port for the embedded web server |
+| `WEBAPP_INIT_DATA_MAX_AGE` | `86400` | Maximum age of Telegram WebApp `initData` in seconds |
 
 ---
 

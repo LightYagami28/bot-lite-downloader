@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import json
 import urllib.parse
+import time
 from typing import Any
 from unittest.mock import patch
 
@@ -10,7 +11,7 @@ from botlite.webapp.auth import validate_init_data
 
 def _build_init_data(bot_token: str, user: dict[str, Any]) -> str:
     params = {
-        "auth_date": "1710000000",
+        "auth_date": str(int(time.time())),
         "query_id": "AAHx",
         "user": json.dumps(user, separators=(",", ":")),
     }
@@ -45,7 +46,7 @@ def test_validate_init_data_failures():
 
 def test_validate_init_data_invalid_user_json_returns_empty_dict():
     params = {
-        "auth_date": "1710000000",
+        "auth_date": str(int(time.time())),
         "query_id": "AAHx",
         "user": "{bad-json}",
     }
@@ -56,3 +57,10 @@ def test_validate_init_data_invalid_user_json_returns_empty_dict():
 
     with patch("botlite.webapp.auth.BOT_TOKEN", "token123"):
         assert validate_init_data(init_data) == {}
+
+
+def test_validate_init_data_rejects_expired_data():
+    init_data = _build_init_data("token123", {"id": 42})
+    with patch("botlite.webapp.auth.BOT_TOKEN", "token123"), \
+         patch("botlite.webapp.auth.WEBAPP_INIT_DATA_MAX_AGE", 0):
+        assert validate_init_data(init_data) is None

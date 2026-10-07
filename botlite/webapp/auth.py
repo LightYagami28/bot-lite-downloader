@@ -10,11 +10,12 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import time
 import urllib.parse
 
 from typing import Any
 
-from botlite.config import BOT_TOKEN
+from botlite.config import BOT_TOKEN, WEBAPP_INIT_DATA_MAX_AGE
 
 
 def validate_init_data(init_data: str) -> dict[str, Any] | None:
@@ -46,6 +47,13 @@ def validate_init_data(init_data: str) -> dict[str, Any] | None:
     ).hexdigest()
 
     if not hmac.compare_digest(expected, received_hash):
+        return None
+
+    try:
+        auth_date = int(params["auth_date"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if auth_date > time.time() + 60 or time.time() - auth_date > WEBAPP_INIT_DATA_MAX_AGE:
         return None
 
     try:
