@@ -24,7 +24,8 @@ def free_disk(path: str = ".") -> int:
     """Return free disk space in bytes for the filesystem at *path*."""
     try:
         return shutil.disk_usage(path).free
-    except Exception:
+    except OSError as exc:
+        log.warning("Unable to determine free disk space for %s: %s", path, exc)
         return 0
 
 
@@ -36,8 +37,8 @@ def cleanup_old_temps() -> None:
             if os.path.isdir(d) and (time.time() - os.path.getmtime(d)) > 3600:
                 shutil.rmtree(d, ignore_errors=True)
                 log.info("Cleaned stale temp dir: %s", d)
-        except Exception:
-            pass
+        except OSError as exc:
+            log.warning("Unable to clean stale temp dir %s: %s", d, exc)
 
 
 def check_cooldown(user_cooldowns: dict[int, float], user_id: int) -> float:

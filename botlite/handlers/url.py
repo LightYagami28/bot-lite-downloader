@@ -63,8 +63,8 @@ async def _send_media(event, fp: str, meta: dict, mtype: str) -> None:
 async def _safe_edit(msg, text: str) -> None:
     try:
         await msg.edit(text, parse_mode="md")
-    except Exception:
-        pass
+    except Exception as exc:
+        log.debug("Unable to edit status message: %s", exc)
 
 
 # ── Guards ────────────────────────────────────────────────────────────────────
@@ -120,8 +120,8 @@ async def _upload_results(event, status, results: list) -> int:
         finally:
             try:
                 os.remove(fp)
-            except Exception:
-                pass
+            except OSError as exc:
+                log.debug("Unable to remove downloaded file %s: %s", fp, exc)
     return sent
 
 
@@ -163,8 +163,8 @@ async def url_handler(event):
             db.increment("total_downloads")
             try:
                 await status.delete()
-            except Exception:
-                pass
+            except Exception as exc:
+                log.debug("Unable to delete status message: %s", exc)
         else:
             await _safe_edit(status, "❌ Could not send any files.")
             db.increment("failed_downloads")

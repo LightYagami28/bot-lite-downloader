@@ -52,7 +52,9 @@ async def download(url: str, tmpdir: str) -> list[MediaResult]:
     loop = asyncio.get_running_loop()
 
     def _run() -> list[MediaResult]:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=120, check=False
+        )
         # exit code 1 = partial success — still usable
         if proc.returncode not in (0, 1):
             raise RuntimeError(
