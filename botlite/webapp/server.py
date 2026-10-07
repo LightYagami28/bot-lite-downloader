@@ -54,6 +54,15 @@ def _require_sudo(request: web.Request) -> dict:
     return user
 
 
+def _require_user(request: web.Request) -> dict:
+    """Validate fresh Telegram initData for any authenticated Mini App user."""
+    init_data = request.headers.get("X-Telegram-Init-Data", "")
+    user = validate_init_data(init_data)
+    if user is None or not user.get("id"):
+        raise web.HTTPUnauthorized(reason="Invalid initData")
+    return user
+
+
 # ── API handlers ──────────────────────────────────────────────────────────────
 
 def api_status(_request: web.Request) -> web.Response:
@@ -64,6 +73,16 @@ def api_status(_request: web.Request) -> web.Response:
         "max_concurrent": MAX_CONCURRENT_DOWNLOADS,
         "free_disk": fmt_size(free_disk()),
         "free_disk_bytes": free_disk(),
+    })
+
+
+def api_me(request: web.Request) -> web.Response:
+    user = _require_user(request)
+    return web.json_response({
+        "id": user.get("id"),
+        "username": user.get("username"),
+        "first_name": user.get("first_name"),
+        "is_sudo": user.get("id") in SUDO_USERS,
     })
 
 
@@ -99,12 +118,25 @@ def index(_request: web.Request) -> web.FileResponse:
     return web.FileResponse(_STATIC / "index.html")
 
 
+@web.middleware
+async def security_headers(request: web.Request, handler):
+    response = await handler(request)
+    response.headers.update({
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "Referrer-Policy": "no-referrer",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' https://telegram.org; connect-src 'self'; style-src 'self' 'unsafe-inline'",
+    })
+    return response
+
+
 # ── App factory ───────────────────────────────────────────────────────────────
 
 def create_app() -> web.Application:
-    app = web.Application()
+    app = web.Application(middlewares=[security_headers])
     app.router.add_get("/", index)
     app.router.add_get("/api/status", api_status)
+    app.router.add_get("/api/me", api_me)
     app.router.add_get("/api/stats", api_stats)
     app.router.add_post("/api/ban", api_ban)
     app.router.add_post("/api/unban", api_unban)
