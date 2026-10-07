@@ -10,14 +10,12 @@ import asyncio
 import logging
 import sys
 
-from botlite import VERSION
-from botlite import config, db
+# Register all handlers (side-effect import)
+import botlite.handlers  # noqa: F401
+from botlite import VERSION, config, db
 from botlite.client import client
 from botlite.config import BOT_TOKEN, MAX_CONCURRENT_DOWNLOADS, WEBAPP_PUBLIC_URL
 from botlite.utils.system import cleanup_old_temps, setup_signals
-
-# Register all handlers (side-effect import)
-import botlite.handlers  # noqa: F401
 
 logging.basicConfig(
     level=logging.INFO,

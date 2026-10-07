@@ -12,7 +12,6 @@ import hmac
 import json
 import time
 import urllib.parse
-
 from typing import Any
 
 from botlite.config import BOT_TOKEN, WEBAPP_INIT_DATA_MAX_AGE

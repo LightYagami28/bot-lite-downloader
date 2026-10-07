@@ -10,7 +10,7 @@ import asyncio
 
 from telethon import TelegramClient
 
-from botlite.config import API_ID, API_HASH, MAX_CONCURRENT_DOWNLOADS
+from botlite.config import API_HASH, API_ID, MAX_CONCURRENT_DOWNLOADS
 
 # ── Telethon client (singleton) ───────────────────────────────────────────────
 client = TelegramClient("bot_lite", API_ID, API_HASH)
