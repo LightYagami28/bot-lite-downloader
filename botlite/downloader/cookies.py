@@ -29,6 +29,6 @@ def resolve(url: str) -> str | None:
             if os.path.exists(candidate):
                 log.info("Cookie file matched: %s (host: %s)", candidate, host)
                 return candidate
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - fail closed on malformed URL/parser errors
         log.warning("Cookie resolution error: %s", exc)
     return None

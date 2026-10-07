@@ -36,7 +36,7 @@ async def download(url: str) -> tuple[str, list[MediaResult]]:
         results = await ytdlp.download(url, ytdir)
         if results:
             return tmpdir, results
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - isolate third-party extractor failures
         log.warning("[yt-dlp] failed (%s): %s", url, exc)
 
     gddir = os.path.join(tmpdir, "gd")
@@ -45,7 +45,7 @@ async def download(url: str) -> tuple[str, list[MediaResult]]:
         results = await gallery.download(url, gddir)
         if results:
             return tmpdir, results
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - isolate third-party extractor failures
         log.warning("[gallery-dl] failed (%s): %s", url, exc)
 
     raise RuntimeError(

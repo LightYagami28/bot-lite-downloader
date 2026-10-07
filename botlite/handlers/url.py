@@ -63,7 +63,7 @@ async def _send_media(event, fp: str, meta: dict, mtype: str) -> None:
 async def _safe_edit(msg, text: str) -> None:
     try:
         await msg.edit(text, parse_mode="md")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - Telethon errors vary by client state
         log.debug("Unable to edit status message: %s", exc)
 
 
@@ -111,7 +111,7 @@ async def _upload_results(event, status, results: list) -> int:
         try:
             await _send_media(event, fp, meta, mtype)
             sent += 1
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - Telethon errors vary by client state
             log.error("Send failed for %s: %s", fp, exc)
             await event.reply(
                 f"❌ Failed to send file {i}: `{str(exc)[:150]}`",
@@ -163,13 +163,13 @@ async def url_handler(event):
             db.increment("total_downloads")
             try:
                 await status.delete()
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - Telethon errors vary by client state
                 log.debug("Unable to delete status message: %s", exc)
         else:
             await _safe_edit(status, "❌ Could not send any files.")
             db.increment("failed_downloads")
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - isolate handler failures and report them
         log.error("Error for %s:\n%s", url, traceback.format_exc())
         await _safe_edit(status, f"❌ **Download failed.**\n\n`{str(exc)[:300]}`")
         db.increment("failed_downloads")
