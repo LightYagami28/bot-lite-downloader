@@ -28,6 +28,13 @@ def _int_list(key: str) -> list[int]:
     return [int(x.strip()) for x in raw.split(",") if x.strip().lstrip("-").isdigit()]
 
 
+def _bool(key: str, default: bool = False) -> bool:
+    value = os.getenv(key)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 # ── Telegram ──────────────────────────────────────────────────────────────────
 API_ID    = _int("API_ID", 0)
 API_HASH  = os.getenv("API_HASH", "")
@@ -41,6 +48,7 @@ MAX_FILE_SIZE            = _int("MAX_FILE_SIZE",            2 * 1024 * 1024 * 10
 MAX_CONCURRENT_DOWNLOADS = _int("MAX_CONCURRENT_DOWNLOADS", 3)
 MIN_FREE_DISK            = _int("MIN_FREE_DISK",            500 * 1024 * 1024)
 USER_COOLDOWN            = _int("USER_COOLDOWN",            5)
+ALLOW_GROUPS             = _bool("ALLOW_GROUPS",            False)
 
 # ── Storage ───────────────────────────────────────────────────────────────────
 DB_FILE = os.getenv("DB_FILE", "media_bot.db")

@@ -16,7 +16,7 @@ from botlite import db
 from botlite.client import active_downloads, client
 from botlite.config import (
     DB_FILE, MAX_CONCURRENT_DOWNLOADS, MAX_FILE_SIZE,
-    SUDO_USERS, USER_COOLDOWN, WEBAPP_PUBLIC_URL,
+    ALLOW_GROUPS, SUDO_USERS, USER_COOLDOWN, WEBAPP_PUBLIC_URL,
 )
 from botlite.utils.format import fmt_size, fmt_uptime
 from botlite.utils.system import free_disk
@@ -39,7 +39,7 @@ def _dashboard_button() -> list | None:
 
 @client.on(events.NewMessage(pattern="/start"))
 async def cmd_start(event):
-    if not event.is_private:
+    if not event.is_private and not ALLOW_GROUPS:
         return
     await event.reply(
         "👋 **Bot Lite Downloader**\n\n"
@@ -58,7 +58,7 @@ async def cmd_start(event):
 
 @client.on(events.NewMessage(pattern="/help"))
 async def cmd_help(event):
-    if not event.is_private:
+    if not event.is_private and not ALLOW_GROUPS:
         return
     cooldown_line = f"• Cooldown between requests: {USER_COOLDOWN}s\n" if USER_COOLDOWN else ""
     await event.reply(
@@ -85,7 +85,7 @@ async def cmd_help(event):
 
 @client.on(events.NewMessage(pattern="/status"))
 async def cmd_status(event):
-    if not event.is_private:
+    if not event.is_private and not ALLOW_GROUPS:
         return
     from botlite import VERSION
     disk      = free_disk()

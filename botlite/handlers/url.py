@@ -20,7 +20,7 @@ from botlite import db
 from botlite.client import (
     _user_cooldowns, active_downloads, client, download_semaphore,
 )
-from botlite.config import MAX_FILE_SIZE, MIN_FREE_DISK
+from botlite.config import ALLOW_GROUPS, MAX_FILE_SIZE, MIN_FREE_DISK
 from botlite.downloader import download
 from botlite.utils.format import build_caption, fmt_size
 from botlite.utils.system import check_cooldown, free_disk
@@ -126,7 +126,7 @@ async def _upload_results(event, status, results: list) -> int:
 
 @client.on(events.NewMessage())
 async def url_handler(event):
-    if not event.is_private:
+    if not event.is_private and not ALLOW_GROUPS:
         return
 
     text = event.message.text or event.message.caption or ""

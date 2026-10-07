@@ -97,6 +97,7 @@ Copy `.env.example` to `.env` and fill in your values:
 | `MAX_CONCURRENT_DOWNLOADS` | `3` | Global concurrent download cap |
 | `MIN_FREE_DISK` | `524288000` | Min free disk before rejecting requests (500 MB) |
 | `USER_COOLDOWN` | `5` | Seconds between requests per user (`0` = disabled) |
+| `ALLOW_GROUPS` | `false` | Enable downloads and basic commands in Telegram groups |
 | `DB_FILE` | `media_bot.db` | SQLite database path |
 | `WEBAPP_PUBLIC_URL` | _(empty)_ | Public HTTPS URL of the dashboard — enables the WebApp feature |
 | `WEBAPP_HOST` | `0.0.0.0` | Bind address for the embedded web server |
