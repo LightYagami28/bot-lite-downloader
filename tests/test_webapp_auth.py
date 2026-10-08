@@ -85,3 +85,14 @@ def test_validate_init_data_rejects_invalid_user_payload():
 
     with patch("botlite.webapp.auth.BOT_TOKEN", "token123"):
         assert validate_init_data(init_data) is None
+
+
+def test_validate_init_data_rejects_oversized_payload():
+    with patch("botlite.webapp.auth.BOT_TOKEN", "token123"):
+        assert validate_init_data("a=" + ("x" * 8192)) is None
+
+
+def test_validate_init_data_rejects_boolean_user_id():
+    init_data = _build_init_data("token123", {"id": True})
+    with patch("botlite.webapp.auth.BOT_TOKEN", "token123"):
+        assert validate_init_data(init_data) is None

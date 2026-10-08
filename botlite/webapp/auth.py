@@ -16,6 +16,8 @@ from typing import Any
 
 from botlite.config import BOT_TOKEN, WEBAPP_INIT_DATA_MAX_AGE
 
+_MAX_INIT_DATA_LENGTH = 8 * 1024
+
 
 def validate_init_data(init_data: str) -> dict[str, Any] | None:
     """
@@ -24,13 +26,21 @@ def validate_init_data(init_data: str) -> dict[str, Any] | None:
     Returns the parsed ``user`` dict on success, or ``None`` if the
     signature is missing, invalid, or the token is not configured.
     """
-    if not init_data or not BOT_TOKEN:
+    if not init_data or len(init_data) > _MAX_INIT_DATA_LENGTH or not BOT_TOKEN:
         return None
 
     # Telegram signs the exact decoded key/value set. Reject duplicate keys
     # instead of silently accepting whichever value happens to win in a dict;
     # this prevents parser differentials between proxies and the application.
-    pairs = urllib.parse.parse_qsl(init_data, keep_blank_values=True)
+    try:
+        pairs = urllib.parse.parse_qsl(
+            init_data,
+            keep_blank_values=True,
+            strict_parsing=True,
+            max_num_fields=32,
+        )
+    except ValueError:
+        return None
     if not pairs:
         return None
     keys = [key for key, _ in pairs]
@@ -69,6 +79,6 @@ def validate_init_data(init_data: str) -> dict[str, Any] | None:
         user = json.loads(params.get("user", "{}"))
     except (json.JSONDecodeError, TypeError):
         return None
-    if not isinstance(user, dict) or not isinstance(user.get("id"), int):
+    if not isinstance(user, dict) or not isinstance(user.get("id"), int) or isinstance(user.get("id"), bool):
         return None
     return user
