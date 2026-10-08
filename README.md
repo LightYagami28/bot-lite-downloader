@@ -30,6 +30,12 @@ Minimal, self-hosted Telegram bot that downloads media from 1 000+ sites
 and sends files straight to your DMs — with an optional **WebApp dashboard**
 accessible directly inside Telegram.
 
+> **Maintenance note:** the repository had gone several months without a
+> meaningful update. Light has taken the project back into active maintenance,
+> refreshed its dependencies, restored automated checks and is progressively
+> modernising the Telegram WebApp and group-safety model. The original project
+> and contributors remain credited below.
+
 > Open-source lite release of **[@UltimateFilesDownloaderBot](https://t.me/UltimateFilesDownloaderBot)**,
 > originally designed by **[linuxuser825](https://t.me/LinuxBotsNews)**.
 
@@ -42,7 +48,8 @@ accessible directly inside Telegram.
 - **Telegram WebApp dashboard** — full-screen admin panel openable inside Telegram (status, stats, ban/unban)
 - **Inline keyboard buttons** — `/start`, `/status`, `/stats` all show a **📊 Open Dashboard** button when the webapp is enabled
 - **Cookie support** — drop a `cookiesSiteName.txt` to unlock age-restricted or private content
-- **DMs only** — ignores all group chats
+- **Private chats by default** — group handling is opt-in through `ALLOW_GROUPS`
+  and remains subject to the same limits and permissions
 - **Config via `.env`** — no hardcoded secrets, Docker-friendly
 - **Built-in safeguards** — disk space guard, per-user cooldown, concurrent download semaphore
 - **Graceful shutdown** — handles `SIGTERM` cleanly for Docker and systemd
@@ -102,7 +109,7 @@ Copy `.env.example` to `.env` and fill in your values:
 | `WEBAPP_PUBLIC_URL` | _(empty)_ | Public HTTPS URL of the dashboard — enables the WebApp feature |
 | `WEBAPP_HOST` | `0.0.0.0` | Bind address for the embedded web server |
 | `WEBAPP_PORT` | `8080` | Listen port for the embedded web server |
-| `WEBAPP_INIT_DATA_MAX_AGE` | `86400` | Maximum age of Telegram WebApp `initData` in seconds |
+| `WEBAPP_INIT_DATA_MAX_AGE` | `3600` | Maximum age of Telegram WebApp `initData` in seconds |
 
 ---
 
@@ -182,6 +189,16 @@ cookies{sitename}.txt
 | `/ban <user_id>` | Ban a user from the bot |
 | `/unban <user_id>` | Unban a user |
 
+## Maintenance and release policy
+
+Dependencies are tracked with Dependabot and reviewed against the current
+Python/Telegram ecosystem. Changes must pass the test suite, static checks and
+dependency validation before release. Releases are tagged semantically and
+published only after the generated artifact and checksum have been verified.
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the contribution workflow and
+[`SECURITY.md`](SECURITY.md) for vulnerability reports and deployment guidance.
+
 ---
 
 ## Running as a systemd service
@@ -245,7 +262,7 @@ BotLite-Downloader/
 ├── .env.example
 ├── Dockerfile
 ├── docker-compose.yml
-├── LICENSE.md
+├── LICENSE
 └── SECURITY.md
 ```
 
