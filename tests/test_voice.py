@@ -82,6 +82,46 @@ def test_stream_end_leaves_call_and_releases_audio():
     asyncio.run(exercise())
 
 
+def test_shutdown_waits_for_inflight_play_and_closes_its_session():
+    class BlockingCalls(FakeCalls):
+        def __init__(self):
+            super().__init__()
+            self.play_entered = asyncio.Event()
+            self.allow_play_to_finish = asyncio.Event()
+
+        async def play(self, chat_id, path, *, config):
+            self.play_entered.set()
+            await self.allow_play_to_finish.wait()
+            await super().play(chat_id, path, config=config)
+
+    async def exercise():
+        calls = BlockingCalls()
+        manager = VoiceChatManager(calls)
+        await manager.start()
+        directory = tempfile.TemporaryDirectory()
+        audio_file = Path(directory.name) / "track.ogg"
+        audio_file.write_bytes(b"audio")
+
+        play_task = asyncio.create_task(
+            manager.play(-100123, str(audio_file), "Track", directory)
+        )
+        await calls.play_entered.wait()
+        shutdown_task = asyncio.create_task(manager.shutdown())
+        await asyncio.sleep(0)
+        assert not shutdown_task.done(), "shutdown must wait for the in-flight play"
+
+        calls.allow_play_to_finish.set()
+        await asyncio.gather(play_task, shutdown_task)
+
+        assert calls.played == [(-100123, str(audio_file), False)]
+        assert calls.left == [-100123]
+        assert not audio_file.exists()
+        assert manager._sessions == {}
+        assert manager._closed
+
+    asyncio.run(exercise())
+
+
 def test_native_voice_client_initializes_inside_asyncio_lifecycle(monkeypatch):
     monkeypatch.setattr(voice, "_voice_manager", None)
 

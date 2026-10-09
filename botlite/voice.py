@@ -50,6 +50,11 @@ class VoiceChatManager:
         from pytgcalls.types import GroupCallConfig
 
         async with self._lock_for(chat_id):
+            # The caller may have been queued behind another operation while
+            # shutdown began. Recheck the lifecycle state after taking the
+            # per-chat lock, before creating a new remote stream.
+            if not self._started or self._closed:
+                raise RuntimeError("Voice playback is not running")
             await self._leave_existing(chat_id)
             await self._calls.play(
                 chat_id,
@@ -79,12 +84,20 @@ class VoiceChatManager:
         if self._closed:
             return
         self._closed = True
-        for chat_id in tuple(self._sessions):
+        # Include in-flight play operations as well as established sessions.
+        # Setting _closed above prevents new plays; taking every existing lock
+        # waits for a play already inside its critical section, then observes
+        # and closes the session it created.
+        for chat_id in tuple(self._locks):
             async with self._lock_for(chat_id):
+                if chat_id not in self._sessions:
+                    continue
                 try:
                     await self._leave_existing(chat_id)
                 except Exception:
-                    log.exception("Unable to leave voice chat %s during shutdown", chat_id)
+                    log.exception(
+                        "Unable to leave voice chat %s during shutdown", chat_id
+                    )
 
     def cleanup_after_disconnect(self) -> None:
         """Release temporary files only after the MTProto connection is closed."""
