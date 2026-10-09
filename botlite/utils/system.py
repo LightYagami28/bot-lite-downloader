@@ -6,14 +6,15 @@ OS-level helpers: disk space, temp cleanup, signal handling.
 
 from __future__ import annotations
 
+import asyncio
 import glob
 import logging
 import os
 import shutil
 import signal
-import sys
 import tempfile
 import time
+from collections.abc import Awaitable, Callable
 
 from botlite.config import USER_COOLDOWN
 
@@ -49,15 +50,34 @@ def check_cooldown(user_cooldowns: dict[int, float], user_id: int) -> float:
     return max(0.0, USER_COOLDOWN - (time.time() - last))
 
 
-def setup_signals(disconnect_fn) -> None:
-    """Register SIGTERM/SIGINT for graceful Docker/systemd shutdown."""
-    def _handler(signum, frame):
-        log.info("Received signal %s, shutting down…", signum)
-        disconnect_fn()
-        sys.exit(0)
+def setup_signals(disconnect_fn: Callable[[], Awaitable[object]]) -> None:
+    """Schedule and observe asynchronous cleanup on SIGTERM/SIGINT."""
+    loop = asyncio.get_running_loop()
+    shutdown_requested = False
 
-    try:
-        signal.signal(signal.SIGTERM, _handler)
-        signal.signal(signal.SIGINT,  _handler)
-    except (OSError, ValueError):
-        pass
+    def _observe_disconnect(task: asyncio.Task[object]) -> None:
+        try:
+            task.result()
+        except asyncio.CancelledError:
+            log.warning("Telegram client shutdown was cancelled")
+        except Exception:
+            log.exception("Telegram client shutdown failed")
+
+    def _request_disconnect(signum: int) -> None:
+        nonlocal shutdown_requested
+        if shutdown_requested:
+            return
+        shutdown_requested = True
+        log.info("Received signal %s, shutting down…", signum)
+        loop.call_soon_threadsafe(
+            lambda: loop.create_task(disconnect_fn()).add_done_callback(_observe_disconnect)
+        )
+
+    def _handler(signum, _frame):
+        _request_disconnect(signum)
+
+    for shutdown_signal in (signal.SIGTERM, signal.SIGINT):
+        try:
+            signal.signal(shutdown_signal, _handler)
+        except (OSError, ValueError) as exc:
+            log.warning("Unable to register handler for signal %s: %s", shutdown_signal, exc)

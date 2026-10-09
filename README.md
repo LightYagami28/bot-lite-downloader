@@ -105,6 +105,7 @@ Copy `.env.example` to `.env` and fill in your values:
 | `MIN_FREE_DISK` | `524288000` | Min free disk before rejecting requests (500 MB) |
 | `USER_COOLDOWN` | `5` | Seconds between requests per user (`0` = disabled) |
 | `ALLOW_GROUPS` | `false` | Enable downloads and basic commands in Telegram groups |
+| `ALLOWED_GROUP_IDS` | _(empty)_ | Comma-separated allowlist of Telegram group IDs; required when groups are enabled |
 | `DB_FILE` | `media_bot.db` | SQLite database path |
 | `WEBAPP_PUBLIC_URL` | _(empty)_ | Public HTTPS URL of the dashboard — enables the WebApp feature |
 | `WEBAPP_HOST` | `0.0.0.0` | Bind address for the embedded web server |
@@ -127,6 +128,12 @@ The dashboard opens full-screen inside Telegram and provides:
 | Ban / Unban by User ID | `SUDO_USERS` only |
 
 Access is authenticated via Telegram's **WebApp `initData`** (HMAC-SHA256 signature verified server-side).
+
+Group downloads are disabled by default. To enable them safely, set `ALLOW_GROUPS=true`
+and provide only the required IDs in `ALLOWED_GROUP_IDS`; an empty allowlist is rejected
+by configuration validation. The current Telethon bot integration handles messages,
+not real-time voice streaming. Telethon exposes raw group-call control methods but does
+not implement audio streaming ([Telethon documentation](https://docs.telethon.dev/en/stable/misc/changelog.html#new-raw-api-call-methods-v1-19)); a voice feature needs a separate, explicitly reviewed MTProto audio client and end-to-end tests.
 
 ### HTTPS requirement
 
@@ -246,6 +253,7 @@ BotLite-Downloader/
 │   │   └── cookies.py       # Cookie file resolver
 │   ├── handlers/
 │   │   ├── __init__.py      # Registers all handlers
+│   │   ├── access.py        # Shared private-chat/group allowlist checks
 │   │   ├── commands.py      # /start /help /status /stats /ban /unban
 │   │   └── url.py           # URL detection + upload pipeline
 │   ├── utils/
@@ -258,7 +266,8 @@ BotLite-Downloader/
 │       └── static/
 │           └── index.html   # Telegram WebApp dashboard (single-page)
 ├── run.py                   # Alternate entry point
-├── requirements.txt
+├── requirements.txt         # Runtime dependencies
+├── requirements-dev.txt     # Test, lint and dependency-audit tools
 ├── .env.example
 ├── Dockerfile
 ├── docker-compose.yml

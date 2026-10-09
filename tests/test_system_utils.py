@@ -1,5 +1,5 @@
-from unittest.mock import patch
 import math
+from unittest.mock import patch
 
 from botlite.utils.system import check_cooldown, free_disk
 

@@ -16,6 +16,7 @@ from botlite import db
 from botlite.client import active_downloads, client
 from botlite.config import (
     ALLOW_GROUPS,
+    ALLOWED_GROUP_IDS,
     DB_FILE,
     MAX_CONCURRENT_DOWNLOADS,
     MAX_FILE_SIZE,
@@ -23,6 +24,7 @@ from botlite.config import (
     USER_COOLDOWN,
     WEBAPP_PUBLIC_URL,
 )
+from botlite.handlers.access import is_message_allowed
 from botlite.utils.format import fmt_size, fmt_uptime
 from botlite.utils.system import free_disk
 
@@ -31,6 +33,17 @@ _start_time = time.time()
 
 def is_sudo(uid: int) -> bool:
     return uid in SUDO_USERS
+
+
+def _group_allowed(event) -> bool:
+    return is_message_allowed(
+        is_private=event.is_private,
+        is_group=event.is_group,
+        chat_id=event.chat_id,
+        sender_id=event.sender_id,
+        allow_groups=ALLOW_GROUPS,
+        allowed_group_ids=ALLOWED_GROUP_IDS,
+    )
 
 
 def _dashboard_button() -> list | None:
@@ -44,7 +57,7 @@ def _dashboard_button() -> list | None:
 
 @client.on(events.NewMessage(pattern="/start"))
 async def cmd_start(event):
-    if not event.is_private and not ALLOW_GROUPS:
+    if not _group_allowed(event):
         return
     await event.reply(
         "👋 **Bot Lite Downloader**\n\n"
@@ -63,7 +76,7 @@ async def cmd_start(event):
 
 @client.on(events.NewMessage(pattern="/help"))
 async def cmd_help(event):
-    if not event.is_private and not ALLOW_GROUPS:
+    if not _group_allowed(event):
         return
     cooldown_line = f"• Cooldown between requests: {USER_COOLDOWN}s\n" if USER_COOLDOWN else ""
     await event.reply(
@@ -90,7 +103,7 @@ async def cmd_help(event):
 
 @client.on(events.NewMessage(pattern="/status"))
 async def cmd_status(event):
-    if not event.is_private and not ALLOW_GROUPS:
+    if not _group_allowed(event):
         return
     from botlite import VERSION
     disk      = free_disk()

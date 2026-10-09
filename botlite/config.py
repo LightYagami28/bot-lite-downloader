@@ -25,7 +25,18 @@ def _int(key: str, default: int) -> int:
 
 def _int_list(key: str) -> list[int]:
     raw = os.getenv(key, "")
-    return [int(x.strip()) for x in raw.split(",") if x.strip().lstrip("-").isdigit()]
+    values = []
+    for item in raw.split(","):
+        try:
+            values.append(int(item.strip(), 10))
+        except ValueError:
+            continue
+    return values
+
+
+def _nonzero_int_list(key: str) -> set[int]:
+    # Telegram supergroup/channel IDs are commonly negative.
+    return {value for value in _int_list(key) if value != 0}
 
 
 def _bool(key: str, default: bool = False) -> bool:
@@ -49,6 +60,7 @@ MAX_CONCURRENT_DOWNLOADS = _int("MAX_CONCURRENT_DOWNLOADS", 3)
 MIN_FREE_DISK            = _int("MIN_FREE_DISK",            500 * 1024 * 1024)
 USER_COOLDOWN            = _int("USER_COOLDOWN",            5)
 ALLOW_GROUPS             = _bool("ALLOW_GROUPS",            False)
+ALLOWED_GROUP_IDS        = _nonzero_int_list("ALLOWED_GROUP_IDS")
 
 # ── Storage ───────────────────────────────────────────────────────────────────
 DB_FILE = os.getenv("DB_FILE", "media_bot.db")
@@ -72,6 +84,10 @@ def validate() -> None:
         errors.append("API_HASH is not set")
     if not BOT_TOKEN:
         errors.append("BOT_TOKEN is not set")
+    if WEBAPP_PUBLIC_URL and not WEBAPP_PUBLIC_URL.lower().startswith("https://"):
+        errors.append("WEBAPP_PUBLIC_URL must use HTTPS")
+    if ALLOW_GROUPS and not ALLOWED_GROUP_IDS:
+        errors.append("ALLOW_GROUPS requires at least one non-zero ALLOWED_GROUP_IDS entry")
     if errors:
         for e in errors:
             print(f"[CONFIG ERROR] {e}", file=sys.stderr)

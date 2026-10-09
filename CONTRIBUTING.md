@@ -9,9 +9,10 @@ history.
 ## Before opening a pull request
 
 ```bash
-python -m pip install -r requirements.txt
-python -m pytest -q
+python -m pip install -r requirements-dev.txt
+python -W error::DeprecationWarning -m pytest -q
 python -m ruff check .
+python -m pip_audit -r requirements-dev.txt
 ```
 
 Do not commit `.env`, Telegram sessions, cookie files, databases, downloaded

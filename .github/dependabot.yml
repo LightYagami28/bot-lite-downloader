@@ -13,10 +13,6 @@ updates:
       - python
     commit-message:
       prefix: "deps(pip)"
-    ignore:
-      # Only allow patch / minor for telethon to avoid breaking API changes
-      - dependency-name: telethon
-        update-types: ["version-update:semver-major"]
 
   # Docker base image
   - package-ecosystem: docker

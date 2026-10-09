@@ -23,8 +23,9 @@ from botlite.client import (
     client,
     download_semaphore,
 )
-from botlite.config import ALLOW_GROUPS, MAX_FILE_SIZE, MIN_FREE_DISK
+from botlite.config import ALLOW_GROUPS, ALLOWED_GROUP_IDS, MAX_FILE_SIZE, MIN_FREE_DISK
 from botlite.downloader import download
+from botlite.handlers.access import is_message_allowed
 from botlite.utils.format import build_caption, fmt_size
 from botlite.utils.system import check_cooldown, free_disk
 
@@ -32,6 +33,17 @@ log = logging.getLogger("botlite.url")
 
 # Exclude t.me links; allow everything else
 _URL_RE = re.compile(r"https?://(?!t\.me/)[^\s<>\"{}|\\^`\[\]]+")
+
+
+def _group_allowed(event) -> bool:
+    return is_message_allowed(
+        is_private=event.is_private,
+        is_group=event.is_group,
+        chat_id=event.chat_id,
+        sender_id=event.sender_id,
+        allow_groups=ALLOW_GROUPS,
+        allowed_group_ids=ALLOWED_GROUP_IDS,
+    )
 
 
 # ── Media sender ──────────────────────────────────────────────────────────────
@@ -129,7 +141,7 @@ async def _upload_results(event, status, results: list) -> int:
 
 @client.on(events.NewMessage())
 async def url_handler(event):
-    if not event.is_private and not ALLOW_GROUPS:
+    if not _group_allowed(event):
         return
 
     text = event.message.text or event.message.caption or ""

@@ -20,15 +20,26 @@ _runner: web.AppRunner | None = None
 
 async def start_webapp() -> None:
     global _runner
-    app = create_app()
-    _runner = web.AppRunner(app, access_log=None)
-    await _runner.setup()
-    site = web.TCPSite(_runner, WEBAPP_HOST, WEBAPP_PORT)
-    await site.start()
+    if _runner is not None:
+        raise RuntimeError("The Telegram WebApp server is already running")
+
+    runner = web.AppRunner(create_app(), access_log=None)
+    try:
+        await runner.setup()
+        site = web.TCPSite(runner, WEBAPP_HOST, WEBAPP_PORT)
+        await site.start()
+    except BaseException:
+        await runner.cleanup()
+        raise
+
+    _runner = runner
     log.info("WebApp dashboard listening on %s:%d", WEBAPP_HOST, WEBAPP_PORT)
 
 
 async def stop_webapp() -> None:
+    global _runner
     if _runner:
-        await _runner.cleanup()
+        runner = _runner
+        _runner = None
+        await runner.cleanup()
         log.info("WebApp dashboard stopped")

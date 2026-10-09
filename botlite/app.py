@@ -34,19 +34,27 @@ async def _main() -> None:
     cleanup_old_temps()
     db.init()
 
-    await client.start(bot_token=BOT_TOKEN)
+    try:
+        await client.start(bot_token=BOT_TOKEN)
 
-    if WEBAPP_PUBLIC_URL:
-        from botlite.webapp import start_webapp
-        await start_webapp()
+        if WEBAPP_PUBLIC_URL:
+            from botlite.webapp import start_webapp
+            await start_webapp()
 
-    log.info(
-        "Bot Lite Downloader v%s started. Max concurrent: %d%s",
-        VERSION,
-        MAX_CONCURRENT_DOWNLOADS,
-        f" | WebApp: {WEBAPP_PUBLIC_URL}" if WEBAPP_PUBLIC_URL else "",
-    )
-    await client.run_until_disconnected()
+        log.info(
+            "Bot Lite Downloader v%s started. Max concurrent: %d%s",
+            VERSION,
+            MAX_CONCURRENT_DOWNLOADS,
+            f" | WebApp: {WEBAPP_PUBLIC_URL}" if WEBAPP_PUBLIC_URL else "",
+        )
+        await client.run_until_disconnected()
+    finally:
+        try:
+            if WEBAPP_PUBLIC_URL:
+                from botlite.webapp import stop_webapp
+                await stop_webapp()
+        finally:
+            await client.disconnect()
 
 
 def run() -> None:

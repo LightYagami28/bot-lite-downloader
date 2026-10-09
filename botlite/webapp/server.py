@@ -65,8 +65,8 @@ def _require_user(request: web.Request) -> dict:
 
 # ── API handlers ──────────────────────────────────────────────────────────────
 
-def api_status(_request: web.Request) -> web.Response:
-    return web.json_response({
+async def api_status(_request: web.Request) -> web.Response:
+    response = web.json_response({
         "version": VERSION,
         "uptime": fmt_uptime(time.time() - _start_time),
         "active_downloads": len(active_downloads),
@@ -74,9 +74,11 @@ def api_status(_request: web.Request) -> web.Response:
         "free_disk": fmt_size(free_disk()),
         "free_disk_bytes": free_disk(),
     })
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
-def api_me(request: web.Request) -> web.Response:
+async def api_me(request: web.Request) -> web.Response:
     user = _require_user(request)
     return web.json_response({
         "id": user.get("id"),
@@ -86,7 +88,7 @@ def api_me(request: web.Request) -> web.Response:
     })
 
 
-def api_stats(request: web.Request) -> web.Response:
+async def api_stats(request: web.Request) -> web.Response:
     _require_sudo(request)
     return web.json_response({
         "total_downloads": db.get_stat("total_downloads"),
@@ -124,26 +126,27 @@ async def api_unban(request: web.Request) -> web.Response:
 
 # ── Static ────────────────────────────────────────────────────────────────────
 
-def index(_request: web.Request) -> web.FileResponse:
+async def index(_request: web.Request) -> web.FileResponse:
     return web.FileResponse(_STATIC / "index.html")
 
 
-@web.middleware
-async def security_headers(request: web.Request, handler):
-    response = await handler(request)
+async def security_headers(request: web.Request, response: web.StreamResponse) -> None:
+    """Set headers on every response, including framework-generated errors."""
     response.headers.update({
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "SAMEORIGIN",
         "Referrer-Policy": "no-referrer",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+        "Cache-Control": "no-store",
         "Content-Security-Policy": "default-src 'self'; script-src 'self' https://telegram.org; connect-src 'self'; style-src 'self' 'unsafe-inline'",
     })
-    return response
 
 
 # ── App factory ───────────────────────────────────────────────────────────────
 
 def create_app() -> web.Application:
-    app = web.Application(middlewares=[security_headers])
+    app = web.Application()
+    app.on_response_prepare.append(security_headers)
     app.router.add_get("/", index)
     app.router.add_get("/api/status", api_status)
     app.router.add_get("/api/me", api_me)
