@@ -26,6 +26,7 @@ USER botlite
 
 EXPOSE 8080
 VOLUME ["/data"]
-ENV DB_FILE=/data/media_bot.db
+ENV DB_FILE=/data/media_bot.db \
+    WEBAPP_HOST=0.0.0.0
 
 CMD ["python", "-m", "botlite"]

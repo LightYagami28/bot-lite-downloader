@@ -9,7 +9,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import subprocess
+import sys
+from urllib.parse import urlsplit
 
 from botlite.downloader.cookies import resolve as resolve_cookie
 from botlite.downloader.ytdlp import _AUDIO_EXTS, _IMAGE_EXTS, _VIDEO_EXTS
@@ -19,7 +20,7 @@ log = logging.getLogger("botlite.gallery")
 MediaResult = tuple[str, dict, str]
 
 
-def _scan_files(tmpdir: str, stderr: str) -> list[MediaResult]:
+def _scan_files(tmpdir: str) -> list[MediaResult]:
     results = []
     for fname in sorted(os.listdir(tmpdir)):
         fp  = os.path.join(tmpdir, fname)
@@ -32,34 +33,50 @@ def _scan_files(tmpdir: str, stderr: str) -> list[MediaResult]:
         else:                     continue
         results.append((fp, {"size": os.path.getsize(fp)}, mtype))
     if not results:
-        raise RuntimeError(f"gallery-dl produced no usable files.\n{stderr[:200]}")
+        raise RuntimeError("gallery-dl produced no usable files")
     return results
 
 
 async def download(url: str, tmpdir: str) -> list[MediaResult]:
     """Download via gallery-dl. Returns [(filepath, meta, mediatype), ...]."""
-    cmd = [
-        "gallery-dl",
-        "--directory", tmpdir,
-        "--filename",  "{num:>03}_{id}.{extension}",
+    parsed_url = urlsplit(url)
+    if parsed_url.scheme not in {"http", "https"} or not parsed_url.hostname:
+        raise ValueError("gallery-dl only accepts absolute HTTP(S) URLs")
+
+    cookie_file = resolve_cookie(url)
+    command = [
+        sys.executable,
+        "-m",
+        "gallery_dl",
+        "--directory",
+        tmpdir,
+        "--filename",
+        "{num:>03}_{id}.{extension}",
         "--no-part",
     ]
-    cookie_file = resolve_cookie(url)
     if cookie_file:
-        cmd += ["--cookies", cookie_file]
-    cmd.append(url)
+        command.extend(("--cookies", cookie_file))
+    command.append(url)
+
+    process = await asyncio.create_subprocess_exec(
+        *command,
+        stdout=asyncio.subprocess.DEVNULL,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    try:
+        _, stderr = await asyncio.wait_for(process.communicate(), timeout=120)
+    except TimeoutError:
+        try:
+            process.kill()
+        except ProcessLookupError:
+            pass
+        await process.communicate()
+        raise TimeoutError("gallery-dl exceeded the 120-second request limit") from None
+
+    # Exit code 1 can represent partial success; completed media remains usable.
+    if process.returncode not in (0, 1):
+        error = stderr.decode("utf-8", errors="replace")
+        raise RuntimeError(f"gallery-dl exited {process.returncode}: {error[:300]}")
 
     loop = asyncio.get_running_loop()
-
-    def _run() -> list[MediaResult]:
-        proc = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=120, check=False
-        )
-        # exit code 1 = partial success — still usable
-        if proc.returncode not in (0, 1):
-            raise RuntimeError(
-                f"gallery-dl exited {proc.returncode}: {proc.stderr[:300]}"
-            )
-        return _scan_files(tmpdir, proc.stderr)
-
-    return await loop.run_in_executor(None, _run)
+    return await loop.run_in_executor(None, _scan_files, tmpdir)

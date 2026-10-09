@@ -36,6 +36,8 @@ jobs:
         run: pytest -W error::DeprecationWarning --cov=botlite --cov-report=xml:coverage.xml --cov-report=term-missing
       - name: Run Ruff
         run: ruff check .
+      - name: Run Bandit security rules
+        run: ruff check botlite --select S
       - name: Audit runtime and development dependencies
         run: pip-audit -r requirements-dev.txt
       - name: Build runtime container image
