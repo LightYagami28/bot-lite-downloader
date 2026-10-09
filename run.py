@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 BotLite Downloader — entry point.
 
