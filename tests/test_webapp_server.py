@@ -20,6 +20,26 @@ def test_status_endpoint_is_live_and_not_cacheable():
     assert '"active_downloads"' in body
 
 
+def test_dashboard_script_is_served_same_origin_under_restrictive_script_csp():
+    status, headers, body = asyncio.run(_request("/app.js"))
+
+    script_policy = headers["Content-Security-Policy"].split("script-src", 1)[1].split(";", 1)[0]
+    assert status == 200
+    assert "javascript" in headers["Content-Type"]
+    assert headers["Cache-Control"] == "no-store"
+    assert "unsafe-inline" not in script_policy
+    assert "Could not load status" in body
+
+
+def test_dashboard_references_external_same_origin_script():
+    status, headers, body = asyncio.run(_request("/"))
+
+    assert status == 200
+    assert headers["Cache-Control"] == "no-store"
+    assert '<script type="module" src="/app.js"></script>' in body
+    assert '<script type="module">' not in body
+
+
 def test_security_headers_are_applied_to_unauthorized_and_not_found_responses():
     for path in ("/api/me", "/api/stats", "/missing"):
         status, headers, _ = asyncio.run(_request(path))

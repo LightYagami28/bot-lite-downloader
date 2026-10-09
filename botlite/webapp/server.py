@@ -130,6 +130,10 @@ async def index(_request: web.Request) -> web.FileResponse:
     return web.FileResponse(_STATIC / "index.html")
 
 
+async def app_script(_request: web.Request) -> web.FileResponse:
+    return web.FileResponse(_STATIC / "app.js")
+
+
 async def security_headers(request: web.Request, response: web.StreamResponse) -> None:
     """Set headers on every response, including framework-generated errors."""
     response.headers.update({
@@ -148,6 +152,7 @@ def create_app() -> web.Application:
     app = web.Application()
     app.on_response_prepare.append(security_headers)
     app.router.add_get("/", index)
+    app.router.add_get("/app.js", app_script)
     app.router.add_get("/api/status", api_status)
     app.router.add_get("/api/me", api_me)
     app.router.add_get("/api/stats", api_stats)
