@@ -1,35 +1,31 @@
-# python:3.14-alpine — 0 critical/high CVEs (Docker Scout 2026-03-25)
-# Debian trixie has 87 CVEs (incl. ncurses 9.8 unfixable); Alpine avoids them entirely.
-# To refresh digest: docker scout recommendations botlite-downloader:dev
-FROM python@sha256:faee120f7885a06fcc9677922331391fa690d911c020abb9e8025ff3d908e510
+# PyTgCalls/NTgCalls publish glibc wheels; Alpine/musl is not a supported base.
+FROM python:3.14-slim-trixie@sha256:f85c5697265c178cc6887276c55fe16cf3d14ca35c3df6a5eab3b360534a55d2
 
-# System deps + full package upgrade to clear all fixable CVEs
-RUN apk add --no-cache ffmpeg \
-    && apk upgrade --no-cache
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends ca-certificates ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install Python deps
 COPY requirements.txt .
-RUN pip install --no-cache-dir --root-user-action=ignore --upgrade pip \
-    && pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
+RUN python -m pip install --no-cache-dir --upgrade pip \
+    && python -m pip install --no-cache-dir -r requirements.txt
 
 COPY botlite/ ./botlite/
 COPY run.py .
 
-# Create non-root user and hand ownership over
-RUN adduser -D -H -s /sbin/nologin botlite \
+RUN useradd --system --no-create-home --home-dir /app --shell /usr/sbin/nologin botlite \
     && mkdir -p /data \
     && chown -R botlite:botlite /app /data
 
 USER botlite
 
-# WebApp dashboard port (only relevant when WEBAPP_PUBLIC_URL is set)
 EXPOSE 8080
-
-# Data directory for session file, DB and logs
 VOLUME ["/data"]
-
 ENV DB_FILE=/data/media_bot.db
 
 CMD ["python", "-m", "botlite"]

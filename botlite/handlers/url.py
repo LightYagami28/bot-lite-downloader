@@ -145,6 +145,8 @@ async def url_handler(event):
         return
 
     text = event.message.text or event.message.caption or ""
+    if text.lstrip().startswith("/"):
+        return
     urls = _URL_RE.findall(text)
     if not urls:
         return

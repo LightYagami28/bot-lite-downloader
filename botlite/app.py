@@ -14,8 +14,14 @@ import sys
 import botlite.handlers  # noqa: F401
 from botlite import VERSION, config, db
 from botlite.client import client
-from botlite.config import BOT_TOKEN, MAX_CONCURRENT_DOWNLOADS, WEBAPP_PUBLIC_URL
+from botlite.config import (
+    BOT_TOKEN,
+    MAX_CONCURRENT_DOWNLOADS,
+    VOICE_ENABLED,
+    WEBAPP_PUBLIC_URL,
+)
 from botlite.utils.system import cleanup_old_temps, setup_signals
+from botlite.voice import get_voice_manager, initialize_voice
 
 logging.basicConfig(
     level=logging.INFO,
@@ -30,12 +36,25 @@ log = logging.getLogger("botlite.app")
 
 async def _main() -> None:
     config.validate()
-    setup_signals(client.disconnect)
+
+    async def disconnect() -> None:
+        if VOICE_ENABLED:
+            await get_voice_manager().shutdown()
+        try:
+            await client.disconnect()
+        finally:
+            if VOICE_ENABLED:
+                get_voice_manager().cleanup_after_disconnect()
+
+    setup_signals(disconnect)
     cleanup_old_temps()
     db.init()
 
     try:
         await client.start(bot_token=BOT_TOKEN)
+
+        if VOICE_ENABLED:
+            await initialize_voice().start()
 
         if WEBAPP_PUBLIC_URL:
             from botlite.webapp import start_webapp
@@ -50,11 +69,17 @@ async def _main() -> None:
         await client.run_until_disconnected()
     finally:
         try:
+            if VOICE_ENABLED:
+                await get_voice_manager().shutdown()
             if WEBAPP_PUBLIC_URL:
                 from botlite.webapp import stop_webapp
                 await stop_webapp()
         finally:
-            await client.disconnect()
+            try:
+                await client.disconnect()
+            finally:
+                if VOICE_ENABLED:
+                    get_voice_manager().cleanup_after_disconnect()
 
 
 def run() -> None:

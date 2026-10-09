@@ -61,6 +61,9 @@ MIN_FREE_DISK            = _int("MIN_FREE_DISK",            500 * 1024 * 1024)
 USER_COOLDOWN            = _int("USER_COOLDOWN",            5)
 ALLOW_GROUPS             = _bool("ALLOW_GROUPS",            False)
 ALLOWED_GROUP_IDS        = _nonzero_int_list("ALLOWED_GROUP_IDS")
+VOICE_ENABLED            = _bool("VOICE_ENABLED",            False)
+VOICE_MAX_DURATION       = _int("VOICE_MAX_DURATION",        1800)
+VOICE_MAX_FILE_SIZE      = _int("VOICE_MAX_FILE_SIZE",       100 * 1024 * 1024)
 
 # ── Storage ───────────────────────────────────────────────────────────────────
 DB_FILE = os.getenv("DB_FILE", "media_bot.db")
@@ -88,6 +91,12 @@ def validate() -> None:
         errors.append("WEBAPP_PUBLIC_URL must use HTTPS")
     if ALLOW_GROUPS and not ALLOWED_GROUP_IDS:
         errors.append("ALLOW_GROUPS requires at least one non-zero ALLOWED_GROUP_IDS entry")
+    if VOICE_ENABLED and (not ALLOW_GROUPS or not ALLOWED_GROUP_IDS):
+        errors.append("VOICE_ENABLED requires ALLOW_GROUPS and an explicit ALLOWED_GROUP_IDS allowlist")
+    if VOICE_MAX_DURATION <= 0:
+        errors.append("VOICE_MAX_DURATION must be greater than zero")
+    if VOICE_MAX_FILE_SIZE <= 0:
+        errors.append("VOICE_MAX_FILE_SIZE must be greater than zero")
     if errors:
         for e in errors:
             print(f"[CONFIG ERROR] {e}", file=sys.stderr)

@@ -38,6 +38,8 @@ jobs:
         run: ruff check .
       - name: Audit runtime and development dependencies
         run: pip-audit -r requirements-dev.txt
+      - name: Build runtime container image
+        run: docker build --tag botlite-downloader:ci .
       - name: Check coverage artifact and SONAR_TOKEN
         run: |
           echo "Files in workspace:" && ls -la

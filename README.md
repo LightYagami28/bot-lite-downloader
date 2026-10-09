@@ -21,7 +21,7 @@
 <!-- ── Row 4 — Stack ────────────────────────────────────────────────────── -->
 [![yt-dlp](https://img.shields.io/badge/engine-yt--dlp-FF0000?logo=youtube&logoColor=white)](https://github.com/yt-dlp/yt-dlp)
 [![Telethon](https://img.shields.io/badge/library-Telethon-26A5E4?logo=telegram&logoColor=white)](https://github.com/LonamiWebs/Telethon)
-[![Docker](https://img.shields.io/badge/base-alpine-2496ED?logo=docker&logoColor=white)](Dockerfile)
+[![Docker](https://img.shields.io/badge/base-Debian%20slim-2496ED?logo=docker&logoColor=white)](Dockerfile)
 [![aiohttp](https://img.shields.io/badge/webapp-aiohttp-2C5BB4?logo=aiohttp&logoColor=white)](https://docs.aiohttp.org)
 
 ---
@@ -53,7 +53,8 @@ accessible directly inside Telegram.
 - **Config via `.env`** — no hardcoded secrets, Docker-friendly
 - **Built-in safeguards** — disk space guard, per-user cooldown, concurrent download semaphore
 - **Graceful shutdown** — handles `SIGTERM` cleanly for Docker and systemd
-- **Hardened Docker image** — Alpine base (0 critical CVEs), non-root user
+- **Hardened Docker image** — digest-pinned Debian slim, non-root user, minimal runtime packages
+- **Optional voice-chat playback** — bounded audio streaming in explicitly allowlisted groups
 
 ---
 
@@ -106,6 +107,9 @@ Copy `.env.example` to `.env` and fill in your values:
 | `USER_COOLDOWN` | `5` | Seconds between requests per user (`0` = disabled) |
 | `ALLOW_GROUPS` | `false` | Enable downloads and basic commands in Telegram groups |
 | `ALLOWED_GROUP_IDS` | _(empty)_ | Comma-separated allowlist of Telegram group IDs; required when groups are enabled |
+| `VOICE_ENABLED` | `false` | Enable `/play`, `/pause`, `/resume` and `/voice_stop` in allowlisted groups |
+| `VOICE_MAX_DURATION` | `1800` | Maximum audio duration in seconds for voice playback |
+| `VOICE_MAX_FILE_SIZE` | `104857600` | Maximum downloaded voice audio size in bytes (100 MiB) |
 | `DB_FILE` | `media_bot.db` | SQLite database path |
 | `WEBAPP_PUBLIC_URL` | _(empty)_ | Public HTTPS URL of the dashboard — enables the WebApp feature |
 | `WEBAPP_HOST` | `0.0.0.0` | Bind address for the embedded web server |
@@ -131,9 +135,21 @@ Access is authenticated via Telegram's **WebApp `initData`** (HMAC-SHA256 signat
 
 Group downloads are disabled by default. To enable them safely, set `ALLOW_GROUPS=true`
 and provide only the required IDs in `ALLOWED_GROUP_IDS`; an empty allowlist is rejected
-by configuration validation. The current Telethon bot integration handles messages,
-not real-time voice streaming. Telethon exposes raw group-call control methods but does
-not implement audio streaming ([Telethon documentation](https://docs.telethon.dev/en/stable/misc/changelog.html#new-raw-api-call-methods-v1-19)); a voice feature needs a separate, explicitly reviewed MTProto audio client and end-to-end tests.
+by configuration validation.
+
+Voice playback is opt-in and requires `ALLOW_GROUPS=true`, an explicit
+`ALLOWED_GROUP_IDS` list, and `VOICE_ENABLED=true`. Install the bot in an
+allowlisted group and start a Telegram voice chat manually before issuing
+`/play https://…`; BotLite will not create a call automatically. Playback uses
+PyTgCalls/NTgCalls over the existing Telethon client. `/pause`, `/resume` and
+`/voice_stop` control the current track. Unknown-duration media, playlists, and
+tracks exceeding the configured duration/size are rejected. The local audio
+file remains until playback ends or is stopped, then is removed. Test this with
+a dedicated bot and private test group before production use.
+
+The native NTgCalls wheels target glibc, so the Docker image uses Debian slim
+instead of Alpine/musl. `ffmpeg` is installed for media decoding. The CI workflow
+builds the image to catch dependency and native-library integration failures.
 
 ### HTTPS requirement
 

@@ -101,6 +101,90 @@ def _build_opts(tmpdir: str, cookie_file: str | None) -> dict:
     return opts
 
 
+def _build_audio_opts(
+    tmpdir: str,
+    cookie_file: str | None,
+    max_file_size: int,
+    max_duration: int,
+) -> dict:
+    def within_duration(info: dict, *, incomplete: bool) -> str | None:
+        duration = info.get("duration")
+        if duration is None:
+            if incomplete:
+                return None
+            return "Audio duration is unknown; refusing an unbounded voice-chat download"
+        if duration > max_duration:
+            return f"Audio exceeds the {max_duration}-second voice-chat limit"
+        return None
+
+    def enforce_download_size(progress: dict) -> None:
+        if progress.get("downloaded_bytes", 0) > max_file_size:
+            raise yt_dlp.utils.DownloadError(
+                f"Audio exceeds the {max_file_size}-byte voice-chat limit"
+            )
+
+    opts = {
+        "format": "bestaudio/best",
+        "outtmpl": os.path.join(tmpdir, "%(id)s.%(ext)s"),
+        "noplaylist": True,
+        "quiet": True,
+        "no_warnings": False,
+        "logger": _Logger(),
+        "socket_timeout": 30,
+        "retries": 3,
+        "max_filesize": max_file_size,
+        "match_filter": within_duration,
+        "progress_hooks": [enforce_download_size],
+        "writeinfojson": False,
+        "writethumbnail": False,
+    }
+    if cookie_file:
+        opts["cookiefile"] = cookie_file
+    return opts
+
+
+async def download_audio(
+    url: str,
+    tmpdir: str,
+    *,
+    max_file_size: int,
+    max_duration: int,
+) -> tuple[str, dict]:
+    """Download one bounded audio track for an explicitly enabled voice chat."""
+    opts = _build_audio_opts(
+        tmpdir, resolve_cookie(url), max_file_size, max_duration
+    )
+    loop = asyncio.get_running_loop()
+
+    def _run() -> tuple[str, dict]:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            if info is None:
+                raise RuntimeError("yt-dlp returned no audio information")
+            path = ydl.prepare_filename(info)
+        if not os.path.isfile(path):
+            candidates = [
+                os.path.join(tmpdir, name)
+                for name in os.listdir(tmpdir)
+                if os.path.isfile(os.path.join(tmpdir, name))
+            ]
+            if len(candidates) != 1:
+                raise RuntimeError("yt-dlp did not produce one unambiguous audio file")
+            path = candidates[0]
+        actual_size = os.path.getsize(path)
+        if actual_size > max_file_size:
+            raise ValueError("Downloaded audio exceeds the configured size limit")
+        if not actual_size:
+            raise RuntimeError("yt-dlp produced an empty audio file")
+        return path, {
+            "title": info.get("title") or "Untitled audio",
+            "duration": info.get("duration"),
+            "size": actual_size,
+        }
+
+    return await loop.run_in_executor(None, _run)
+
+
 async def download(url: str, tmpdir: str) -> list[MediaResult]:
     """Download via yt-dlp. Returns [(filepath, meta, mediatype), ...]."""
     opts = _build_opts(tmpdir, resolve_cookie(url))
