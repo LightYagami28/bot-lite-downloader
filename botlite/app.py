@@ -23,18 +23,24 @@ from botlite.config import (
 from botlite.utils.system import cleanup_old_temps, setup_signals
 from botlite.voice import get_voice_manager, initialize_voice
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[
-        logging.FileHandler("bot.log"),
-        logging.StreamHandler(sys.stdout),
-    ],
-)
+
+def setup_logging() -> None:
+    if not logging.root.handlers:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            handlers=[
+                logging.FileHandler("bot.log", encoding="utf-8"),
+                logging.StreamHandler(sys.stdout),
+            ],
+        )
+
+
 log = logging.getLogger("botlite.app")
 
 
 async def _main() -> None:
+    setup_logging()
     config.validate()
 
     async def disconnect() -> None:
@@ -58,6 +64,7 @@ async def _main() -> None:
 
         if WEBAPP_PUBLIC_URL:
             from botlite.webapp import start_webapp
+
             await start_webapp()
 
         log.info(
@@ -73,6 +80,7 @@ async def _main() -> None:
                 await get_voice_manager().shutdown()
             if WEBAPP_PUBLIC_URL:
                 from botlite.webapp import stop_webapp
+
                 await stop_webapp()
         finally:
             try:

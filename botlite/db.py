@@ -7,12 +7,14 @@ Thin SQLite layer: ban list and download counters.
 from __future__ import annotations
 
 import sqlite3
+from typing import Any
 
 from botlite.config import DB_FILE
 
 
 def init() -> None:
-    with sqlite3.connect(DB_FILE) as conn:
+    conn = sqlite3.connect(DB_FILE)
+    try:
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS banned_users (
                 user_id   INTEGER PRIMARY KEY,
@@ -26,18 +28,25 @@ def init() -> None:
                 ('total_downloads',  0),
                 ('failed_downloads', 0);
         """)
+        conn.commit()
+    finally:
+        conn.close()
 
 
-def _execute(query: str, params: tuple = (), *, fetch: bool = False):
-    with sqlite3.connect(DB_FILE) as conn:
+def _execute(query: str, params: tuple[Any, ...] = (), *, fetch: bool = False) -> Any:
+    conn = sqlite3.connect(DB_FILE)
+    try:
         cur = conn.execute(query, params)
         if fetch:
             return cur.fetchall()
         conn.commit()
-    return None
+        return None
+    finally:
+        conn.close()
 
 
 # ── Ban management ────────────────────────────────────────────────────────────
+
 
 def is_banned(uid: int) -> bool:
     return bool(_execute("SELECT 1 FROM banned_users WHERE user_id=?", (uid,), fetch=True))
@@ -52,6 +61,7 @@ def unban(uid: int) -> None:
 
 
 # ── Stats ─────────────────────────────────────────────────────────────────────
+
 
 def increment(name: str) -> None:
     _execute("UPDATE stats SET value=value+1 WHERE name=?", (name,))

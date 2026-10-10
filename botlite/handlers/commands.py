@@ -61,10 +61,22 @@ def _dashboard_button() -> list | None:
     """Return a one-row inline keyboard with the WebApp button, or None."""
     if not WEBAPP_PUBLIC_URL:
         return None
-    return [[Button.web_app("📊 Open Dashboard", url=WEBAPP_PUBLIC_URL)]]
+    try:
+        from telethon.tl import types
+
+        return [
+            [
+                types.KeyboardInlineButton(
+                    "📊 Open Dashboard", types.InlineButtonTypeWebView(WEBAPP_PUBLIC_URL)
+                )
+            ]
+        ]
+    except (AttributeError, TypeError):
+        return [[Button.url("📊 Open Dashboard", url=WEBAPP_PUBLIC_URL)]]
 
 
 # ── /start ────────────────────────────────────────────────────────────────────
+
 
 @client.on(events.NewMessage(pattern="/start"))
 async def cmd_start(event):
@@ -84,6 +96,7 @@ async def cmd_start(event):
 
 
 # ── /help ─────────────────────────────────────────────────────────────────────
+
 
 @client.on(events.NewMessage(pattern="/help"))
 async def cmd_help(event):
@@ -118,12 +131,14 @@ async def cmd_help(event):
 
 # ── /status ───────────────────────────────────────────────────────────────────
 
+
 @client.on(events.NewMessage(pattern="/status"))
 async def cmd_status(event):
     if not _group_allowed(event):
         return
     from botlite import VERSION
-    disk      = free_disk()
+
+    disk = free_disk()
     disk_warn = " ⚠️" if disk < 500 * 1024 * 1024 * 2 else ""
     await event.reply(
         f"**🤖 Bot Lite Downloader v{VERSION}**\n\n"
@@ -137,13 +152,14 @@ async def cmd_status(event):
 
 # ── /stats ────────────────────────────────────────────────────────────────────
 
+
 @client.on(events.NewMessage(pattern="/stats"))
 async def cmd_stats(event):
     if not event.is_private or not is_sudo(event.sender_id):
         return
-    total  = db.get_stat("total_downloads")
+    total = db.get_stat("total_downloads")
     failed = db.get_stat("failed_downloads")
-    db_sz  = os.path.getsize(DB_FILE) if os.path.exists(DB_FILE) else 0
+    db_sz = os.path.getsize(DB_FILE) if os.path.exists(DB_FILE) else 0
     await event.reply(
         f"**📊 Stats**\n\n"
         f"✅ Succeeded: `{total}`\n"
@@ -159,6 +175,7 @@ async def cmd_stats(event):
 
 # ── /ban ──────────────────────────────────────────────────────────────────────
 
+
 @client.on(events.NewMessage(pattern=r"/ban( \d+)?"))
 async def cmd_ban(event):
     if not event.is_private or not is_sudo(event.sender_id):
@@ -173,6 +190,7 @@ async def cmd_ban(event):
 
 
 # ── /unban ────────────────────────────────────────────────────────────────────
+
 
 @client.on(events.NewMessage(pattern=r"/unban( \d+)?"))
 async def cmd_unban(event):
@@ -205,7 +223,9 @@ async def cmd_voice_play(event):
         return
     wait = check_cooldown(_user_cooldowns, user_id)
     if wait > 0:
-        await event.reply(f"⏳ Please wait **{wait:.0f}s** before the next request.", parse_mode="md")
+        await event.reply(
+            f"⏳ Please wait **{wait:.0f}s** before the next request.", parse_mode="md"
+        )
         return
 
     url = match.group(1).rstrip(".,!?)];}")
