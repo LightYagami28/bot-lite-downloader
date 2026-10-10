@@ -48,26 +48,31 @@ def _group_allowed(event) -> bool:
 
 # ── Media sender ──────────────────────────────────────────────────────────────
 
+
 async def _send_media(event, fp: str, meta: dict, mtype: str) -> None:
-    size    = os.path.getsize(fp)
-    caption = build_caption(mtype, meta.get("title"), meta.get("uploader"),
-                             meta.get("duration"), size)
-    kwargs: dict = {"caption": caption, "parse_mode": "md",
-                    "reply_to": event.message.id}
+    size = os.path.getsize(fp)
+    caption = build_caption(
+        mtype, meta.get("title"), meta.get("uploader"), meta.get("duration"), size
+    )
+    kwargs: dict = {"caption": caption, "parse_mode": "md", "reply_to": event.message.id}
 
     if mtype == "video":
-        kwargs["attributes"] = [DocumentAttributeVideo(
-            duration          = int(meta.get("duration") or 0),
-            w                 = int(meta.get("width")    or 0),
-            h                 = int(meta.get("height")   or 0),
-            supports_streaming= True,
-        )]
+        kwargs["attributes"] = [
+            DocumentAttributeVideo(
+                duration=int(meta.get("duration") or 0),
+                w=int(meta.get("width") or 0),
+                h=int(meta.get("height") or 0),
+                supports_streaming=True,
+            )
+        ]
     elif mtype == "audio":
-        kwargs["attributes"] = [DocumentAttributeAudio(
-            duration  = int(meta.get("duration") or 0),
-            title     = meta.get("title")    or "",
-            performer = meta.get("uploader") or "",
-        )]
+        kwargs["attributes"] = [
+            DocumentAttributeAudio(
+                duration=int(meta.get("duration") or 0),
+                title=meta.get("title") or "",
+                performer=meta.get("uploader") or "",
+            )
+        ]
 
     await client.send_file(event.chat_id, fp, **kwargs)
 
@@ -80,6 +85,7 @@ async def _safe_edit(msg, text: str) -> None:
 
 
 # ── Guards ────────────────────────────────────────────────────────────────────
+
 
 async def _check_guards(event, user_id: int) -> bool:
     """Return True if the request should be rejected."""
@@ -104,6 +110,7 @@ async def _check_guards(event, user_id: int) -> bool:
 
 
 # ── Upload loop ───────────────────────────────────────────────────────────────
+
 
 async def _upload_results(event, status, results: list) -> int:
     total = len(results)
@@ -139,6 +146,7 @@ async def _upload_results(event, status, results: list) -> int:
 
 # ── Handler ───────────────────────────────────────────────────────────────────
 
+
 @client.on(events.NewMessage())
 async def url_handler(event):
     if not _group_allowed(event):
@@ -151,7 +159,7 @@ async def url_handler(event):
     if not urls:
         return
 
-    url     = urls[0]
+    url = urls[0]
     user_id = event.sender_id
 
     if await _check_guards(event, user_id):

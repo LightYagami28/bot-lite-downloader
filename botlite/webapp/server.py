@@ -40,6 +40,7 @@ _STATIC = Path(__file__).parent / "static"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+
 def _require_sudo(request: web.Request) -> dict:
     """
     Validate initData and check sudo membership.
@@ -65,35 +66,42 @@ def _require_user(request: web.Request) -> dict:
 
 # ── API handlers ──────────────────────────────────────────────────────────────
 
+
 async def api_status(_request: web.Request) -> web.Response:
-    response = web.json_response({
-        "version": VERSION,
-        "uptime": fmt_uptime(time.time() - _start_time),
-        "active_downloads": len(active_downloads),
-        "max_concurrent": MAX_CONCURRENT_DOWNLOADS,
-        "free_disk": fmt_size(free_disk()),
-        "free_disk_bytes": free_disk(),
-    })
+    response = web.json_response(
+        {
+            "version": VERSION,
+            "uptime": fmt_uptime(time.time() - _start_time),
+            "active_downloads": len(active_downloads),
+            "max_concurrent": MAX_CONCURRENT_DOWNLOADS,
+            "free_disk": fmt_size(free_disk()),
+            "free_disk_bytes": free_disk(),
+        }
+    )
     response.headers["Cache-Control"] = "no-store"
     return response
 
 
 async def api_me(request: web.Request) -> web.Response:
     user = _require_user(request)
-    return web.json_response({
-        "id": user.get("id"),
-        "username": user.get("username"),
-        "first_name": user.get("first_name"),
-        "is_sudo": user.get("id") in SUDO_USERS,
-    })
+    return web.json_response(
+        {
+            "id": user.get("id"),
+            "username": user.get("username"),
+            "first_name": user.get("first_name"),
+            "is_sudo": user.get("id") in SUDO_USERS,
+        }
+    )
 
 
 async def api_stats(request: web.Request) -> web.Response:
     _require_sudo(request)
-    return web.json_response({
-        "total_downloads": db.get_stat("total_downloads"),
-        "failed_downloads": db.get_stat("failed_downloads"),
-    })
+    return web.json_response(
+        {
+            "total_downloads": db.get_stat("total_downloads"),
+            "failed_downloads": db.get_stat("failed_downloads"),
+        }
+    )
 
 
 async def api_ban(request: web.Request) -> web.Response:
@@ -126,6 +134,7 @@ async def api_unban(request: web.Request) -> web.Response:
 
 # ── Static ────────────────────────────────────────────────────────────────────
 
+
 async def index(_request: web.Request) -> web.FileResponse:
     return web.FileResponse(_STATIC / "index.html")
 
@@ -136,17 +145,20 @@ async def app_script(_request: web.Request) -> web.FileResponse:
 
 async def security_headers(request: web.Request, response: web.StreamResponse) -> None:
     """Set headers on every response, including framework-generated errors."""
-    response.headers.update({
-        "X-Content-Type-Options": "nosniff",
-        "X-Frame-Options": "SAMEORIGIN",
-        "Referrer-Policy": "no-referrer",
-        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-        "Cache-Control": "no-store",
-        "Content-Security-Policy": "default-src 'self'; script-src 'self' https://telegram.org; connect-src 'self'; style-src 'self' 'unsafe-inline'",
-    })
+    response.headers.update(
+        {
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "SAMEORIGIN",
+            "Referrer-Policy": "no-referrer",
+            "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+            "Cache-Control": "no-store",
+            "Content-Security-Policy": "default-src 'self'; script-src 'self' https://telegram.org; connect-src 'self'; style-src 'self' 'unsafe-inline'",
+        }
+    )
 
 
 # ── App factory ───────────────────────────────────────────────────────────────
+
 
 def create_app() -> web.Application:
     app = web.Application()

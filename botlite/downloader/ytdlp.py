@@ -21,9 +21,9 @@ _LOG_FMT = "[yt-dlp] %s"
 _VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".flv", ".m4v"}
 _AUDIO_EXTS = {".mp3", ".m4a", ".ogg", ".opus", ".flac", ".wav", ".aac"}
 _IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"}
-ALL_EXTS    = _VIDEO_EXTS | _AUDIO_EXTS | _IMAGE_EXTS
+ALL_EXTS = _VIDEO_EXTS | _AUDIO_EXTS | _IMAGE_EXTS
 
-MediaResult = tuple[str, dict, str]   # (filepath, meta, mediatype)
+MediaResult = tuple[str, dict, str]  # (filepath, meta, mediatype)
 
 
 class _Logger:
@@ -43,22 +43,29 @@ class _Logger:
 
 def _guess_mtype(path: str) -> str:
     ext = os.path.splitext(path)[1].lower()
-    if ext in _VIDEO_EXTS: return "video"
-    if ext in _AUDIO_EXTS: return "audio"
-    if ext in _IMAGE_EXTS: return "photo"
+    if ext in _VIDEO_EXTS:
+        return "video"
+    if ext in _AUDIO_EXTS:
+        return "audio"
+    if ext in _IMAGE_EXTS:
+        return "photo"
     return "video"
 
 
 def _mtype_from_info(fp: str, vcodec: str, acodec: str) -> str:
     ext = os.path.splitext(fp)[1].lower()
-    if ext in _IMAGE_EXTS:             return "photo"
-    if vcodec and vcodec != "none":    return "video"
-    if acodec and acodec != "none":    return "audio"
+    if ext in _IMAGE_EXTS:
+        return "photo"
+    if vcodec and vcodec != "none":
+        return "video"
+    if acodec and acodec != "none":
+        return "audio"
     return _guess_mtype(fp)
 
 
-def _scan_new_files(tmpdir: str, before: set[str], meta: dict,
-                    vcodec: str, acodec: str) -> list[MediaResult]:
+def _scan_new_files(
+    tmpdir: str, before: set[str], meta: dict, vcodec: str, acodec: str
+) -> list[MediaResult]:
     new_files = [
         os.path.join(tmpdir, f)
         for f in sorted(set(os.listdir(tmpdir)) - before)
@@ -84,17 +91,17 @@ def _build_opts(tmpdir: str, cookie_file: str | None) -> dict:
             "/bestvideo+bestaudio/best"
         ),
         "merge_output_format": "mp4",
-        "outtmpl":             os.path.join(tmpdir, "%(id)s.%(ext)s"),
-        "noplaylist":          True,
-        "quiet":               True,
-        "no_warnings":         False,
-        "logger":              _Logger(),
-        "socket_timeout":      30,
-        "retries":             3,
-        "max_filesize":        MAX_FILE_SIZE,
-        "writeinfojson":       False,
-        "writethumbnail":      False,
-        "postprocessors":      [],
+        "outtmpl": os.path.join(tmpdir, "%(id)s.%(ext)s"),
+        "noplaylist": True,
+        "quiet": True,
+        "no_warnings": False,
+        "logger": _Logger(),
+        "socket_timeout": 30,
+        "retries": 3,
+        "max_filesize": MAX_FILE_SIZE,
+        "writeinfojson": False,
+        "writethumbnail": False,
+        "postprocessors": [],
     }
     if cookie_file:
         opts["cookiefile"] = cookie_file
@@ -151,9 +158,7 @@ async def download_audio(
     max_duration: int,
 ) -> tuple[str, dict]:
     """Download one bounded audio track for an explicitly enabled voice chat."""
-    opts = _build_audio_opts(
-        tmpdir, resolve_cookie(url), max_file_size, max_duration
-    )
+    opts = _build_audio_opts(tmpdir, resolve_cookie(url), max_file_size, max_duration)
     loop = asyncio.get_running_loop()
 
     def _run() -> tuple[str, dict]:
@@ -197,14 +202,16 @@ async def download(url: str, tmpdir: str) -> list[MediaResult]:
         if info is None:
             raise RuntimeError("yt-dlp returned no info")
         meta = {
-            "title":    info.get("title"),
+            "title": info.get("title"),
             "uploader": info.get("uploader") or info.get("channel"),
             "duration": info.get("duration"),
-            "width":    info.get("width"),
-            "height":   info.get("height"),
+            "width": info.get("width"),
+            "height": info.get("height"),
         }
         return _scan_new_files(
-            tmpdir, before, meta,
+            tmpdir,
+            before,
+            meta,
             info.get("vcodec", ""),
             info.get("acodec", ""),
         )

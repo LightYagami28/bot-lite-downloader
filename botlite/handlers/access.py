@@ -19,9 +19,4 @@ def is_message_allowed(
         return False
     if is_private:
         return True
-    return (
-        allow_groups
-        and is_group
-        and chat_id is not None
-        and chat_id in allowed_group_ids
-    )
+    return allow_groups and is_group and chat_id is not None and chat_id in allowed_group_ids

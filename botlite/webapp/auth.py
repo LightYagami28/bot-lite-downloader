@@ -79,6 +79,10 @@ def validate_init_data(init_data: str) -> dict[str, Any] | None:
         user = json.loads(params.get("user", "{}"))
     except (json.JSONDecodeError, TypeError):
         return None
-    if not isinstance(user, dict) or not isinstance(user.get("id"), int) or isinstance(user.get("id"), bool):
+    if (
+        not isinstance(user, dict)
+        or not isinstance(user.get("id"), int)
+        or isinstance(user.get("id"), bool)
+    ):
         return None
     return user

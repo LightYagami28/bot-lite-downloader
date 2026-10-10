@@ -95,9 +95,7 @@ class VoiceChatManager:
                 try:
                     await self._leave_existing(chat_id)
                 except Exception:
-                    log.exception(
-                        "Unable to leave voice chat %s during shutdown", chat_id
-                    )
+                    log.exception("Unable to leave voice chat %s during shutdown", chat_id)
 
     def cleanup_after_disconnect(self) -> None:
         """Release temporary files only after the MTProto connection is closed."""

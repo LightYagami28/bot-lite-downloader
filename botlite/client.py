@@ -17,5 +17,5 @@ client = TelegramClient("bot_lite", API_ID, API_HASH)
 
 # ── Runtime state ─────────────────────────────────────────────────────────────
 download_semaphore: asyncio.Semaphore = asyncio.Semaphore(MAX_CONCURRENT_DOWNLOADS)
-active_downloads: set[int] = set()        # user_ids with a download in progress
-_user_cooldowns: dict[int, float] = {}    # user_id → timestamp of last request
+active_downloads: set[int] = set()  # user_ids with a download in progress
+_user_cooldowns: dict[int, float] = {}  # user_id → timestamp of last request

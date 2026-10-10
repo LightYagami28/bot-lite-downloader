@@ -31,9 +31,14 @@ def fmt_uptime(secs: float) -> str:
     return f"{h}h {m}m {sec}s"
 
 
-def build_caption(mtype: str, title: str | None, uploader: str | None = None,
-                  duration: int | None = None, size: int | None = None) -> str:
-    icon  = {"video": "🎬", "audio": "🎵", "photo": "📸"}.get(mtype, "📎")
+def build_caption(
+    mtype: str,
+    title: str | None,
+    uploader: str | None = None,
+    duration: int | None = None,
+    size: int | None = None,
+) -> str:
+    icon = {"video": "🎬", "audio": "🎵", "photo": "📸"}.get(mtype, "📎")
     lines = [f"{icon} **{title or 'Media'}**"]
     if uploader:
         lines.append(f"👤 {uploader}")
