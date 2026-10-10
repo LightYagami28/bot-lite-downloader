@@ -15,8 +15,13 @@ def _allowed(**overrides) -> bool:
 
 
 def test_private_user_is_allowed_without_group_configuration():
-    assert _allowed(is_private=True, is_group=False, chat_id=123456789, allow_groups=False,
-                    allowed_group_ids=set())
+    assert _allowed(
+        is_private=True,
+        is_group=False,
+        chat_id=123456789,
+        allow_groups=False,
+        allowed_group_ids=set(),
+    )
 
 
 def test_allowlisted_group_user_is_allowed():

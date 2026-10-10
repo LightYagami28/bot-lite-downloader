@@ -102,9 +102,7 @@ def test_shutdown_waits_for_inflight_play_and_closes_its_session():
         audio_file = Path(directory.name) / "track.ogg"
         audio_file.write_bytes(b"audio")
 
-        play_task = asyncio.create_task(
-            manager.play(-100123, str(audio_file), "Track", directory)
-        )
+        play_task = asyncio.create_task(manager.play(-100123, str(audio_file), "Track", directory))
         await calls.play_entered.wait()
         shutdown_task = asyncio.create_task(manager.shutdown())
         await asyncio.sleep(0)

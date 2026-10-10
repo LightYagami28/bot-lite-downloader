@@ -5,6 +5,7 @@ def test_fmt_size_none_and_units():
     assert fmt_size(None) == "Unknown"
     assert fmt_size(512) == "512.0 B"
     assert fmt_size(1024) == "1.0 KB"
+    assert fmt_size(1024**4 * 2.5) == "2.5 TB"
 
 
 def test_fmt_dur_variants():

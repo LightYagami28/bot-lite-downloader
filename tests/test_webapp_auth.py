@@ -61,8 +61,10 @@ def test_validate_init_data_invalid_user_json_is_rejected():
 
 def test_validate_init_data_rejects_expired_data():
     init_data = _build_init_data("token123", {"id": 42})
-    with patch("botlite.webapp.auth.BOT_TOKEN", "token123"), \
-         patch("botlite.webapp.auth.WEBAPP_INIT_DATA_MAX_AGE", 0):
+    with (
+        patch("botlite.webapp.auth.BOT_TOKEN", "token123"),
+        patch("botlite.webapp.auth.WEBAPP_INIT_DATA_MAX_AGE", 0),
+    ):
         assert validate_init_data(init_data) is None
 
 

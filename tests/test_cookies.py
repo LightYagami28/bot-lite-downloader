@@ -11,6 +11,8 @@ def test_resolve_cookie_file_found():
 def test_resolve_cookie_file_not_found_and_invalid_url():
     with patch("os.path.exists", return_value=False):
         assert resolve("https://example.invalid/path") is None
+        # Verify host parts with len <= 2 (e.g. 'co', 'uk') are skipped
+        assert resolve("https://video.co.uk/watch") is None
 
     # Should fail closed and return None on unexpected parse/runtime issue
     with patch("botlite.downloader.cookies.urlparse", side_effect=Exception("bad")):
