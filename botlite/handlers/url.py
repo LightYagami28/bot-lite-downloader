@@ -11,7 +11,6 @@ import os
 import re
 import shutil
 import time
-import traceback
 
 from telethon import events
 from telethon.tl.types import DocumentAttributeAudio, DocumentAttributeVideo
@@ -130,8 +129,8 @@ async def _upload_results(event, status, results: list) -> int:
         try:
             await _send_media(event, fp, meta, mtype)
             sent += 1
-        except Exception as exc:  # noqa: BLE001 - Telethon errors vary by client state
-            log.error("Send failed for %s: %s", fp, exc)
+        except Exception as exc:
+            log.exception("Send failed for %s", fp)
             await event.reply(
                 f"❌ Failed to send file {i}: `{str(exc)[:150]}`",
                 parse_mode="md",
@@ -191,8 +190,8 @@ async def url_handler(event):
             await _safe_edit(status, "❌ Could not send any files.")
             db.increment("failed_downloads")
 
-    except Exception as exc:  # noqa: BLE001 - isolate handler failures and report them
-        log.error("Error for %s:\n%s", url, traceback.format_exc())
+    except Exception as exc:
+        log.exception("Error for %s", url)
         await _safe_edit(status, f"❌ **Download failed.**\n\n`{str(exc)[:300]}`")
         db.increment("failed_downloads")
 

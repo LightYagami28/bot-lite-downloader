@@ -20,3 +20,6 @@ venv/
 .claude/
 .vscode/
 .pytest_cache/
+# Coverage reports
+.coverage
+coverage.xml
