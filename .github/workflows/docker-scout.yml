@@ -1,0 +1,86 @@
+name: Docker Scout
+# Costruisce l'immagine con provenance (mode=max) e SBOM, la pubblica su GHCR (solo da main e dalla
+# schedulazione settimanale) e la analizza con Docker Scout. La ricostruzione settimanale tiene
+# aggiornati base image e pacchetti del sistema anche senza modifiche al codice.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: docker-scout-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  IMAGE: ghcr.io/lightyagami28/bot-lite-downloader
+jobs:
+  image:
+    name: Build, attestazioni e Docker Scout
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      PUBLISH: ${{ github.event_name != 'pull_request' }}
+      SCOUT_USER: ${{ secrets.DOCKER_SCOUT_USER }}
+      SCOUT_PAT: ${{ secrets.DOCKER_SCOUT_PAT }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069  # v4.4.1
+      - name: Login to GHCR
+        if: env.PUBLISH == 'true'
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6  # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build image with provenance and SBOM
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc  # v7.4.0
+        with:
+          context: .
+          push: ${{ env.PUBLISH == 'true' }}
+          load: ${{ env.PUBLISH != 'true' }}
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          provenance: ${{ env.PUBLISH == 'true' && 'mode=max' || 'false' }}
+          sbom: ${{ env.PUBLISH == 'true' }}
+      - name: Attest build provenance (GitHub)
+        if: env.PUBLISH == 'true'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+      # Docker Scout richiede un account Docker: senza i secret DOCKER_SCOUT_USER e DOCKER_SCOUT_PAT si salta.
+      - name: Login to Docker Hub (Scout)
+        if: env.SCOUT_USER != '' && env.SCOUT_PAT != ''
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6  # v4.7.0
+        with:
+          username: ${{ env.SCOUT_USER }}
+          password: ${{ env.SCOUT_PAT }}
+      - name: Docker Scout CVEs
+        if: env.SCOUT_USER != '' && env.SCOUT_PAT != ''
+        uses: docker/scout-action@a4119c5a8c5076236a54e4ce99531f7e4dd2ef84  # v1.27.0
+        with:
+          command: cves
+          image: ${{ env.PUBLISH == 'true' && format('{0}@{1}', env.IMAGE, steps.build.outputs.digest) || format('{0}:latest', env.IMAGE) }}
+          only-fixed: true
+          only-severities: critical,high
+          exit-code: true
+      - name: Docker Scout policy evaluation
+        if: env.PUBLISH == 'true' && env.SCOUT_USER != '' && env.SCOUT_PAT != ''
+        uses: docker/scout-action@a4119c5a8c5076236a54e4ce99531f7e4dd2ef84  # v1.27.0
+        with:
+          command: policy
+          image: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}

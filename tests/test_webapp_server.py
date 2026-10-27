@@ -69,11 +69,13 @@ def test_api_me_authenticated(monkeypatch):
         ),
     )
     monkeypatch.setattr("botlite.webapp.server.SUDO_USERS", [100])
+    monkeypatch.setattr("botlite.webapp.server.db.is_banned", lambda uid: uid == 999)
 
     status, _, body = asyncio.run(_request("/api/me", headers={"X-Telegram-Init-Data": "auth"}))
     assert status == 200
     assert '"is_sudo": true' in body
     assert '"id": 100' in body
+    assert '"banned": false' in body
 
 
 def test_api_stats_sudo_and_forbidden(monkeypatch):

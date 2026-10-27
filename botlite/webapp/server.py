@@ -20,6 +20,7 @@ The user ID extracted from initData must be in SUDO_USERS.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from pathlib import Path
@@ -68,14 +69,15 @@ def _require_user(request: web.Request) -> dict:
 
 
 async def api_status(_request: web.Request) -> web.Response:
+    free_bytes = await asyncio.to_thread(free_disk)
     response = web.json_response(
         {
             "version": VERSION,
             "uptime": fmt_uptime(time.time() - _start_time),
             "active_downloads": len(active_downloads),
             "max_concurrent": MAX_CONCURRENT_DOWNLOADS,
-            "free_disk": fmt_size(free_disk()),
-            "free_disk_bytes": free_disk(),
+            "free_disk": fmt_size(free_bytes),
+            "free_disk_bytes": free_bytes,
         }
     )
     response.headers["Cache-Control"] = "no-store"
@@ -84,9 +86,11 @@ async def api_status(_request: web.Request) -> web.Response:
 
 async def api_me(request: web.Request) -> web.Response:
     user = _require_user(request)
+    banned = await asyncio.to_thread(db.is_banned, user["id"])
     return web.json_response(
         {
             "id": user.get("id"),
+            "banned": banned,
             "username": user.get("username"),
             "first_name": user.get("first_name"),
             "is_sudo": user.get("id") in SUDO_USERS,
@@ -96,10 +100,14 @@ async def api_me(request: web.Request) -> web.Response:
 
 async def api_stats(request: web.Request) -> web.Response:
     _require_sudo(request)
+    total, failed = await asyncio.gather(
+        asyncio.to_thread(db.get_stat, "total_downloads"),
+        asyncio.to_thread(db.get_stat, "failed_downloads"),
+    )
     return web.json_response(
         {
-            "total_downloads": db.get_stat("total_downloads"),
-            "failed_downloads": db.get_stat("failed_downloads"),
+            "total_downloads": total,
+            "failed_downloads": failed,
         }
     )
 
@@ -113,7 +121,7 @@ async def api_ban(request: web.Request) -> web.Response:
         raise web.HTTPBadRequest(reason="user_id must be an integer") from None
     if uid <= 0:
         raise web.HTTPBadRequest(reason="user_id must be positive")
-    db.ban(uid)
+    await asyncio.to_thread(db.ban, uid)
     log.info("WebApp: user %d banned by admin %d", uid, user.get("id"))
     return web.json_response({"ok": True})
 
@@ -127,7 +135,7 @@ async def api_unban(request: web.Request) -> web.Response:
         raise web.HTTPBadRequest(reason="user_id must be an integer") from None
     if uid <= 0:
         raise web.HTTPBadRequest(reason="user_id must be positive")
-    db.unban(uid)
+    await asyncio.to_thread(db.unban, uid)
     log.info("WebApp: user %d unbanned by admin %d", uid, user.get("id"))
     return web.json_response({"ok": True})
 
@@ -135,34 +143,51 @@ async def api_unban(request: web.Request) -> web.Response:
 # ── Static ────────────────────────────────────────────────────────────────────
 
 
-async def index(_request: web.Request) -> web.FileResponse:
-    return web.FileResponse(_STATIC / "index.html")
+async def _static_response(name: str, content_type: str) -> web.Response:
+    body = await asyncio.to_thread((_STATIC / name).read_bytes)
+    return web.Response(body=body, content_type=content_type, charset="utf-8")
 
 
-async def app_script(_request: web.Request) -> web.FileResponse:
-    return web.FileResponse(_STATIC / "app.js")
+async def index(_request: web.Request) -> web.Response:
+    return await _static_response("index.html", "text/html")
 
 
-async def security_headers(request: web.Request, response: web.StreamResponse) -> None:
+async def app_script(_request: web.Request) -> web.Response:
+    return await _static_response("app.js", "application/javascript")
+
+
+_SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Cache-Control": "no-store",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' https://telegram.org; connect-src 'self'; style-src 'self' 'unsafe-inline'",
+}
+
+
+@web.middleware
+async def security_headers(request: web.Request, handler) -> web.StreamResponse:
     """Set headers on every response, including framework-generated errors."""
-    response.headers.update(
-        {
-            "X-Content-Type-Options": "nosniff",
-            "X-Frame-Options": "SAMEORIGIN",
-            "Referrer-Policy": "no-referrer",
-            "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-            "Cache-Control": "no-store",
-            "Content-Security-Policy": "default-src 'self'; script-src 'self' https://telegram.org; connect-src 'self'; style-src 'self' 'unsafe-inline'",
-        }
-    )
+    try:
+        response = await handler(request)
+    except web.HTTPException as exc:
+        exc.headers.update(_SECURITY_HEADERS)
+        raise
+    except Exception:
+        log.exception("Unhandled error in %s %s", request.method, request.path)
+        error = web.HTTPInternalServerError()
+        error.headers.update(_SECURITY_HEADERS)
+        raise error from None
+    response.headers.update(_SECURITY_HEADERS)
+    return response
 
 
 # ── App factory ───────────────────────────────────────────────────────────────
 
 
 def create_app() -> web.Application:
-    app = web.Application()
-    app.on_response_prepare.append(security_headers)
+    app = web.Application(middlewares=[security_headers])
     app.router.add_get("/", index)
     app.router.add_get("/app.js", app_script)
     app.router.add_get("/api/status", api_status)

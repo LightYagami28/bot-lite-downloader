@@ -39,3 +39,16 @@ updates:
       - ci
     commit-message:
       prefix: "deps(actions)"
+
+  # uv lock file (pyproject.toml -> uv.lock)
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - python
+    commit-message:
+      prefix: "deps(uv)"
