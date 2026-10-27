@@ -2,21 +2,22 @@
 
 <!-- ── Row 1 — Identity ─────────────────────────────────────────────────── -->
 [![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](https://python.org)
-[![Version](https://img.shields.io/badge/version-1.2.0-f97316?logo=git&logoColor=white)](https://github.com/LightYagami28/BotLite-Downloader/releases)
+[![Version](https://img.shields.io/badge/version-1.2.0-f97316?logo=git&logoColor=white)](https://github.com/LightYagami28/bot-lite-downloader/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-22c55e?logo=opensourceinitiative&logoColor=white)](LICENSE.md)
 [![Telegram](https://img.shields.io/badge/channel-LinuxBotsNews-26A5E4?logo=telegram&logoColor=white)](https://t.me/LinuxBotsNews)
 
 <!-- ── Row 2 — CI ────────────────────────────────────────────────────────── -->
-[![SonarCloud Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=LightYagami28_BotLite-Downloader&metric=alert_status)](https://sonarcloud.io/project/overview?id=LightYagami28_BotLite-Downloader)
-[![SonarCloud Security](https://sonarcloud.io/api/project_badges/measure?project=LightYagami28_BotLite-Downloader&metric=security_rating)](https://sonarcloud.io/project/overview?id=LightYagami28_BotLite-Downloader)
-[![SonarCloud Maintainability](https://sonarcloud.io/api/project_badges/measure?project=LightYagami28_BotLite-Downloader&metric=sqale_rating)](https://sonarcloud.io/project/overview?id=LightYagami28_BotLite-Downloader)
-[![SonarCloud Reliability](https://sonarcloud.io/api/project_badges/measure?project=LightYagami28_BotLite-Downloader&metric=reliability_rating)](https://sonarcloud.io/project/overview?id=LightYagami28_BotLite-Downloader)
+[![SonarCloud Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=LightYagami28_bot-lite-downloader&metric=alert_status)](https://sonarcloud.io/project/overview?id=LightYagami28_bot-lite-downloader)
+[![SonarCloud Security](https://sonarcloud.io/api/project_badges/measure?project=LightYagami28_bot-lite-downloader&metric=security_rating)](https://sonarcloud.io/project/overview?id=LightYagami28_bot-lite-downloader)
+[![SonarCloud Maintainability](https://sonarcloud.io/api/project_badges/measure?project=LightYagami28_bot-lite-downloader&metric=sqale_rating)](https://sonarcloud.io/project/overview?id=LightYagami28_bot-lite-downloader)
+[![SonarCloud Reliability](https://sonarcloud.io/api/project_badges/measure?project=LightYagami28_bot-lite-downloader&metric=reliability_rating)](https://sonarcloud.io/project/overview?id=LightYagami28_bot-lite-downloader)
 
 <!-- ── Row 3 — Security & deps ──────────────────────────────────────────── -->
-[![Snyk](https://snyk.io/test/github/LightYagami28/BotLite-Downloader/badge.svg)](https://snyk.io/test/github/LightYagami28/BotLite-Downloader)
-[![Snyk CI](https://github.com/LightYagami28/BotLite-Downloader/actions/workflows/snyk.yml/badge.svg)](https://github.com/LightYagami28/BotLite-Downloader/actions/workflows/snyk.yml)
-[![SonarCloud CI](https://github.com/LightYagami28/BotLite-Downloader/actions/workflows/sonarcloud.yml/badge.svg)](https://github.com/LightYagami28/BotLite-Downloader/actions/workflows/sonarcloud.yml)
-[![Dependabot](https://img.shields.io/badge/dependabot-enabled-0366d6?logo=dependabot&logoColor=white)](https://github.com/LightYagami28/BotLite-Downloader/network/updates)
+[![SonarQube Linux](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/sonarqube-linux.yml/badge.svg)](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/sonarqube-linux.yml)
+[![SonarQube macOS](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/sonarqube-macos.yml/badge.svg)](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/sonarqube-macos.yml)
+[![SonarQube Windows](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/sonarqube-windows.yml/badge.svg)](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/sonarqube-windows.yml)
+[![Docker Scout](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/docker-scout.yml/badge.svg)](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/docker-scout.yml)
+[![Dependabot](https://img.shields.io/badge/dependabot-enabled-0366d6?logo=dependabot&logoColor=white)](https://github.com/LightYagami28/bot-lite-downloader/network/updates)
 
 <!-- ── Row 4 — Stack ────────────────────────────────────────────────────── -->
 [![yt-dlp](https://img.shields.io/badge/engine-yt--dlp-FF0000?logo=youtube&logoColor=white)](https://github.com/yt-dlp/yt-dlp)
@@ -63,8 +64,8 @@ accessible directly inside Telegram.
 ### Docker (recommended)
 
 ```bash
-git clone https://github.com/LightYagami28/BotLite-Downloader.git
-cd BotLite-Downloader
+git clone https://github.com/LightYagami28/bot-lite-downloader.git
+cd bot-lite-downloader
 cp .env.example .env
 # Fill in API_ID, API_HASH, BOT_TOKEN, SUDO_USERS
 docker compose up -d
@@ -73,8 +74,8 @@ docker compose up -d
 ### Manual
 
 ```bash
-git clone https://github.com/LightYagami28/BotLite-Downloader.git
-cd BotLite-Downloader
+git clone https://github.com/LightYagami28/bot-lite-downloader.git
+cd bot-lite-downloader
 pip install -r requirements.txt
 cp .env.example .env   # fill in your values
 python -m botlite
