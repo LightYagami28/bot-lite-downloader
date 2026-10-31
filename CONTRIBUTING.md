@@ -29,3 +29,16 @@ commits and add regression tests for security-sensitive behavior.
 2. Run tests, Ruff and dependency audit.
 3. Review the Docker image as a non-root user.
 4. Tag the release and publish only verified artifacts.
+
+## Dependency updates
+
+Edit `requirements.txt` / `requirements-dev.txt` / `pyproject.toml`, then regenerate the locks
+exactly as CI checks them:
+
+```bash
+uv pip compile requirements.txt --universal --python-version 3.14 --generate-hashes --no-header -o requirements.lock
+uv pip compile requirements-dev.txt --universal --python-version 3.14 --generate-hashes --no-header -o requirements-dev.lock
+uv lock
+```
+
+GitHub Actions are pinned by commit SHA with the tag in a trailing comment.
