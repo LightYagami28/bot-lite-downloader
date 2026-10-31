@@ -59,6 +59,24 @@ accessible directly inside Telegram.
 
 ---
 
+## Requirements
+
+- Python 3.12+ (3.14 recommended; the Docker image uses 3.14) or Docker
+- ffmpeg in `PATH` (bundled in the Docker image)
+- Telegram API credentials and a bot token
+
+## Tests
+
+```bash
+uv sync --frozen
+uv run pytest -W error::DeprecationWarning --cov=botlite
+uv run ruff check .
+```
+
+Design and stack details: [`SPEC.md`](SPEC.md).
+
+---
+
 ## Quick Start
 
 ### Docker (recommended)
