@@ -2,7 +2,7 @@
 # Both stages use the same digest-pinned base so that Dependabot (docker ecosystem) bumps them together.
 
 # ── Build stage: resolve the hash-locked dependencies into a virtualenv ──────
-FROM python:3.14-slim-trixie@sha256:f85c5697265c178cc6887276c55fe16cf3d14ca35c3df6a5eab3b360534a55d2 AS builder
+FROM python:3.14-slim-trixie@sha256:cd89c30eda26ee911a4611b18680086e0ea42e6f5f8cbe653d07fa7958c9cec8 AS builder
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
@@ -18,7 +18,7 @@ RUN python -m venv /opt/venv \
     && /opt/venv/bin/python -m pip uninstall --yes pip
 
 # ── Runtime stage: no compiler, no pip, non-root ─────────────────────────────
-FROM python:3.14-slim-trixie@sha256:f85c5697265c178cc6887276c55fe16cf3d14ca35c3df6a5eab3b360534a55d2 AS runtime
+FROM python:3.14-slim-trixie@sha256:cd89c30eda26ee911a4611b18680086e0ea42e6f5f8cbe653d07fa7958c9cec8 AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
