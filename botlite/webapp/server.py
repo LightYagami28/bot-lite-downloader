@@ -162,7 +162,10 @@ _SECURITY_HEADERS = {
     "Referrer-Policy": "no-referrer",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Cache-Control": "no-store",
-    "Content-Security-Policy": "default-src 'self'; script-src 'self' https://telegram.org; connect-src 'self'; style-src 'self' 'unsafe-inline'",
+    "Content-Security-Policy": (
+        "default-src 'self'; script-src 'self' https://telegram.org; "
+        "connect-src 'self'; style-src 'self' 'unsafe-inline'"
+    ),
 }
 
 

@@ -13,10 +13,14 @@ import re
 import tempfile
 import time
 
+from pytgcalls import exceptions as tgcalls_exceptions
 from telethon import events
+from telethon.errors import RPCError
+from telethon.tl import types
 from telethon.tl.custom import Button
+from yt_dlp.utils import YoutubeDLError
 
-from botlite import db
+from botlite import VERSION, db
 from botlite.client import _user_cooldowns, active_downloads, client, download_semaphore
 from botlite.config import (
     ALLOW_GROUPS,
@@ -41,6 +45,22 @@ _start_time = time.time()
 _VOICE_URL_RE = re.compile(r"^/play(?:@\w+)?\s+(https?://\S+)\s*$", re.IGNORECASE)
 log = logging.getLogger("botlite.commands")
 
+# py-tgcalls errors share no base class, so collect them from its exceptions module.
+_PLAYBACK_ERRORS = (
+    RPCError,
+    YoutubeDLError,
+    OSError,
+    RuntimeError,
+    ValueError,
+    *(
+        cls
+        for cls in vars(tgcalls_exceptions).values()
+        if isinstance(cls, type)
+        and issubclass(cls, Exception)
+        and cls.__module__ == tgcalls_exceptions.__name__
+    ),
+)
+
 
 def is_sudo(uid: int) -> bool:
     return uid in SUDO_USERS
@@ -62,8 +82,6 @@ def _dashboard_button() -> list | None:
     if not WEBAPP_PUBLIC_URL:
         return None
     try:
-        from telethon.tl import types
-
         return [
             [
                 types.KeyboardInlineButton(
@@ -136,8 +154,6 @@ async def cmd_help(event):
 async def cmd_status(event):
     if not _group_allowed(event):
         return
-    from botlite import VERSION
-
     disk = free_disk()
     disk_warn = " ⚠️" if disk < 500 * 1024 * 1024 * 2 else ""
     await event.reply(
@@ -246,7 +262,7 @@ async def cmd_voice_play(event):
             )
         await get_voice_manager().play(event.chat_id, path, metadata["title"], temporary)
         temporary = None
-    except Exception as exc:  # noqa: BLE001 - downloader and MTProto failures are source-specific
+    except _PLAYBACK_ERRORS as exc:
         failure = exc
     finally:
         active_downloads.discard(user_id)
@@ -258,7 +274,8 @@ async def cmd_voice_play(event):
             log.error("Unable to prepare voice playback status: %s", failure)
         else:
             await status.edit(
-                f"❌ Could not start voice playback. Ensure this group already has an active voice chat.\n"
+                "❌ Could not start voice playback. "
+                "Ensure this group already has an active voice chat.\n"
                 f"<code>{html.escape(str(failure)[:240])}</code>",
                 parse_mode="html",
             )
