@@ -15,5 +15,5 @@ def test_resolve_cookie_file_not_found_and_invalid_url():
         assert resolve("https://video.co.uk/watch") is None
 
     # Should fail closed and return None on unexpected parse/runtime issue
-    with patch("botlite.downloader.cookies.urlparse", side_effect=Exception("bad")):
+    with patch("botlite.downloader.cookies.urlparse", side_effect=ValueError("bad")):
         assert resolve("not-a-url") is None

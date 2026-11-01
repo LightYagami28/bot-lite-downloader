@@ -121,7 +121,7 @@ def test_shutdown_waits_for_inflight_play_and_closes_its_session():
 
 
 def test_native_voice_client_initializes_inside_asyncio_lifecycle(monkeypatch):
-    monkeypatch.setattr(voice, "_voice_manager", None)
+    monkeypatch.setattr(voice._state, "manager", None)
 
     async def exercise():
         manager = voice.initialize_voice()

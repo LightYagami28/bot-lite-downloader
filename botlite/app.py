@@ -7,11 +7,10 @@ Application bootstrap: wires all modules together and starts the bot.
 from __future__ import annotations
 
 import asyncio
+import importlib
 import logging
 import sys
 
-# Register all handlers (side-effect import)
-import botlite.handlers  # noqa: F401
 from botlite import VERSION, config, db
 from botlite.client import client
 from botlite.config import (
@@ -22,6 +21,9 @@ from botlite.config import (
 )
 from botlite.utils.system import cleanup_old_temps, setup_signals
 from botlite.voice import get_voice_manager, initialize_voice
+
+# Register all handlers (side-effect import)
+importlib.import_module("botlite.handlers")
 
 
 def setup_logging() -> None:

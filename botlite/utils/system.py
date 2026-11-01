@@ -17,6 +17,7 @@ import time
 from collections.abc import Awaitable, Callable
 
 from botlite.config import USER_COOLDOWN
+from botlite.errors import RECOVERABLE_ERRORS
 
 log = logging.getLogger("botlite.system")
 
@@ -60,7 +61,7 @@ def setup_signals(disconnect_fn: Callable[[], Awaitable[object]]) -> None:
             task.result()
         except asyncio.CancelledError:
             log.warning("Telegram client shutdown was cancelled")
-        except Exception:
+        except RECOVERABLE_ERRORS:
             log.exception("Telegram client shutdown failed")
 
     def _request_disconnect(signum: int) -> None:

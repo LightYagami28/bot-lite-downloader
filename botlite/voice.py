@@ -7,7 +7,12 @@ import logging
 import tempfile
 from dataclasses import dataclass
 
+from pytgcalls import PyTgCalls
+from pytgcalls.exceptions import NotInCallError
+from pytgcalls.types import GroupCallConfig, StreamEnded
+
 from botlite.client import client
+from botlite.errors import RECOVERABLE_ERRORS
 
 log = logging.getLogger("botlite.voice")
 
@@ -47,8 +52,6 @@ class VoiceChatManager:
     ) -> None:
         if not self._started or self._closed:
             raise RuntimeError("Voice playback is not running")
-        from pytgcalls.types import GroupCallConfig
-
         async with self._lock_for(chat_id):
             # The caller may have been queued behind another operation while
             # shutdown began. Recheck the lifecycle state after taking the
@@ -94,7 +97,7 @@ class VoiceChatManager:
                     continue
                 try:
                     await self._leave_existing(chat_id)
-                except Exception:
+                except RECOVERABLE_ERRORS:
                     log.exception("Unable to leave voice chat %s during shutdown", chat_id)
 
     def cleanup_after_disconnect(self) -> None:
@@ -104,8 +107,6 @@ class VoiceChatManager:
         self._sessions.clear()
 
     async def _leave_existing(self, chat_id: int) -> None:
-        from pytgcalls.exceptions import NotInCallError
-
         playback = self._sessions.get(chat_id)
         if playback is None:
             return
@@ -119,8 +120,6 @@ class VoiceChatManager:
         playback.directory.cleanup()
 
     async def _on_update(self, _calls: object, update: object) -> None:
-        from pytgcalls.types import StreamEnded
-
         if not isinstance(update, StreamEnded):
             return
         chat_id = update.chat_id
@@ -129,24 +128,26 @@ class VoiceChatManager:
         try:
             async with self._lock_for(chat_id):
                 await self._leave_existing(chat_id)
-        except Exception:
+        except RECOVERABLE_ERRORS:
             log.exception("Unable to clean up ended playback in chat %s", chat_id)
 
 
-_voice_manager: VoiceChatManager | None = None
+@dataclass
+class _State:
+    manager: VoiceChatManager | None = None
+
+
+_state = _State()
 
 
 def initialize_voice() -> VoiceChatManager:
-    """Load the native voice stack after the asyncio loop has been created."""
-    global _voice_manager
-    if _voice_manager is None:
-        from pytgcalls import PyTgCalls
-
-        _voice_manager = VoiceChatManager(PyTgCalls(client))
-    return _voice_manager
+    """Create the voice manager once the asyncio loop is running."""
+    if _state.manager is None:
+        _state.manager = VoiceChatManager(PyTgCalls(client))
+    return _state.manager
 
 
 def get_voice_manager() -> VoiceChatManager:
-    if _voice_manager is None:
+    if _state.manager is None:
         raise RuntimeError("Voice playback is disabled or not initialized")
-    return _voice_manager
+    return _state.manager

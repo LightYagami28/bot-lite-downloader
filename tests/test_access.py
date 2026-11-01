@@ -1,4 +1,4 @@
-from botlite.handlers.access import is_message_allowed
+from botlite.handlers.access import MessageOrigin, is_message_allowed
 
 
 def _allowed(**overrides) -> bool:
@@ -11,7 +11,10 @@ def _allowed(**overrides) -> bool:
         "allowed_group_ids": {-1001234567890},
     }
     values.update(overrides)
-    return is_message_allowed(**values)
+    origin = MessageOrigin(
+        values["is_private"], values["is_group"], values["chat_id"], values["sender_id"]
+    )
+    return is_message_allowed(origin, values["allow_groups"], values["allowed_group_ids"])
 
 
 def test_private_user_is_allowed_without_group_configuration():

@@ -162,7 +162,10 @@ _SECURITY_HEADERS = {
     "Referrer-Policy": "no-referrer",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Cache-Control": "no-store",
-    "Content-Security-Policy": "default-src 'self'; script-src 'self' https://telegram.org; connect-src 'self'; style-src 'self' 'unsafe-inline'",
+    "Content-Security-Policy": (
+        "default-src 'self'; script-src 'self' https://telegram.org; "
+        "connect-src 'self'; style-src 'self' 'unsafe-inline'"
+    ),
 }
 
 
@@ -174,7 +177,7 @@ async def security_headers(request: web.Request, handler) -> web.StreamResponse:
     except web.HTTPException as exc:
         exc.headers.update(_SECURITY_HEADERS)
         raise
-    except Exception:
+    except (OSError, RuntimeError, ValueError, TypeError, LookupError):
         log.exception("Unhandled error in %s %s", request.method, request.path)
         error = web.HTTPInternalServerError()
         error.headers.update(_SECURITY_HEADERS)

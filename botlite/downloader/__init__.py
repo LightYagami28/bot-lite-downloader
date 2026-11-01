@@ -13,6 +13,8 @@ import os
 import shutil
 import tempfile
 
+from yt_dlp.utils import YoutubeDLError
+
 from botlite.downloader import gallery, ytdlp
 
 log = logging.getLogger("botlite.downloader")
@@ -38,7 +40,7 @@ async def download(url: str) -> tuple[str, list[MediaResult]]:
             results = await ytdlp.download(url, ytdir)
             if results:
                 return tmpdir, results
-        except Exception as exc:  # noqa: BLE001 - isolate third-party extractor failures
+        except (YoutubeDLError, RuntimeError, ValueError, OSError) as exc:
             log.warning("[yt-dlp] failed (%s): %s", url, exc)
 
         gddir = os.path.join(tmpdir, "gd")
@@ -47,7 +49,7 @@ async def download(url: str) -> tuple[str, list[MediaResult]]:
             results = await gallery.download(url, gddir)
             if results:
                 return tmpdir, results
-        except Exception as exc:  # noqa: BLE001 - isolate third-party extractor failures
+        except (RuntimeError, ValueError, OSError) as exc:
             log.warning("[gallery-dl] failed (%s): %s", url, exc)
 
         raise RuntimeError(

@@ -19,16 +19,10 @@ from botlite.config import BOT_TOKEN, WEBAPP_INIT_DATA_MAX_AGE
 _MAX_INIT_DATA_LENGTH = 8 * 1024
 
 
-def validate_init_data(init_data: str) -> dict[str, Any] | None:
-    """
-    Validate the initData string sent by Telegram WebApp.
-
-    Returns the parsed ``user`` dict on success, or ``None`` if the
-    signature is missing, invalid, or the token is not configured.
-    """
-    if not init_data or len(init_data) > _MAX_INIT_DATA_LENGTH or not BOT_TOKEN:
+def _parse_fields(init_data: str) -> dict[str, str] | None:
+    """Split initData into fields, rejecting oversized, malformed or duplicate-key input."""
+    if not init_data or len(init_data) > _MAX_INIT_DATA_LENGTH:
         return None
-
     # Telegram signs the exact decoded key/value set. Reject duplicate keys
     # instead of silently accepting whichever value happens to win in a dict;
     # this prevents parser differentials between proxies and the application.
@@ -41,18 +35,12 @@ def validate_init_data(init_data: str) -> dict[str, Any] | None:
         )
     except ValueError:
         return None
-    if not pairs:
-        return None
-    keys = [key for key, _ in pairs]
-    if len(keys) != len(set(keys)):
-        return None
     params = dict(pairs)
-    received_hash = params.pop("hash", None)
-    if not received_hash:
-        return None
+    return params if pairs and len(params) == len(pairs) else None
 
+
+def _signature_valid(params: dict[str, str], received_hash: str) -> bool:
     data_check = "\n".join(f"{k}={v}" for k, v in sorted(params.items()))
-
     secret_key = hmac.new(
         key=b"WebAppData",
         msg=BOT_TOKEN.encode(),
@@ -63,26 +51,41 @@ def validate_init_data(init_data: str) -> dict[str, Any] | None:
         msg=data_check.encode(),
         digestmod=hashlib.sha256,
     ).hexdigest()
+    return hmac.compare_digest(expected, received_hash)
 
-    if not hmac.compare_digest(expected, received_hash):
-        return None
 
+def _fresh(params: dict[str, str]) -> bool:
     try:
-        auth_date = int(params["auth_date"])
+        age = time.time() - int(params["auth_date"])
     except (KeyError, TypeError, ValueError):
-        return None
-    now = time.time()
-    if auth_date > now + 60 or now - auth_date > WEBAPP_INIT_DATA_MAX_AGE:
-        return None
+        return False
+    return -60 <= age <= WEBAPP_INIT_DATA_MAX_AGE
 
+
+def _parse_user(params: dict[str, str]) -> dict[str, Any] | None:
     try:
         user = json.loads(params.get("user", "{}"))
     except (json.JSONDecodeError, TypeError):
         return None
-    if (
-        not isinstance(user, dict)
-        or not isinstance(user.get("id"), int)
-        or isinstance(user.get("id"), bool)
-    ):
+    if not isinstance(user, dict):
+        return None
+    user_id = user.get("id")
+    if not isinstance(user_id, int) or isinstance(user_id, bool):
         return None
     return user
+
+
+def validate_init_data(init_data: str) -> dict[str, Any] | None:
+    """
+    Validate the initData string sent by Telegram WebApp.
+
+    Returns the parsed ``user`` dict on success, or ``None`` if the
+    signature is missing, invalid, or the token is not configured.
+    """
+    params = _parse_fields(init_data) if BOT_TOKEN else None
+    received_hash = params.pop("hash", None) if params else None
+    if not received_hash:
+        return None
+    if not _signature_valid(params, received_hash) or not _fresh(params):
+        return None
+    return _parse_user(params)
