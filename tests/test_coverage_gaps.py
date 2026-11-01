@@ -421,7 +421,7 @@ def test_dashboard_button_falls_back_to_a_url_button(monkeypatch):
 
 @pytest.mark.parametrize("handler", ["cmd_start", "cmd_help", "cmd_status"])
 def test_public_commands_ignore_disallowed_chats(monkeypatch, handler):
-    monkeypatch.setattr(commands, "_group_allowed", lambda _event: False)
+    monkeypatch.setattr(commands, "group_allowed", lambda _event: False)
     event = CommandEvent()
     asyncio.run(getattr(commands, handler)(event))
     assert event.replies == []
@@ -437,7 +437,7 @@ def test_ban_commands_ignore_non_sudo_users(monkeypatch, handler):
 
 def _enable_voice(monkeypatch):
     monkeypatch.setattr(commands, "VOICE_ENABLED", True)
-    monkeypatch.setattr(commands, "_group_allowed", lambda _event: True)
+    monkeypatch.setattr(commands, "group_allowed", lambda _event: True)
     monkeypatch.setattr(commands.db, "is_banned", lambda _uid: False)
     monkeypatch.setattr(commands, "check_cooldown", lambda _cooldowns, _uid: 0.0)
     commands.active_downloads.discard(100)
@@ -591,14 +591,14 @@ def test_upload_results_tolerates_a_file_that_cannot_be_removed(monkeypatch, tmp
 
 
 def test_url_handler_ignores_disallowed_chats(monkeypatch):
-    monkeypatch.setattr(url, "_group_allowed", lambda _event: False)
+    monkeypatch.setattr(url, "group_allowed", lambda _event: False)
     event = UrlEvent()
     asyncio.run(url.url_handler(event))
     assert event.replies == []
 
 
 def test_url_handler_stops_when_a_guard_rejects(monkeypatch):
-    monkeypatch.setattr(url, "_group_allowed", lambda _event: True)
+    monkeypatch.setattr(url, "group_allowed", lambda _event: True)
     monkeypatch.setattr(url, "_check_guards", AsyncMock(return_value=True))
     event = UrlEvent()
     asyncio.run(url.url_handler(event))
@@ -606,7 +606,7 @@ def test_url_handler_stops_when_a_guard_rejects(monkeypatch):
 
 
 def _handler_setup(monkeypatch, tmp_path, *, results, uploaded=1, status=None):
-    monkeypatch.setattr(url, "_group_allowed", lambda _event: True)
+    monkeypatch.setattr(url, "group_allowed", lambda _event: True)
     monkeypatch.setattr(url, "_check_guards", AsyncMock(return_value=False))
     counters = []
     monkeypatch.setattr(url.db, "increment", counters.append)
@@ -793,12 +793,12 @@ def test_voice_updates_only_react_to_ended_streams_of_active_chats():
 
 def test_get_voice_manager_returns_the_initialised_manager(monkeypatch):
     sentinel = object()
-    monkeypatch.setattr(voice, "_voice_manager", sentinel)
+    monkeypatch.setattr(voice._state, "manager", sentinel)
     assert voice.get_voice_manager() is sentinel
 
 
 def test_get_voice_manager_requires_initialisation(monkeypatch):
-    monkeypatch.setattr(voice, "_voice_manager", None)
+    monkeypatch.setattr(voice._state, "manager", None)
     with pytest.raises(RuntimeError, match="disabled or not initialized"):
         voice.get_voice_manager()
 
@@ -819,13 +819,13 @@ def test_start_webapp_cleans_up_when_the_server_cannot_start(monkeypatch):
         async def cleanup(self):
             cleaned.append(True)
 
-    monkeypatch.setattr(webapp_pkg, "_runner", None)
+    monkeypatch.setattr(webapp_pkg, "_runners", [])
     monkeypatch.setattr(webapp_pkg.web, "AppRunner", FailingRunner)
 
     with pytest.raises(RuntimeError, match="port busy"):
         asyncio.run(webapp_pkg.start_webapp())
     assert cleaned == [True]
-    assert webapp_pkg._runner is None
+    assert webapp_pkg._runners == []
 
 
 TOKEN = "123456:TEST-TOKEN"

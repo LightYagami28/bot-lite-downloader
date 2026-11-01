@@ -13,7 +13,6 @@ import shutil
 import time
 
 from telethon import events
-from telethon.errors import RPCError
 from telethon.tl.types import DocumentAttributeAudio, DocumentAttributeVideo
 
 from botlite import db
@@ -23,9 +22,10 @@ from botlite.client import (
     client,
     download_semaphore,
 )
-from botlite.config import ALLOW_GROUPS, ALLOWED_GROUP_IDS, MAX_FILE_SIZE, MIN_FREE_DISK
+from botlite.config import MAX_FILE_SIZE, MIN_FREE_DISK
 from botlite.downloader import download
-from botlite.handlers.access import is_message_allowed
+from botlite.errors import RECOVERABLE_ERRORS
+from botlite.handlers.access import group_allowed
 from botlite.utils.format import build_caption, fmt_size
 from botlite.utils.system import check_cooldown, free_disk
 
@@ -33,17 +33,6 @@ log = logging.getLogger("botlite.url")
 
 # Exclude t.me links; allow everything else
 _URL_RE = re.compile(r"https?://(?!t\.me/)[^\s<>\"{}|\\^`\[\]]+")
-
-
-def _group_allowed(event) -> bool:
-    return is_message_allowed(
-        is_private=event.is_private,
-        is_group=event.is_group,
-        chat_id=event.chat_id,
-        sender_id=event.sender_id,
-        allow_groups=ALLOW_GROUPS,
-        allowed_group_ids=ALLOWED_GROUP_IDS,
-    )
 
 
 # ── Media sender ──────────────────────────────────────────────────────────────
@@ -80,7 +69,7 @@ async def _send_media(event, fp: str, meta: dict, mtype: str) -> None:
 async def _safe_edit(msg, text: str) -> None:
     try:
         await msg.edit(text, parse_mode="md")
-    except (RPCError, OSError, RuntimeError, ValueError) as exc:
+    except RECOVERABLE_ERRORS as exc:
         log.debug("Unable to edit status message: %s", exc)
 
 
@@ -130,7 +119,7 @@ async def _upload_results(event, status, results: list) -> int:
         try:
             await _send_media(event, fp, meta, mtype)
             sent += 1
-        except Exception as exc:
+        except RECOVERABLE_ERRORS as exc:
             log.exception("Send failed for %s", fp)
             await event.reply(
                 f"❌ Failed to send file {i}: `{str(exc)[:150]}`",
@@ -149,7 +138,7 @@ async def _upload_results(event, status, results: list) -> int:
 
 @client.on(events.NewMessage())
 async def url_handler(event):
-    if not _group_allowed(event):
+    if not group_allowed(event):
         return
 
     text = event.message.text or event.message.caption or ""
@@ -185,13 +174,13 @@ async def url_handler(event):
             db.increment("total_downloads")
             try:
                 await status.delete()
-            except (RPCError, OSError, RuntimeError, ValueError) as exc:
+            except RECOVERABLE_ERRORS as exc:
                 log.debug("Unable to delete status message: %s", exc)
         else:
             await _safe_edit(status, "❌ Could not send any files.")
             db.increment("failed_downloads")
 
-    except Exception as exc:
+    except RECOVERABLE_ERRORS as exc:
         log.exception("Error for %s", url)
         await _safe_edit(status, f"❌ **Download failed.**\n\n`{str(exc)[:300]}`")
         db.increment("failed_downloads")

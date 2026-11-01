@@ -11,10 +11,10 @@ def test_webapp_runner_starts_stops_and_allows_idempotent_cleanup(monkeypatch):
 
     async def exercise():
         await webapp.start_webapp()
-        assert webapp._runner is not None
+        assert webapp._runners
 
         await webapp.stop_webapp()
-        assert webapp._runner is None
+        assert not webapp._runners
         await webapp.stop_webapp()
 
     asyncio.run(exercise())

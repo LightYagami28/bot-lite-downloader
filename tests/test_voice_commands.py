@@ -1,6 +1,6 @@
 import asyncio
 
-from botlite.handlers import commands
+from botlite.handlers import access, commands
 
 
 class FakeMessage:
@@ -38,8 +38,8 @@ def test_voice_command_downloads_only_for_explicitly_allowed_group(monkeypatch):
         event = FakeEvent()
         manager = FakeVoiceManager()
         monkeypatch.setattr(commands, "VOICE_ENABLED", True)
-        monkeypatch.setattr(commands, "ALLOW_GROUPS", True)
-        monkeypatch.setattr(commands, "ALLOWED_GROUP_IDS", {-100123})
+        monkeypatch.setattr(access, "ALLOW_GROUPS", True)
+        monkeypatch.setattr(access, "ALLOWED_GROUP_IDS", {-100123})
         monkeypatch.setattr(commands.db, "is_banned", lambda _user_id: False)
         monkeypatch.setattr(commands, "get_voice_manager", lambda: manager)
 
@@ -68,8 +68,8 @@ def test_voice_command_ignores_unallowlisted_group(monkeypatch):
     async def exercise():
         event = FakeEvent(chat_id=-100999)
         monkeypatch.setattr(commands, "VOICE_ENABLED", True)
-        monkeypatch.setattr(commands, "ALLOW_GROUPS", True)
-        monkeypatch.setattr(commands, "ALLOWED_GROUP_IDS", {-100123})
+        monkeypatch.setattr(access, "ALLOW_GROUPS", True)
+        monkeypatch.setattr(access, "ALLOWED_GROUP_IDS", {-100123})
 
         async def forbidden_download(*_args, **_kwargs):
             raise AssertionError("voice download started in a non-allowlisted group")

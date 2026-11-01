@@ -13,18 +13,13 @@ import re
 import tempfile
 import time
 
-from pytgcalls import exceptions as tgcalls_exceptions
 from telethon import events
-from telethon.errors import RPCError
 from telethon.tl import types
 from telethon.tl.custom import Button
-from yt_dlp.utils import YoutubeDLError
 
 from botlite import VERSION, db
 from botlite.client import _user_cooldowns, active_downloads, client, download_semaphore
 from botlite.config import (
-    ALLOW_GROUPS,
-    ALLOWED_GROUP_IDS,
     DB_FILE,
     MAX_CONCURRENT_DOWNLOADS,
     MAX_FILE_SIZE,
@@ -36,7 +31,8 @@ from botlite.config import (
     WEBAPP_PUBLIC_URL,
 )
 from botlite.downloader.ytdlp import download_audio
-from botlite.handlers.access import is_message_allowed
+from botlite.errors import RECOVERABLE_ERRORS
+from botlite.handlers.access import group_allowed
 from botlite.utils.format import fmt_size, fmt_uptime
 from botlite.utils.system import check_cooldown, free_disk
 from botlite.voice import get_voice_manager
@@ -45,36 +41,9 @@ _start_time = time.time()
 _VOICE_URL_RE = re.compile(r"^/play(?:@\w+)?\s+(https?://\S+)\s*$", re.IGNORECASE)
 log = logging.getLogger("botlite.commands")
 
-# py-tgcalls errors share no base class, so collect them from its exceptions module.
-_PLAYBACK_ERRORS = (
-    RPCError,
-    YoutubeDLError,
-    OSError,
-    RuntimeError,
-    ValueError,
-    *(
-        cls
-        for cls in vars(tgcalls_exceptions).values()
-        if isinstance(cls, type)
-        and issubclass(cls, Exception)
-        and cls.__module__ == tgcalls_exceptions.__name__
-    ),
-)
-
 
 def is_sudo(uid: int) -> bool:
     return uid in SUDO_USERS
-
-
-def _group_allowed(event) -> bool:
-    return is_message_allowed(
-        is_private=event.is_private,
-        is_group=event.is_group,
-        chat_id=event.chat_id,
-        sender_id=event.sender_id,
-        allow_groups=ALLOW_GROUPS,
-        allowed_group_ids=ALLOWED_GROUP_IDS,
-    )
 
 
 def _dashboard_button() -> list | None:
@@ -98,7 +67,7 @@ def _dashboard_button() -> list | None:
 
 @client.on(events.NewMessage(pattern="/start"))
 async def cmd_start(event):
-    if not _group_allowed(event):
+    if not group_allowed(event):
         return
     await event.reply(
         "👋 **Bot Lite Downloader**\n\n"
@@ -118,7 +87,7 @@ async def cmd_start(event):
 
 @client.on(events.NewMessage(pattern="/help"))
 async def cmd_help(event):
-    if not _group_allowed(event):
+    if not group_allowed(event):
         return
     cooldown_line = f"• Cooldown between requests: {USER_COOLDOWN}s\n" if USER_COOLDOWN else ""
     voice_line = (
@@ -152,7 +121,7 @@ async def cmd_help(event):
 
 @client.on(events.NewMessage(pattern="/status"))
 async def cmd_status(event):
-    if not _group_allowed(event):
+    if not group_allowed(event):
         return
     disk = free_disk()
     disk_warn = " ⚠️" if disk < 500 * 1024 * 1024 * 2 else ""
@@ -221,35 +190,27 @@ async def cmd_unban(event):
     await event.reply(f"✅ User `{uid}` unbanned.", parse_mode="md")
 
 
-@client.on(events.NewMessage(pattern=r"^/play(?:@\w+)?(?:\s|$)"))
-async def cmd_voice_play(event):
-    if not VOICE_ENABLED or not event.is_group or not _group_allowed(event):
-        return
-    match = _VOICE_URL_RE.fullmatch((event.raw_text or "").strip())
-    if match is None:
-        await event.reply("Usage: `/play https://…`", parse_mode="md")
-        return
-
-    user_id = event.sender_id
+async def _voice_guard_reply(event, user_id: int) -> bool:
+    """Reply and return True when the user may not start playback right now."""
     if db.is_banned(user_id):
         await event.reply("🚫 You are banned from using this bot.")
-        return
+        return True
     if user_id in active_downloads:
         await event.reply("⏳ Your previous download is still running. Please wait.")
-        return
+        return True
     wait = check_cooldown(_user_cooldowns, user_id)
     if wait > 0:
         await event.reply(
             f"⏳ Please wait **{wait:.0f}s** before the next request.", parse_mode="md"
         )
-        return
+        return True
+    return False
 
-    url = match.group(1).rstrip(".,!?)];}")
-    active_downloads.add(user_id)
-    _user_cooldowns[user_id] = time.time()
+
+async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | None, object]:
+    """Download the audio and start playback; return (metadata, failure, status)."""
     temporary = None
     status = None
-    failure = None
     try:
         status = await event.reply("🎧 Preparing audio…")
         temporary = tempfile.TemporaryDirectory(prefix="botlite_voice_")
@@ -262,12 +223,35 @@ async def cmd_voice_play(event):
             )
         await get_voice_manager().play(event.chat_id, path, metadata["title"], temporary)
         temporary = None
-    except _PLAYBACK_ERRORS as exc:
-        failure = exc
+    except RECOVERABLE_ERRORS as exc:
+        return None, exc, status
     finally:
-        active_downloads.discard(user_id)
         if temporary is not None:
             temporary.cleanup()
+    return metadata, None, status
+
+
+@client.on(events.NewMessage(pattern=r"^/play(?:@\w+)?(?:\s|$)"))
+async def cmd_voice_play(event):
+    if not VOICE_ENABLED or not event.is_group or not group_allowed(event):
+        return
+    match = _VOICE_URL_RE.fullmatch((event.raw_text or "").strip())
+    if match is None:
+        await event.reply("Usage: `/play https://…`", parse_mode="md")
+        return
+
+    user_id = event.sender_id
+    if await _voice_guard_reply(event, user_id):
+        return
+
+    active_downloads.add(user_id)
+    _user_cooldowns[user_id] = time.time()
+    try:
+        metadata, failure, status = await _prepare_and_play(
+            event, match.group(1).rstrip(".,!?)];}")
+        )
+    finally:
+        active_downloads.discard(user_id)
 
     if failure is not None:
         if status is None:
@@ -290,7 +274,7 @@ async def cmd_voice_play(event):
 
 @client.on(events.NewMessage(pattern=r"^/(pause|resume|voice_stop)(?:@\w+)?$"))
 async def cmd_voice_control(event):
-    if not VOICE_ENABLED or not event.is_group or not _group_allowed(event):
+    if not VOICE_ENABLED or not event.is_group or not group_allowed(event):
         return
     command = event.pattern_match.group(1)
     if command == "pause":

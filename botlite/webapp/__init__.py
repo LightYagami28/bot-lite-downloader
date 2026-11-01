@@ -15,12 +15,11 @@ from botlite.config import WEBAPP_HOST, WEBAPP_PORT
 from botlite.webapp.server import create_app
 
 log = logging.getLogger("botlite.webapp")
-_runner: web.AppRunner | None = None
+_runners: list[web.AppRunner] = []
 
 
 async def start_webapp() -> None:
-    global _runner
-    if _runner is not None:
+    if _runners:
         raise RuntimeError("The Telegram WebApp server is already running")
 
     runner = web.AppRunner(create_app(), access_log=None)
@@ -32,14 +31,12 @@ async def start_webapp() -> None:
         await runner.cleanup()
         raise
 
-    _runner = runner
+    _runners.append(runner)
     log.info("WebApp dashboard listening on %s:%d", WEBAPP_HOST, WEBAPP_PORT)
 
 
 async def stop_webapp() -> None:
-    global _runner
-    if _runner:
-        runner = _runner
-        _runner = None
+    if _runners:
+        runner = _runners.pop()
         await runner.cleanup()
         log.info("WebApp dashboard stopped")

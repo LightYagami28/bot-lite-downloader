@@ -1,7 +1,7 @@
 import asyncio
 from unittest.mock import MagicMock
 
-from botlite.handlers import commands
+from botlite.handlers import access, commands
 
 
 class FakeEvent:
@@ -165,8 +165,8 @@ def test_cmd_voice_control(monkeypatch):
     async def exercise():
         mgr = FakeVoiceManager()
         monkeypatch.setattr(commands, "VOICE_ENABLED", True)
-        monkeypatch.setattr(commands, "ALLOW_GROUPS", True)
-        monkeypatch.setattr(commands, "ALLOWED_GROUP_IDS", {123})
+        monkeypatch.setattr(access, "ALLOW_GROUPS", True)
+        monkeypatch.setattr(access, "ALLOWED_GROUP_IDS", {123})
         monkeypatch.setattr(commands, "get_voice_manager", lambda: mgr)
 
         # Pause
@@ -200,8 +200,8 @@ def test_cmd_voice_control(monkeypatch):
 def test_cmd_voice_play_guards(monkeypatch):
     async def exercise():
         monkeypatch.setattr(commands, "VOICE_ENABLED", True)
-        monkeypatch.setattr(commands, "ALLOW_GROUPS", True)
-        monkeypatch.setattr(commands, "ALLOWED_GROUP_IDS", {123})
+        monkeypatch.setattr(access, "ALLOW_GROUPS", True)
+        monkeypatch.setattr(access, "ALLOWED_GROUP_IDS", {123})
 
         # Banned user
         monkeypatch.setattr(commands.db, "is_banned", lambda uid: True)
