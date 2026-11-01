@@ -56,8 +56,9 @@ def test_download_reports_error_when_gallery_dl_raises(monkeypatch):
     monkeypatch.setattr("botlite.downloader.ytdlp.download", no_results)
     monkeypatch.setattr("botlite.downloader.gallery.download", gallery_boom)
 
+    pending = download("https://example.test/video")
     with pytest.raises(RuntimeError, match="Both yt-dlp and gallery-dl"):
-        asyncio.run(download("https://example.test/video"))
+        asyncio.run(pending)
 
 
 # ── gallery-dl engine ─────────────────────────────────────────────────────────
@@ -136,8 +137,9 @@ def test_gallery_download_survives_a_process_that_already_exited(monkeypatch, tm
     monkeypatch.setattr(gallery.asyncio, "create_subprocess_exec", create_process)
     monkeypatch.setattr(gallery.asyncio, "wait_for", timeout_immediately)
 
+    pending = gallery.download("https://example.test/gallery", str(tmp_path))
     with pytest.raises(TimeoutError, match="120-second"):
-        asyncio.run(gallery.download("https://example.test/gallery", str(tmp_path)))
+        asyncio.run(pending)
     assert process.killed
 
 
@@ -147,8 +149,9 @@ def test_gallery_download_rejects_failing_exit_code(monkeypatch, tmp_path):
 
     monkeypatch.setattr(gallery.asyncio, "create_subprocess_exec", create_process)
 
+    pending = gallery.download("https://example.test/gallery", str(tmp_path))
     with pytest.raises(RuntimeError, match="gallery-dl exited 2: boom"):
-        asyncio.run(gallery.download("https://example.test/gallery", str(tmp_path)))
+        asyncio.run(pending)
 
 
 # ── yt-dlp audio engine ───────────────────────────────────────────────────────
@@ -691,8 +694,9 @@ def test_voice_start_is_idempotent():
 def test_voice_play_requires_a_started_manager():
     async def exercise():
         directory, path = _directory()
+        pending = VoiceChatManager(Calls()).play(1, str(path), "T", directory)
         with pytest.raises(RuntimeError, match="not running"):
-            await VoiceChatManager(Calls()).play(1, str(path), "T", directory)
+            await pending
         directory.cleanup()
 
     asyncio.run(exercise())
@@ -822,8 +826,9 @@ def test_start_webapp_cleans_up_when_the_server_cannot_start(monkeypatch):
     monkeypatch.setattr(webapp_pkg, "_runners", [])
     monkeypatch.setattr(webapp_pkg.web, "AppRunner", FailingRunner)
 
+    pending = webapp_pkg.start_webapp()
     with pytest.raises(RuntimeError, match="port busy"):
-        asyncio.run(webapp_pkg.start_webapp())
+        asyncio.run(pending)
     assert cleaned == [True]
     assert webapp_pkg._runners == []
 
