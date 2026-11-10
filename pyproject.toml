@@ -12,14 +12,14 @@ dependencies = [
     "python-dotenv>=1.2.4",
     "aiohttp>=3.14.5",
     "py-tgcalls>=3.0.0",
-    "ntgcalls>=3.0.5",
+    "ntgcalls>=3.0.6",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
 filterwarnings = [
-    "error::DeprecationWarning",
+    "error",
 ]
 
 [tool.ruff]
