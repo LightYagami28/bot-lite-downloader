@@ -675,8 +675,19 @@ class Calls:
         return True
 
 
+_created_directories = []
+
+
+@pytest.fixture(autouse=True)
+def _release_directories():
+    yield
+    while _created_directories:
+        _created_directories.pop().cleanup()
+
+
 def _directory():
     directory = tempfile.TemporaryDirectory()
+    _created_directories.append(directory)
     return directory, Path(directory.name) / "a.ogg"
 
 

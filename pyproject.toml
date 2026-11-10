@@ -19,7 +19,7 @@ dependencies = [
 pythonpath = ["."]
 testpaths = ["tests"]
 filterwarnings = [
-    "error::DeprecationWarning",
+    "error",
 ]
 
 [tool.ruff]
