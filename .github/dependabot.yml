@@ -1,54 +1,72 @@
 version: 2
-
 updates:
-  # Python dependencies (pip)
-  - package-ecosystem: pip
-    directory: /
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - python
-    commit-message:
-      prefix: "deps(pip)"
-
-  # Docker base image
-  - package-ecosystem: docker
-    directory: /
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 3
-    labels:
-      - dependencies
-      - docker
-    commit-message:
-      prefix: "deps(docker)"
-
-  # GitHub Actions
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "deps(actions)"
-
-  # uv lock file (pyproject.toml -> uv.lock)
-  - package-ecosystem: uv
-    directory: /
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 3
-    labels:
-      - dependencies
-      - python
-    commit-message:
-      prefix: "deps(uv)"
+- package-ecosystem: pip
+  directory: /
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 20
+  labels:
+  - dependencies
+  - python
+  commit-message:
+    prefix: deps(pip)
+  groups:
+    minori-e-patch:
+      update-types:
+      - minor
+      - patch
+- package-ecosystem: docker
+  directory: /
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 20
+  labels:
+  - dependencies
+  - docker
+  commit-message:
+    prefix: deps(docker)
+  groups:
+    minori-e-patch:
+      update-types:
+      - minor
+      - patch
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 20
+  labels:
+  - dependencies
+  - ci
+  commit-message:
+    prefix: deps(actions)
+  groups:
+    minori-e-patch:
+      update-types:
+      - minor
+      - patch
+- package-ecosystem: uv
+  directory: /
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 20
+  labels:
+  - dependencies
+  - python
+  commit-message:
+    prefix: deps(uv)
+  groups:
+    minori-e-patch:
+      update-types:
+      - minor
+      - patch
+- package-ecosystem: docker-compose
+  directory: C:/Program Files/Git/
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 20
+  groups:
+    minori-e-patch:
+      update-types:
+      - minor
+      - patch
