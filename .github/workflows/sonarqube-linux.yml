@@ -51,6 +51,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: pytest -W error::DeprecationWarning --cov=botlite --cov=run --cov-report=xml:coverage.xml --cov-report=term-missing
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: lts/*
       - name: Run JavaScript tests with coverage
         run: node --experimental-vm-modules --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage-js.lcov tests/js/
       - name: Run Ruff
