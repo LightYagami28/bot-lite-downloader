@@ -28,6 +28,3 @@ line-length = 100
 
 [tool.coverage.run]
 source = ["botlite"]
-omit = [
-    "botlite/__main__.py",
-]

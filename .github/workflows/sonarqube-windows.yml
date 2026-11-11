@@ -38,7 +38,7 @@ jobs:
       - name: Run tests with coverage
         env:
           PYTHONPATH: ${{ github.workspace }}
-        run: pytest -W error::DeprecationWarning --cov=botlite --cov-report=xml:coverage.xml --cov-report=term-missing
+        run: pytest -W error::DeprecationWarning --cov=botlite --cov=run --cov-report=xml:coverage.xml --cov-report=term-missing
       - name: Run Ruff
         run: ruff check .
       - name: Upload coverage report
