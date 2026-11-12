@@ -1,72 +1,84 @@
+# Dependabot: controllo giornaliero di tutte le dipendenze, major comprese.
+# Minori e patch arrivano in una sola PR per ecosistema, le major in una PR separata.
+# versioning-strategy: increase alza anche i range nel manifest all'ultima versione.
 version: 2
 updates:
-  - package-ecosystem: pip
-    directory: /
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 20
-    labels:
-      - dependencies
-      - python
-    commit-message:
-      prefix: deps(pip)
-    groups:
-      minori-e-patch:
-        update-types:
-          - minor
-          - patch
-  - package-ecosystem: docker
-    directory: /
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 20
-    labels:
-      - dependencies
-      - docker
-    commit-message:
-      prefix: deps(docker)
-    groups:
-      minori-e-patch:
-        update-types:
-          - minor
-          - patch
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 20
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: deps(actions)
-    groups:
-      minori-e-patch:
-        update-types:
-          - minor
-          - patch
-  - package-ecosystem: uv
-    directory: /
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 20
-    labels:
-      - dependencies
-      - python
-    commit-message:
-      prefix: deps(uv)
-    groups:
-      minori-e-patch:
-        update-types:
-          - minor
-          - patch
-  - package-ecosystem: docker-compose
-    directory: /
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 20
-    groups:
-      minori-e-patch:
-        update-types:
-          - minor
-          - patch
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 20
+  commit-message:
+    prefix: dipendenze(github-actions)
+  groups:
+    minori-e-patch:
+      update-types:
+      - minor
+      - patch
+    major:
+      update-types:
+      - major
+- package-ecosystem: uv
+  directory: /
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 20
+  versioning-strategy: increase
+  commit-message:
+    prefix: dipendenze(uv)
+    prefix-development: dipendenze-sviluppo(uv)
+  groups:
+    minori-e-patch:
+      update-types:
+      - minor
+      - patch
+    major:
+      update-types:
+      - major
+- package-ecosystem: pip
+  directory: /
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 20
+  versioning-strategy: increase
+  commit-message:
+    prefix: dipendenze(pip)
+    prefix-development: dipendenze-sviluppo(pip)
+  groups:
+    minori-e-patch:
+      update-types:
+      - minor
+      - patch
+    major:
+      update-types:
+      - major
+- package-ecosystem: docker
+  directory: /
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 20
+  commit-message:
+    prefix: dipendenze(docker)
+  groups:
+    minori-e-patch:
+      update-types:
+      - minor
+      - patch
+    major:
+      update-types:
+      - major
+- package-ecosystem: docker-compose
+  directory: /
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 20
+  commit-message:
+    prefix: dipendenze(docker-compose)
+  groups:
+    minori-e-patch:
+      update-types:
+      - minor
+      - patch
+    major:
+      update-types:
+      - major
