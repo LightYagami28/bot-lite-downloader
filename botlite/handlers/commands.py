@@ -1,8 +1,4 @@
-"""
-botlite.handlers.commands
-~~~~~~~~~~~~~~~~~~~~~~~~~
-Telegram command handlers: /start /help /status /stats /ban /unban
-"""
+"""Telegram command handlers: /start /help /status /stats /ban /unban and voice."""
 
 from __future__ import annotations
 

@@ -1,7 +1,6 @@
-"""Exceptions the bot treats as recoverable at handler boundaries.
+"""Exceptions the bot treats as recoverable at handler boundaries."""
 
-py-tgcalls errors share no base class, so they are collected from its exceptions module.
-"""
+# py-tgcalls errors share no base class, so they are collected from its exceptions module.
 
 from __future__ import annotations
 

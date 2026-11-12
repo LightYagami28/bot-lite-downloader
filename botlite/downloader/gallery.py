@@ -1,8 +1,4 @@
-"""
-botlite.downloader.gallery
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-Download media via gallery-dl (fallback for photo galleries/carousels).
-"""
+"""Download media via gallery-dl (fallback for photo galleries and carousels)."""
 
 from __future__ import annotations
 

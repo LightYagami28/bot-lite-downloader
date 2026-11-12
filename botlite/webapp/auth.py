@@ -1,9 +1,6 @@
-"""
-botlite.webapp.auth
-~~~~~~~~~~~~~~~~~~~
-Validates Telegram WebApp initData (HMAC-SHA256 per official spec).
-https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
-"""
+"""Validate Telegram WebApp initData (HMAC-SHA256 per the official spec)."""
+
+# https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
 
 from __future__ import annotations
 

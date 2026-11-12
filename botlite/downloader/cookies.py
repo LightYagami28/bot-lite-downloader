@@ -1,13 +1,9 @@
-"""
-botlite.downloader.cookies
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-Resolve a Netscape cookie file for a given URL.
+"""Resolve a Netscape cookie file for a given URL."""
 
-Naming convention:  cookies{sitename}.txt
-Examples:
-  youtube.com     → cookiesyoutube.txt
-  instagram.com   → cookiesinstagram.txt
-"""
+# Naming convention: cookies{sitename}.txt
+# Examples:
+#   youtube.com     -> cookiesyoutube.txt
+#   instagram.com   -> cookiesinstagram.txt
 
 from __future__ import annotations
 

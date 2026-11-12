@@ -1,8 +1,4 @@
-"""
-botlite.utils.format
-~~~~~~~~~~~~~~~~~~~~
-Human-readable formatting helpers.
-"""
+"""Human-readable formatting helpers."""
 
 from __future__ import annotations
 

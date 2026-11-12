@@ -1,8 +1,4 @@
-"""
-botlite.app
-~~~~~~~~~~~
-Application bootstrap: wires all modules together and starts the bot.
-"""
+"""Application bootstrap: wire all modules together and start the bot."""
 
 from __future__ import annotations
 

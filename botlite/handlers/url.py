@@ -1,8 +1,4 @@
-"""
-botlite.handlers.url
-~~~~~~~~~~~~~~~~~~~~
-URL detection handler + upload pipeline.
-"""
+"""URL detection handler and upload pipeline."""
 
 from __future__ import annotations
 

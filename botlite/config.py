@@ -1,8 +1,4 @@
-"""
-botlite.config
-~~~~~~~~~~~~~~
-Loads all configuration from environment variables / .env file.
-"""
+"""Load all configuration from environment variables or a .env file."""
 
 from __future__ import annotations
 

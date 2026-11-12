@@ -1,8 +1,4 @@
-"""
-botlite.db
-~~~~~~~~~~
-Thin SQLite layer: ban list and download counters.
-"""
+"""Thin SQLite layer: ban list and download counters."""
 
 from __future__ import annotations
 

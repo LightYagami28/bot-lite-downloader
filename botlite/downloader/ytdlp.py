@@ -1,8 +1,4 @@
-"""
-botlite.downloader.ytdlp
-~~~~~~~~~~~~~~~~~~~~~~~~
-Download media via yt-dlp.
-"""
+"""Download media via yt-dlp."""
 
 from __future__ import annotations
 

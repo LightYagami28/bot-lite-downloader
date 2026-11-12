@@ -1,9 +1,6 @@
-"""
-botlite.webapp
-~~~~~~~~~~~~~~
-Optional embedded web server for the Telegram WebApp dashboard.
-Start it only when WEBAPP_PUBLIC_URL is configured.
-"""
+"""Optional embedded web server for the Telegram WebApp dashboard."""
+
+# Start it only when WEBAPP_PUBLIC_URL is configured.
 
 from __future__ import annotations
 

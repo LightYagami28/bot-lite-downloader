@@ -1,8 +1,4 @@
-"""
-botlite.utils.system
-~~~~~~~~~~~~~~~~~~~~
-OS-level helpers: disk space, temp cleanup, signal handling.
-"""
+"""OS-level helpers: disk space, temp cleanup, signal handling."""
 
 from __future__ import annotations
 
