@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
+_BYTES_PER_UNIT = 1024
+
 
 def fmt_size(n: float | None) -> str:
     """Format a byte count in human-readable units (B, KB, MB, …)."""
     if n is None:
         return "Unknown"
     for unit in ("B", "KB", "MB", "GB"):
-        if n < 1024:
+        if n < _BYTES_PER_UNIT:
             return f"{n:.1f} {unit}"
-        n /= 1024
+        n /= _BYTES_PER_UNIT
     return f"{n:.1f} TB"
 
 

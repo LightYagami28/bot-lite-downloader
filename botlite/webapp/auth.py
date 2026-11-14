@@ -14,6 +14,7 @@ from typing import Any
 from botlite.config import BOT_TOKEN, WEBAPP_INIT_DATA_MAX_AGE
 
 _MAX_INIT_DATA_LENGTH = 8 * 1024
+_INIT_DATA_CLOCK_SKEW = 60  # seconds of client clock skew tolerated
 
 
 def _parse_fields(init_data: str) -> dict[str, str] | None:
@@ -56,7 +57,7 @@ def _fresh(params: dict[str, str]) -> bool:
         age = time.time() - int(params["auth_date"])
     except (KeyError, TypeError, ValueError):
         return False
-    return -60 <= age <= WEBAPP_INIT_DATA_MAX_AGE
+    return -_INIT_DATA_CLOCK_SKEW <= age <= WEBAPP_INIT_DATA_MAX_AGE
 
 
 def _parse_user(params: dict[str, str]) -> dict[str, Any] | None:

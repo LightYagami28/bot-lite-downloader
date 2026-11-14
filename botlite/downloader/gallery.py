@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import os
 import sys
 from urllib.parse import urlsplit
 
 from botlite.downloader.cookies import resolve as resolve_cookie
-from botlite.downloader.ytdlp import _AUDIO_EXTS, _IMAGE_EXTS, _VIDEO_EXTS
+from botlite.downloader.ytdlp import _AUDIO_EXTS, _IMAGE_EXTS, _MIN_FILE_SIZE, _VIDEO_EXTS
 
 log = logging.getLogger("botlite.gallery")
 
@@ -21,7 +22,7 @@ def _scan_files(tmpdir: str) -> list[MediaResult]:
     for fname in sorted(os.listdir(tmpdir)):
         fp = os.path.join(tmpdir, fname)
         ext = os.path.splitext(fname)[1].lower()
-        if not os.path.isfile(fp) or os.path.getsize(fp) < 100:
+        if not os.path.isfile(fp) or os.path.getsize(fp) < _MIN_FILE_SIZE:
             continue
         if ext in _VIDEO_EXTS:
             mtype = "video"
@@ -66,10 +67,8 @@ async def download(url: str, tmpdir: str) -> list[MediaResult]:
     try:
         _, stderr = await asyncio.wait_for(process.communicate(), timeout=120)
     except TimeoutError:
-        try:
+        with contextlib.suppress(ProcessLookupError):
             process.kill()
-        except ProcessLookupError:
-            pass
         await process.communicate()
         raise TimeoutError("gallery-dl exceeded the 120-second request limit") from None
 

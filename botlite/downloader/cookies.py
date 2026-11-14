@@ -13,13 +13,16 @@ from urllib.parse import urlparse
 
 log = logging.getLogger("botlite.cookies")
 
+# Skip empty fragments and TLD-like bits such as "co" or "uk".
+_MIN_HOST_PART_LENGTH = 3
+
 
 def resolve(url: str) -> str | None:
     """Return the path to a matching cookie file, or None."""
     try:
         host = urlparse(url).netloc.lower().replace("www.", "")
         for part in host.split("."):
-            if len(part) <= 2:
+            if len(part) < _MIN_HOST_PART_LENGTH:
                 continue
             candidate = f"cookies{part}.txt"
             if os.path.exists(candidate):
