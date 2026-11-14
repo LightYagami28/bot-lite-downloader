@@ -1,7 +1,4 @@
-"""
-botlite.webapp.server
-~~~~~~~~~~~~~~~~~~~~~
-aiohttp application: JSON API + static dashboard.
+"""Serve the dashboard JSON API and static files for the Telegram WebApp.
 
 Endpoints
 ---------
@@ -43,8 +40,8 @@ _STATIC = Path(__file__).parent / "static"
 
 
 def _require_sudo(request: web.Request) -> dict:
-    """
-    Validate initData and check sudo membership.
+    """Validate initData and check sudo membership.
+
     Raises HTTP 401 / 403 on failure; returns the user dict on success.
     """
     init_data = request.headers.get("X-Telegram-Init-Data", "")

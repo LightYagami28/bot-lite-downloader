@@ -73,8 +73,7 @@ def _parse_user(params: dict[str, str]) -> dict[str, Any] | None:
 
 
 def validate_init_data(init_data: str) -> dict[str, Any] | None:
-    """
-    Validate the initData string sent by Telegram WebApp.
+    """Validate the initData string sent by Telegram WebApp.
 
     Returns the parsed ``user`` dict on success, or ``None`` if the
     signature is missing, invalid, or the token is not configured.
