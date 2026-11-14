@@ -1,0 +1,15 @@
+# Politica Socket.dev del repo (docs.socket.dev/docs/socket-yml).
+# Triage del report del 2026-11-14: categorie silenziate dopo revisione
+# puntuale dei pacchetti flaggati. Le violazioni di licenza restano attive
+# (policy org: ntgcalls e' LGPL, decisione consapevole da rivalutare).
+version: 2
+
+issueRules:
+  # deprecation e pyaes: transitivi di catene gia' all'ultima versione
+  # (verificato 2026-11-14).
+  unmaintained: false
+  # ruff: install script di build standard.
+  installScripts: false
+  # Flag AI rivisti il 2026-11-14: primitive by-design in versioni correnti
+  # (yt-dlp, deprecation), nessun indicatore di malware.
+  gptSecurity: false
