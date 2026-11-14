@@ -40,7 +40,8 @@ _STATIC = Path(__file__).parent / "static"
 
 
 def _require_sudo(request: web.Request) -> dict:
-    """Validate initData and check sudo membership.
+    """
+    Validate initData and check sudo membership.
 
     Raises HTTP 401 / 403 on failure; returns the user dict on success.
     """

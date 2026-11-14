@@ -213,22 +213,31 @@ async def _voice_guard_reply(event, user_id: int) -> bool:
     return False
 
 
-async def _prepare_and_play(
-    event, url: str
-) -> tuple[dict | None, Exception | None, object]:
+async def _download_voice_audio(url: str, dir_name: str):
+    """Download the audio for voice playback under the shared semaphore."""
+    async with download_semaphore:
+        return await download_audio(
+            url,
+            dir_name,
+            max_file_size=VOICE_MAX_FILE_SIZE,
+            max_duration=VOICE_MAX_DURATION,
+        )
+
+
+def _cleanup_voice_temporary(temporary) -> None:
+    """Delete the temporary directory when it still owns the audio file."""
+    if temporary is not None:
+        temporary.cleanup()
+
+
+async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | None, object]:
     """Download the audio and start playback; return (metadata, failure, status)."""
     temporary = None
     status = None
     try:
         status = await event.reply("🎧 Preparing audio…")
         temporary = tempfile.TemporaryDirectory(prefix="botlite_voice_")
-        async with download_semaphore:
-            path, metadata = await download_audio(
-                url,
-                temporary.name,
-                max_file_size=VOICE_MAX_FILE_SIZE,
-                max_duration=VOICE_MAX_DURATION,
-            )
+        path, metadata = await _download_voice_audio(url, temporary.name)
         await get_voice_manager().play(
             event.chat_id, path, metadata["title"], temporary
         )
@@ -236,8 +245,7 @@ async def _prepare_and_play(
     except RECOVERABLE_ERRORS as exc:
         return None, exc, status
     finally:
-        if temporary is not None:
-            temporary.cleanup()
+        _cleanup_voice_temporary(temporary)
     return metadata, None, status
 
 
