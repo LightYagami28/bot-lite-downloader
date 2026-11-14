@@ -116,7 +116,9 @@ def _build_audio_opts(
         if duration is None:
             if incomplete:
                 return None
-            return "Audio duration is unknown; refusing an unbounded voice-chat download"
+            return (
+                "Audio duration is unknown; refusing an unbounded voice-chat download"
+            )
         if duration > max_duration:
             return f"Audio exceeds the {max_duration}-second voice-chat limit"
         return None

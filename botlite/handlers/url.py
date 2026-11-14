@@ -39,7 +39,11 @@ async def _send_media(event, fp: str, meta: dict, mtype: str) -> None:
     caption = build_caption(
         mtype, meta.get("title"), meta.get("uploader"), meta.get("duration"), size
     )
-    kwargs: dict = {"caption": caption, "parse_mode": "md", "reply_to": event.message.id}
+    kwargs: dict = {
+        "caption": caption,
+        "parse_mode": "md",
+        "reply_to": event.message.id,
+    }
 
     if mtype == "video":
         kwargs["attributes"] = [
@@ -99,7 +103,9 @@ async def _check_guards(event, user_id: int) -> bool:
 
 async def _upload_results(event, status, results: list) -> int:
     total = len(results)
-    await _safe_edit(status, f"📤 **Uploading {total} file{'s' if total > 1 else ''}…**")
+    await _safe_edit(
+        status, f"📤 **Uploading {total} file{'s' if total > 1 else ''}…**"
+    )
 
     sent = 0
     for i, (fp, meta, mtype) in enumerate(results, 1):

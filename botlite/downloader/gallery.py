@@ -10,7 +10,12 @@ import sys
 from urllib.parse import urlsplit
 
 from botlite.downloader.cookies import resolve as resolve_cookie
-from botlite.downloader.ytdlp import _AUDIO_EXTS, _IMAGE_EXTS, _MIN_FILE_SIZE, _VIDEO_EXTS
+from botlite.downloader.ytdlp import (
+    _AUDIO_EXTS,
+    _IMAGE_EXTS,
+    _MIN_FILE_SIZE,
+    _VIDEO_EXTS,
+)
 
 log = logging.getLogger("botlite.gallery")
 

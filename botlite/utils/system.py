@@ -34,7 +34,9 @@ def cleanup_old_temps() -> None:
     pattern = os.path.join(tempfile.gettempdir(), "botlite_*")
     for d in glob.glob(pattern):
         try:
-            if os.path.isdir(d) and (time.time() - os.path.getmtime(d)) > _STALE_TEMP_MAX_AGE:
+            if os.path.isdir(d) and (
+                time.time() - os.path.getmtime(d)
+            ) > _STALE_TEMP_MAX_AGE:
                 shutil.rmtree(d, ignore_errors=True)
                 log.info("Cleaned stale temp dir: %s", d)
         except OSError as exc:
@@ -69,7 +71,9 @@ def setup_signals(disconnect_fn: Callable[[], Awaitable[object]]) -> None:
         shutdown_requested = True
         log.info("Received signal %s, shutting down…", signum)
         loop.call_soon_threadsafe(
-            lambda: loop.create_task(disconnect_fn()).add_done_callback(_observe_disconnect)
+            lambda: loop.create_task(disconnect_fn()).add_done_callback(
+                _observe_disconnect
+            )
         )
 
     def _handler(signum, _frame):
@@ -79,4 +83,6 @@ def setup_signals(disconnect_fn: Callable[[], Awaitable[object]]) -> None:
         try:
             signal.signal(shutdown_signal, _handler)
         except (OSError, ValueError) as exc:
-            log.warning("Unable to register handler for signal %s: %s", shutdown_signal, exc)
+            log.warning(
+                "Unable to register handler for signal %s: %s", shutdown_signal, exc
+            )

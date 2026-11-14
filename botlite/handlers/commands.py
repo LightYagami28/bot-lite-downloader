@@ -51,7 +51,8 @@ def _dashboard_button() -> list | None:
         return [
             [
                 types.KeyboardInlineButton(
-                    "📊 Open Dashboard", types.InlineButtonTypeWebView(WEBAPP_PUBLIC_URL)
+                    "📊 Open Dashboard",
+                    types.InlineButtonTypeWebView(WEBAPP_PUBLIC_URL),
                 )
             ]
         ]
@@ -88,7 +89,9 @@ async def cmd_help(event):
     """Reply to /help with usage, limits and cookie instructions."""
     if not group_allowed(event):
         return
-    cooldown_line = f"• Cooldown between requests: {USER_COOLDOWN}s\n" if USER_COOLDOWN else ""
+    cooldown_line = (
+        f"• Cooldown between requests: {USER_COOLDOWN}s\n" if USER_COOLDOWN else ""
+    )
     voice_line = (
         "• In allowlisted groups: `/play URL`, `/pause`, `/resume`, `/voice_stop`\n"
         if VOICE_ENABLED and event.is_group
@@ -210,7 +213,9 @@ async def _voice_guard_reply(event, user_id: int) -> bool:
     return False
 
 
-async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | None, object]:
+async def _prepare_and_play(
+    event, url: str
+) -> tuple[dict | None, Exception | None, object]:
     """Download the audio and start playback; return (metadata, failure, status)."""
     temporary = None
     status = None
@@ -224,7 +229,9 @@ async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | N
                 max_file_size=VOICE_MAX_FILE_SIZE,
                 max_duration=VOICE_MAX_DURATION,
             )
-        await get_voice_manager().play(event.chat_id, path, metadata["title"], temporary)
+        await get_voice_manager().play(
+            event.chat_id, path, metadata["title"], temporary
+        )
         temporary = None
     except RECOVERABLE_ERRORS as exc:
         return None, exc, status
@@ -284,11 +291,17 @@ async def cmd_voice_control(event):
     command = event.pattern_match.group(1)
     if command == "pause":
         changed = await get_voice_manager().pause(event.chat_id)
-        message = "⏸ Playback paused." if changed else "No active playback in this group."
+        message = (
+            "⏸ Playback paused." if changed else "No active playback in this group."
+        )
     elif command == "resume":
         changed = await get_voice_manager().resume(event.chat_id)
-        message = "▶️ Playback resumed." if changed else "No paused playback in this group."
+        message = (
+            "▶️ Playback resumed." if changed else "No paused playback in this group."
+        )
     else:
         changed = await get_voice_manager().stop(event.chat_id)
-        message = "⏹ Playback stopped." if changed else "No active playback in this group."
+        message = (
+            "⏹ Playback stopped." if changed else "No active playback in this group."
+        )
     await event.reply(message)

@@ -87,10 +87,13 @@ def validate() -> None:
     if WEBAPP_PUBLIC_URL and not WEBAPP_PUBLIC_URL.lower().startswith("https://"):
         errors.append("WEBAPP_PUBLIC_URL must use HTTPS")
     if ALLOW_GROUPS and not ALLOWED_GROUP_IDS:
-        errors.append("ALLOW_GROUPS requires at least one non-zero ALLOWED_GROUP_IDS entry")
+        errors.append(
+            "ALLOW_GROUPS requires at least one non-zero ALLOWED_GROUP_IDS entry"
+        )
     if VOICE_ENABLED and (not ALLOW_GROUPS or not ALLOWED_GROUP_IDS):
         errors.append(
-            "VOICE_ENABLED requires ALLOW_GROUPS and an explicit ALLOWED_GROUP_IDS allowlist"
+            "VOICE_ENABLED requires ALLOW_GROUPS and an explicit "
+            "ALLOWED_GROUP_IDS allowlist"
         )
     if VOICE_MAX_DURATION <= 0:
         errors.append("VOICE_MAX_DURATION must be greater than zero")

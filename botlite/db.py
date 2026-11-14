@@ -47,7 +47,9 @@ def _execute(query: str, params: tuple[Any, ...] = (), *, fetch: bool = False) -
 
 def is_banned(uid: int) -> bool:
     """Return True when *uid* is in the ban list."""
-    return bool(_execute("SELECT 1 FROM banned_users WHERE user_id=?", (uid,), fetch=True))
+    return bool(
+        _execute("SELECT 1 FROM banned_users WHERE user_id=?", (uid,), fetch=True)
+    )
 
 
 def ban(uid: int) -> None:
