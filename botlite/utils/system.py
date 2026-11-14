@@ -1,8 +1,4 @@
-"""
-botlite.utils.system
-~~~~~~~~~~~~~~~~~~~~
-OS-level helpers: disk space, temp cleanup, signal handling.
-"""
+"""OS-level helpers: disk space, temp cleanup, signal handling."""
 
 from __future__ import annotations
 
@@ -21,6 +17,8 @@ from botlite.errors import RECOVERABLE_ERRORS
 
 log = logging.getLogger("botlite.system")
 
+_STALE_TEMP_MAX_AGE = 3600  # seconds: remove temp dirs older than one hour
+
 
 def free_disk(path: str = ".") -> int:
     """Return free disk space in bytes for the filesystem at *path*."""
@@ -36,7 +34,9 @@ def cleanup_old_temps() -> None:
     pattern = os.path.join(tempfile.gettempdir(), "botlite_*")
     for d in glob.glob(pattern):
         try:
-            if os.path.isdir(d) and (time.time() - os.path.getmtime(d)) > 3600:
+            if os.path.isdir(d) and (
+                time.time() - os.path.getmtime(d)
+            ) > _STALE_TEMP_MAX_AGE:
                 shutil.rmtree(d, ignore_errors=True)
                 log.info("Cleaned stale temp dir: %s", d)
         except OSError as exc:
@@ -71,7 +71,9 @@ def setup_signals(disconnect_fn: Callable[[], Awaitable[object]]) -> None:
         shutdown_requested = True
         log.info("Received signal %s, shutting down…", signum)
         loop.call_soon_threadsafe(
-            lambda: loop.create_task(disconnect_fn()).add_done_callback(_observe_disconnect)
+            lambda: loop.create_task(disconnect_fn()).add_done_callback(
+                _observe_disconnect
+            )
         )
 
     def _handler(signum, _frame):
@@ -81,4 +83,6 @@ def setup_signals(disconnect_fn: Callable[[], Awaitable[object]]) -> None:
         try:
             signal.signal(shutdown_signal, _handler)
         except (OSError, ValueError) as exc:
-            log.warning("Unable to register handler for signal %s: %s", shutdown_signal, exc)
+            log.warning(
+                "Unable to register handler for signal %s: %s", shutdown_signal, exc
+            )

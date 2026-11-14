@@ -1,7 +1,4 @@
-"""
-botlite.webapp.server
-~~~~~~~~~~~~~~~~~~~~~
-aiohttp application: JSON API + static dashboard.
+"""Serve the dashboard JSON API and static files for the Telegram WebApp.
 
 Endpoints
 ---------
@@ -45,6 +42,7 @@ _STATIC = Path(__file__).parent / "static"
 def _require_sudo(request: web.Request) -> dict:
     """
     Validate initData and check sudo membership.
+
     Raises HTTP 401 / 403 on failure; returns the user dict on success.
     """
     init_data = request.headers.get("X-Telegram-Init-Data", "")
@@ -69,6 +67,7 @@ def _require_user(request: web.Request) -> dict:
 
 
 async def api_status(_request: web.Request) -> web.Response:
+    """Return public bot health: version, uptime, downloads and free disk."""
     free_bytes = await asyncio.to_thread(free_disk)
     response = web.json_response(
         {
@@ -85,6 +84,7 @@ async def api_status(_request: web.Request) -> web.Response:
 
 
 async def api_me(request: web.Request) -> web.Response:
+    """Return identity and permissions for the authenticated Mini App user."""
     user = _require_user(request)
     banned = await asyncio.to_thread(db.is_banned, user["id"])
     return web.json_response(
@@ -99,6 +99,7 @@ async def api_me(request: web.Request) -> web.Response:
 
 
 async def api_stats(request: web.Request) -> web.Response:
+    """Return the download counters (sudo only)."""
     _require_sudo(request)
     total, failed = await asyncio.gather(
         asyncio.to_thread(db.get_stat, "total_downloads"),
@@ -113,6 +114,7 @@ async def api_stats(request: web.Request) -> web.Response:
 
 
 async def api_ban(request: web.Request) -> web.Response:
+    """Ban the user ID from the JSON body (sudo only)."""
     user = _require_sudo(request)
     try:
         data = await request.json()
@@ -127,6 +129,7 @@ async def api_ban(request: web.Request) -> web.Response:
 
 
 async def api_unban(request: web.Request) -> web.Response:
+    """Unban the user ID from the JSON body (sudo only)."""
     user = _require_sudo(request)
     try:
         data = await request.json()
@@ -149,10 +152,12 @@ async def _static_response(name: str, content_type: str) -> web.Response:
 
 
 async def index(_request: web.Request) -> web.Response:
+    """Serve the dashboard HTML page."""
     return await _static_response("index.html", "text/html")
 
 
 async def app_script(_request: web.Request) -> web.Response:
+    """Serve the dashboard JavaScript bundle."""
     return await _static_response("app.js", "application/javascript")
 
 
@@ -190,6 +195,7 @@ async def security_headers(request: web.Request, handler) -> web.StreamResponse:
 
 
 def create_app() -> web.Application:
+    """Build the aiohttp application with all routes and security middleware."""
     app = web.Application(middlewares=[security_headers])
     app.router.add_get("/", index)
     app.router.add_get("/app.js", app_script)

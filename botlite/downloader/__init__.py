@@ -1,10 +1,4 @@
-"""
-botlite.downloader
-~~~~~~~~~~~~~~~~~~
-Public API: download(url, tmpdir) → list[MediaResult]
-
-Tries yt-dlp first; falls back to gallery-dl.
-"""
+"""Public download API: try yt-dlp first, then fall back to gallery-dl."""
 
 from __future__ import annotations
 

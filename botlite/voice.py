@@ -27,6 +27,7 @@ class VoiceChatManager:
     """Own one audio stream per allowlisted group and its temporary files."""
 
     def __init__(self, calls) -> None:
+        """Bind to *calls* and register the stream-end update listener."""
         self._calls = calls
         self._sessions: dict[int, _Playback] = {}
         self._locks: dict[int, asyncio.Lock] = {}
@@ -35,6 +36,7 @@ class VoiceChatManager:
         self._calls.on_update()(self._on_update)
 
     async def start(self) -> None:
+        """Start the underlying call client once."""
         if self._started:
             return
         await self._calls.start()
@@ -50,6 +52,7 @@ class VoiceChatManager:
         title: str,
         directory: tempfile.TemporaryDirectory[str],
     ) -> None:
+        """Play *path* in chat *chat_id*, replacing any existing stream."""
         if not self._started or self._closed:
             raise RuntimeError("Voice playback is not running")
         async with self._lock_for(chat_id):
@@ -67,16 +70,19 @@ class VoiceChatManager:
             self._sessions[chat_id] = _Playback(directory, title)
 
     async def pause(self, chat_id: int) -> bool:
+        """Pause the stream in *chat_id*; return False when there is none."""
         if chat_id not in self._sessions:
             return False
         return bool(await self._calls.pause(chat_id))
 
     async def resume(self, chat_id: int) -> bool:
+        """Resume the stream in *chat_id*; return False when there is none."""
         if chat_id not in self._sessions:
             return False
         return bool(await self._calls.resume(chat_id))
 
     async def stop(self, chat_id: int) -> bool:
+        """Stop the stream in *chat_id*; return False when there is none."""
         async with self._lock_for(chat_id):
             if chat_id not in self._sessions:
                 return False
@@ -84,6 +90,7 @@ class VoiceChatManager:
             return True
 
     async def shutdown(self) -> None:
+        """Stop every session and close the manager; safe to call twice."""
         if self._closed:
             return
         self._closed = True
@@ -98,7 +105,9 @@ class VoiceChatManager:
                 try:
                     await self._leave_existing(chat_id)
                 except RECOVERABLE_ERRORS:
-                    log.exception("Unable to leave voice chat %s during shutdown", chat_id)
+                    log.exception(
+                        "Unable to leave voice chat %s during shutdown", chat_id
+                    )
 
     def cleanup_after_disconnect(self) -> None:
         """Release temporary files only after the MTProto connection is closed."""
@@ -148,6 +157,7 @@ def initialize_voice() -> VoiceChatManager:
 
 
 def get_voice_manager() -> VoiceChatManager:
+    """Return the initialized voice manager, raising when voice is unavailable."""
     if _state.manager is None:
         raise RuntimeError("Voice playback is disabled or not initialized")
     return _state.manager

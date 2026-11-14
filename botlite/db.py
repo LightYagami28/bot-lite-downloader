@@ -1,8 +1,4 @@
-"""
-botlite.db
-~~~~~~~~~~
-Thin SQLite layer: ban list and download counters.
-"""
+"""Thin SQLite layer: ban list and download counters."""
 
 from __future__ import annotations
 
@@ -13,6 +9,7 @@ from botlite.config import DB_FILE
 
 
 def init() -> None:
+    """Create the SQLite schema and default counters if they do not exist."""
     conn = sqlite3.connect(DB_FILE)
     try:
         conn.executescript("""
@@ -49,14 +46,19 @@ def _execute(query: str, params: tuple[Any, ...] = (), *, fetch: bool = False) -
 
 
 def is_banned(uid: int) -> bool:
-    return bool(_execute("SELECT 1 FROM banned_users WHERE user_id=?", (uid,), fetch=True))
+    """Return True when *uid* is in the ban list."""
+    return bool(
+        _execute("SELECT 1 FROM banned_users WHERE user_id=?", (uid,), fetch=True)
+    )
 
 
 def ban(uid: int) -> None:
+    """Add *uid* to the ban list."""
     _execute("INSERT OR REPLACE INTO banned_users (user_id) VALUES (?)", (uid,))
 
 
 def unban(uid: int) -> None:
+    """Remove *uid* from the ban list."""
     _execute("DELETE FROM banned_users WHERE user_id=?", (uid,))
 
 
@@ -64,9 +66,11 @@ def unban(uid: int) -> None:
 
 
 def increment(name: str) -> None:
+    """Increment the download counter *name* by one."""
     _execute("UPDATE stats SET value=value+1 WHERE name=?", (name,))
 
 
 def get_stat(name: str) -> int:
+    """Return the current value of counter *name* (0 when it is missing)."""
     rows = _execute("SELECT value FROM stats WHERE name=?", (name,), fetch=True)
     return rows[0][0] if rows else 0

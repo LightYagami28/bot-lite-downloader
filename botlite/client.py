@@ -1,8 +1,4 @@
-"""
-botlite.client
-~~~~~~~~~~~~~~
-Singleton Telethon client and shared runtime state.
-"""
+"""Singleton Telethon client and shared runtime state."""
 
 from __future__ import annotations
 

@@ -1,6 +1,4 @@
-"""
-Allows running the bot as a module:  python -m botlite
-"""
+"""Allow running the bot as a module with ``python -m botlite``."""
 
 from botlite.app import run
 

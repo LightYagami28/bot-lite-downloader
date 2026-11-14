@@ -1,9 +1,6 @@
-"""
-botlite.webapp.auth
-~~~~~~~~~~~~~~~~~~~
-Validates Telegram WebApp initData (HMAC-SHA256 per official spec).
-https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
-"""
+"""Validate Telegram WebApp initData (HMAC-SHA256 per the official spec)."""
+
+# https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
 
 from __future__ import annotations
 
@@ -17,10 +14,11 @@ from typing import Any
 from botlite.config import BOT_TOKEN, WEBAPP_INIT_DATA_MAX_AGE
 
 _MAX_INIT_DATA_LENGTH = 8 * 1024
+_INIT_DATA_CLOCK_SKEW = 60  # seconds of client clock skew tolerated
 
 
 def _parse_fields(init_data: str) -> dict[str, str] | None:
-    """Split initData into fields, rejecting oversized, malformed or duplicate-key input."""
+    """Split initData into fields, rejecting malformed or duplicate-key input."""
     if not init_data or len(init_data) > _MAX_INIT_DATA_LENGTH:
         return None
     # Telegram signs the exact decoded key/value set. Reject duplicate keys
@@ -59,7 +57,7 @@ def _fresh(params: dict[str, str]) -> bool:
         age = time.time() - int(params["auth_date"])
     except (KeyError, TypeError, ValueError):
         return False
-    return -60 <= age <= WEBAPP_INIT_DATA_MAX_AGE
+    return -_INIT_DATA_CLOCK_SKEW <= age <= WEBAPP_INIT_DATA_MAX_AGE
 
 
 def _parse_user(params: dict[str, str]) -> dict[str, Any] | None:

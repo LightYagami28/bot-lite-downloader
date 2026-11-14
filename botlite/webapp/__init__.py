@@ -1,9 +1,6 @@
-"""
-botlite.webapp
-~~~~~~~~~~~~~~
-Optional embedded web server for the Telegram WebApp dashboard.
-Start it only when WEBAPP_PUBLIC_URL is configured.
-"""
+"""Optional embedded web server for the Telegram WebApp dashboard."""
+
+# Start it only when WEBAPP_PUBLIC_URL is configured.
 
 from __future__ import annotations
 
@@ -19,6 +16,7 @@ _runners: list[web.AppRunner] = []
 
 
 async def start_webapp() -> None:
+    """Start the aiohttp dashboard server; raise when already running."""
     if _runners:
         raise RuntimeError("The Telegram WebApp server is already running")
 
@@ -36,6 +34,7 @@ async def start_webapp() -> None:
 
 
 async def stop_webapp() -> None:
+    """Stop the dashboard server if one is running."""
     if _runners:
         runner = _runners.pop()
         await runner.cleanup()

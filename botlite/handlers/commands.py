@@ -1,8 +1,4 @@
-"""
-botlite.handlers.commands
-~~~~~~~~~~~~~~~~~~~~~~~~~
-Telegram command handlers: /start /help /status /stats /ban /unban
-"""
+"""Telegram command handlers: /start /help /status /stats /ban /unban and voice."""
 
 from __future__ import annotations
 
@@ -43,6 +39,7 @@ log = logging.getLogger("botlite.commands")
 
 
 def is_sudo(uid: int) -> bool:
+    """Return True when *uid* is configured as an admin."""
     return uid in SUDO_USERS
 
 
@@ -54,7 +51,8 @@ def _dashboard_button() -> list | None:
         return [
             [
                 types.KeyboardInlineButton(
-                    "📊 Open Dashboard", types.InlineButtonTypeWebView(WEBAPP_PUBLIC_URL)
+                    "📊 Open Dashboard",
+                    types.InlineButtonTypeWebView(WEBAPP_PUBLIC_URL),
                 )
             ]
         ]
@@ -67,6 +65,7 @@ def _dashboard_button() -> list | None:
 
 @client.on(events.NewMessage(pattern="/start"))
 async def cmd_start(event):
+    """Reply to /start with the bot introduction."""
     if not group_allowed(event):
         return
     await event.reply(
@@ -87,9 +86,12 @@ async def cmd_start(event):
 
 @client.on(events.NewMessage(pattern="/help"))
 async def cmd_help(event):
+    """Reply to /help with usage, limits and cookie instructions."""
     if not group_allowed(event):
         return
-    cooldown_line = f"• Cooldown between requests: {USER_COOLDOWN}s\n" if USER_COOLDOWN else ""
+    cooldown_line = (
+        f"• Cooldown between requests: {USER_COOLDOWN}s\n" if USER_COOLDOWN else ""
+    )
     voice_line = (
         "• In allowlisted groups: `/play URL`, `/pause`, `/resume`, `/voice_stop`\n"
         if VOICE_ENABLED and event.is_group
@@ -121,6 +123,7 @@ async def cmd_help(event):
 
 @client.on(events.NewMessage(pattern="/status"))
 async def cmd_status(event):
+    """Reply to /status with uptime, active downloads and free disk."""
     if not group_allowed(event):
         return
     disk = free_disk()
@@ -140,6 +143,7 @@ async def cmd_status(event):
 
 @client.on(events.NewMessage(pattern="/stats"))
 async def cmd_stats(event):
+    """Reply to /stats (sudo, private chat) with the download counters."""
     if not event.is_private or not is_sudo(event.sender_id):
         return
     total = db.get_stat("total_downloads")
@@ -163,6 +167,7 @@ async def cmd_stats(event):
 
 @client.on(events.NewMessage(pattern=r"/ban( \d+)?"))
 async def cmd_ban(event):
+    """Ban a user via /ban USER_ID (sudo, private chat)."""
     if not event.is_private or not is_sudo(event.sender_id):
         return
     match = event.pattern_match.group(1)
@@ -179,6 +184,7 @@ async def cmd_ban(event):
 
 @client.on(events.NewMessage(pattern=r"/unban( \d+)?"))
 async def cmd_unban(event):
+    """Unban a user via /unban USER_ID (sudo, private chat)."""
     if not event.is_private or not is_sudo(event.sender_id):
         return
     match = event.pattern_match.group(1)
@@ -207,6 +213,23 @@ async def _voice_guard_reply(event, user_id: int) -> bool:
     return False
 
 
+async def _download_voice_audio(url: str, dir_name: str):
+    """Download the audio for voice playback under the shared semaphore."""
+    async with download_semaphore:
+        return await download_audio(
+            url,
+            dir_name,
+            max_file_size=VOICE_MAX_FILE_SIZE,
+            max_duration=VOICE_MAX_DURATION,
+        )
+
+
+def _cleanup_voice_temporary(temporary) -> None:
+    """Delete the temporary directory when it still owns the audio file."""
+    if temporary is not None:
+        temporary.cleanup()
+
+
 async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | None, object]:
     """Download the audio and start playback; return (metadata, failure, status)."""
     temporary = None
@@ -214,25 +237,21 @@ async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | N
     try:
         status = await event.reply("🎧 Preparing audio…")
         temporary = tempfile.TemporaryDirectory(prefix="botlite_voice_")
-        async with download_semaphore:
-            path, metadata = await download_audio(
-                url,
-                temporary.name,
-                max_file_size=VOICE_MAX_FILE_SIZE,
-                max_duration=VOICE_MAX_DURATION,
-            )
-        await get_voice_manager().play(event.chat_id, path, metadata["title"], temporary)
+        path, metadata = await _download_voice_audio(url, temporary.name)
+        await get_voice_manager().play(
+            event.chat_id, path, metadata["title"], temporary
+        )
         temporary = None
     except RECOVERABLE_ERRORS as exc:
         return None, exc, status
     finally:
-        if temporary is not None:
-            temporary.cleanup()
+        _cleanup_voice_temporary(temporary)
     return metadata, None, status
 
 
 @client.on(events.NewMessage(pattern=r"^/play(?:@\w+)?(?:\s|$)"))
 async def cmd_voice_play(event):
+    """Download and start voice playback via /play URL (allowlisted groups)."""
     if not VOICE_ENABLED or not event.is_group or not group_allowed(event):
         return
     match = _VOICE_URL_RE.fullmatch((event.raw_text or "").strip())
@@ -274,16 +293,29 @@ async def cmd_voice_play(event):
 
 @client.on(events.NewMessage(pattern=r"^/(pause|resume|voice_stop)(?:@\w+)?$"))
 async def cmd_voice_control(event):
+    """Handle /pause, /resume and /voice_stop in groups."""
     if not VOICE_ENABLED or not event.is_group or not group_allowed(event):
         return
     command = event.pattern_match.group(1)
     if command == "pause":
         changed = await get_voice_manager().pause(event.chat_id)
-        message = "⏸ Playback paused." if changed else "No active playback in this group."
+        message = (
+            "⏸ Playback paused."
+            if changed
+            else "No active playback in this group."
+        )
     elif command == "resume":
         changed = await get_voice_manager().resume(event.chat_id)
-        message = "▶️ Playback resumed." if changed else "No paused playback in this group."
+        message = (
+            "▶️ Playback resumed."
+            if changed
+            else "No paused playback in this group."
+        )
     else:
         changed = await get_voice_manager().stop(event.chat_id)
-        message = "⏹ Playback stopped." if changed else "No active playback in this group."
+        message = (
+            "⏹ Playback stopped."
+            if changed
+            else "No active playback in this group."
+        )
     await event.reply(message)

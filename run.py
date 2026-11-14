@@ -1,10 +1,4 @@
-"""
-BotLite Downloader — entry point.
-
-Usage:
-    python run.py
-    python -m botlite
-"""
+"""BotLite Downloader entry point (``python run.py`` or ``python -m botlite``)."""
 
 from botlite.app import run
 

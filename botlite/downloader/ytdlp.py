@@ -1,8 +1,4 @@
-"""
-botlite.downloader.ytdlp
-~~~~~~~~~~~~~~~~~~~~~~~~
-Download media via yt-dlp.
-"""
+"""Download media via yt-dlp."""
 
 from __future__ import annotations
 
@@ -17,6 +13,7 @@ from botlite.downloader.cookies import resolve as resolve_cookie
 
 log = logging.getLogger("botlite.ytdlp")
 _LOG_FMT = "[yt-dlp] %s"
+_MIN_FILE_SIZE = 100  # ignore freshly written files smaller than this (bytes)
 
 _VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".flv", ".m4v"}
 _AUDIO_EXTS = {".mp3", ".m4a", ".ogg", ".opus", ".flac", ".wav", ".aac"}
@@ -69,7 +66,7 @@ def _scan_new_files(
     new_files = [
         os.path.join(tmpdir, f)
         for f in sorted(set(os.listdir(tmpdir)) - before)
-        if os.path.getsize(os.path.join(tmpdir, f)) > 100
+        if os.path.getsize(os.path.join(tmpdir, f)) > _MIN_FILE_SIZE
     ]
     if not new_files:
         raise RuntimeError("yt-dlp finished but no file was written")
@@ -119,7 +116,10 @@ def _build_audio_opts(
         if duration is None:
             if incomplete:
                 return None
-            return "Audio duration is unknown; refusing an unbounded voice-chat download"
+            return (
+                "Audio duration is unknown; refusing an unbounded "
+                "voice-chat download"
+            )
         if duration > max_duration:
             return f"Audio exceeds the {max_duration}-second voice-chat limit"
         return None

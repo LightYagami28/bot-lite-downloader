@@ -1,8 +1,4 @@
-"""
-botlite.app
-~~~~~~~~~~~
-Application bootstrap: wires all modules together and starts the bot.
-"""
+"""Application bootstrap: wire all modules together and start the bot."""
 
 from __future__ import annotations
 
@@ -27,6 +23,7 @@ importlib.import_module("botlite.handlers")
 
 
 def setup_logging() -> None:
+    """Configure root logging to bot.log and stdout, unless already configured."""
     if not logging.root.handlers:
         logging.basicConfig(
             level=logging.INFO,
@@ -93,4 +90,5 @@ async def _main() -> None:
 
 
 def run() -> None:
+    """Run the bot until it disconnects."""
     asyncio.run(_main())
