@@ -4,6 +4,7 @@ from __future__ import annotations
 
 
 def fmt_size(n: float | None) -> str:
+    """Format a byte count in human-readable units (B, KB, MB, …)."""
     if n is None:
         return "Unknown"
     for unit in ("B", "KB", "MB", "GB"):
@@ -14,6 +15,7 @@ def fmt_size(n: float | None) -> str:
 
 
 def fmt_dur(secs: int | None) -> str:
+    """Format a duration as H:MM:SS (M:SS below one hour); empty for falsy input."""
     if not secs:
         return ""
     s = int(secs)
@@ -22,6 +24,7 @@ def fmt_dur(secs: int | None) -> str:
 
 
 def fmt_uptime(secs: float) -> str:
+    """Format seconds as ``Xh Ym Zs``."""
     s = int(secs)
     h, m, sec = s // 3600, (s % 3600) // 60, s % 60
     return f"{h}h {m}m {sec}s"
@@ -34,6 +37,7 @@ def build_caption(
     duration: int | None = None,
     size: int | None = None,
 ) -> str:
+    """Build the Markdown caption for one downloaded media item."""
     icon = {"video": "🎬", "audio": "🎵", "photo": "📸"}.get(mtype, "📎")
     lines = [f"{icon} **{title or 'Media'}**"]
     if uploader:

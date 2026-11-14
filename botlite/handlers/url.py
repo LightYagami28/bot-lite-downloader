@@ -134,6 +134,7 @@ async def _upload_results(event, status, results: list) -> int:
 
 @client.on(events.NewMessage())
 async def url_handler(event):
+    """Download and send the first media URL found in a non-command message."""
     if not group_allowed(event):
         return
 

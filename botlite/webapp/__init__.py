@@ -16,6 +16,7 @@ _runners: list[web.AppRunner] = []
 
 
 async def start_webapp() -> None:
+    """Start the aiohttp dashboard server; raise when already running."""
     if _runners:
         raise RuntimeError("The Telegram WebApp server is already running")
 
@@ -33,6 +34,7 @@ async def start_webapp() -> None:
 
 
 async def stop_webapp() -> None:
+    """Stop the dashboard server if one is running."""
     if _runners:
         runner = _runners.pop()
         await runner.cleanup()

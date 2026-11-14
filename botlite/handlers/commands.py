@@ -39,6 +39,7 @@ log = logging.getLogger("botlite.commands")
 
 
 def is_sudo(uid: int) -> bool:
+    """Return True when *uid* is configured as an admin."""
     return uid in SUDO_USERS
 
 
@@ -63,6 +64,7 @@ def _dashboard_button() -> list | None:
 
 @client.on(events.NewMessage(pattern="/start"))
 async def cmd_start(event):
+    """Reply to /start with the bot introduction."""
     if not group_allowed(event):
         return
     await event.reply(
@@ -83,6 +85,7 @@ async def cmd_start(event):
 
 @client.on(events.NewMessage(pattern="/help"))
 async def cmd_help(event):
+    """Reply to /help with usage, limits and cookie instructions."""
     if not group_allowed(event):
         return
     cooldown_line = f"• Cooldown between requests: {USER_COOLDOWN}s\n" if USER_COOLDOWN else ""
@@ -117,6 +120,7 @@ async def cmd_help(event):
 
 @client.on(events.NewMessage(pattern="/status"))
 async def cmd_status(event):
+    """Reply to /status with uptime, active downloads and free disk."""
     if not group_allowed(event):
         return
     disk = free_disk()
@@ -136,6 +140,7 @@ async def cmd_status(event):
 
 @client.on(events.NewMessage(pattern="/stats"))
 async def cmd_stats(event):
+    """Reply to /stats (sudo, private chat) with the download counters."""
     if not event.is_private or not is_sudo(event.sender_id):
         return
     total = db.get_stat("total_downloads")
@@ -159,6 +164,7 @@ async def cmd_stats(event):
 
 @client.on(events.NewMessage(pattern=r"/ban( \d+)?"))
 async def cmd_ban(event):
+    """Ban a user via /ban USER_ID (sudo, private chat)."""
     if not event.is_private or not is_sudo(event.sender_id):
         return
     match = event.pattern_match.group(1)
@@ -175,6 +181,7 @@ async def cmd_ban(event):
 
 @client.on(events.NewMessage(pattern=r"/unban( \d+)?"))
 async def cmd_unban(event):
+    """Unban a user via /unban USER_ID (sudo, private chat)."""
     if not event.is_private or not is_sudo(event.sender_id):
         return
     match = event.pattern_match.group(1)
@@ -229,6 +236,7 @@ async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | N
 
 @client.on(events.NewMessage(pattern=r"^/play(?:@\w+)?(?:\s|$)"))
 async def cmd_voice_play(event):
+    """Download and start voice playback via /play URL (allowlisted groups)."""
     if not VOICE_ENABLED or not event.is_group or not group_allowed(event):
         return
     match = _VOICE_URL_RE.fullmatch((event.raw_text or "").strip())
@@ -270,6 +278,7 @@ async def cmd_voice_play(event):
 
 @client.on(events.NewMessage(pattern=r"^/(pause|resume|voice_stop)(?:@\w+)?$"))
 async def cmd_voice_control(event):
+    """Handle /pause, /resume and /voice_stop in groups."""
     if not VOICE_ENABLED or not event.is_group or not group_allowed(event):
         return
     command = event.pattern_match.group(1)
