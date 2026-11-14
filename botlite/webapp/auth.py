@@ -18,7 +18,7 @@ _INIT_DATA_CLOCK_SKEW = 60  # seconds of client clock skew tolerated
 
 
 def _parse_fields(init_data: str) -> dict[str, str] | None:
-    """Split initData into fields, rejecting oversized, malformed or duplicate keys."""
+    """Split initData into fields, rejecting malformed or duplicate-key input."""
     if not init_data or len(init_data) > _MAX_INIT_DATA_LENGTH:
         return None
     # Telegram signs the exact decoded key/value set. Reject duplicate keys

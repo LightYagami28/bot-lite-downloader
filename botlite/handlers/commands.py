@@ -292,16 +292,22 @@ async def cmd_voice_control(event):
     if command == "pause":
         changed = await get_voice_manager().pause(event.chat_id)
         message = (
-            "⏸ Playback paused." if changed else "No active playback in this group."
+            "⏸ Playback paused."
+            if changed
+            else "No active playback in this group."
         )
     elif command == "resume":
         changed = await get_voice_manager().resume(event.chat_id)
         message = (
-            "▶️ Playback resumed." if changed else "No paused playback in this group."
+            "▶️ Playback resumed."
+            if changed
+            else "No paused playback in this group."
         )
     else:
         changed = await get_voice_manager().stop(event.chat_id)
         message = (
-            "⏹ Playback stopped." if changed else "No active playback in this group."
+            "⏹ Playback stopped."
+            if changed
+            else "No active playback in this group."
         )
     await event.reply(message)
