@@ -32,23 +32,30 @@ def fmt_uptime(secs: float) -> str:
     return f"{hours}h {minutes}m {sec}s"
 
 
+def _details_line(duration: int | None, size: int | None) -> str:
+    parts = [
+        text
+        for text in (
+            f"⏱ {fmt_dur(duration)}" if duration else "",
+            f"📦 {fmt_size(size)}" if size else "",
+        )
+        if text
+    ]
+    return "  ".join(parts)
+
+
 def build_caption(
     mtype: str,
     title: str | None,
     uploader: str | None = None,
-    duration: int | None = None,
-    size: int | None = None,
+    details: tuple[int | None, int | None] = (None, None),
 ) -> str:
-    """Build the Markdown caption for one downloaded media item."""
+    """Build the Markdown caption; *details* is ``(duration, size)``."""
     icon = {"video": "🎬", "audio": "🎵", "photo": "📸"}.get(mtype, "📎")
     lines = [f"{icon} **{title or 'Media'}**"]
     if uploader:
         lines.append(f"👤 {uploader}")
-    meta = []
-    if duration:
-        meta.append(f"⏱ {fmt_dur(duration)}")
-    if size:
-        meta.append(f"📦 {fmt_size(size)}")
-    if meta:
-        lines.append("  ".join(meta))
+    details_line = _details_line(*details)
+    if details_line:
+        lines.append(details_line)
     return "\n".join(lines)

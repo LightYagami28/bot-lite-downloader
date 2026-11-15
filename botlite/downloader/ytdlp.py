@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+from collections.abc import Mapping
+from typing import Any
 
 import yt_dlp
 
@@ -63,34 +65,33 @@ def _mtype_from_info(file_path: str, vcodec: str, acodec: str) -> str:
     return _guess_mtype(file_path)
 
 
-def _scan_new_files(
-    tmpdir: str, before: set[str], meta: dict, vcodec: str, acodec: str
-) -> list[MediaResult]:
-    new_files = [
-        os.path.join(tmpdir, f)
-        for f in sorted(set(os.listdir(tmpdir)) - before)
-        if os.path.getsize(os.path.join(tmpdir, f)) > _MIN_FILE_SIZE
-    ]
+def _new_files(tmpdir: str, before: set[str]) -> list[str]:
+    paths = [os.path.join(tmpdir, name) for name in sorted(set(os.listdir(tmpdir)) - before)]
+    new_files = [path for path in paths if os.path.getsize(path) > _MIN_FILE_SIZE]
     if not new_files:
         raise RuntimeError("yt-dlp finished but no file was written")
+    return new_files
 
+
+def _scan_new_files(
+    tmpdir: str, before: set[str], meta: dict, codecs: tuple[str, str]
+) -> list[MediaResult]:
+    vcodec, acodec = codecs
     results = []
-    for file_path in new_files:
-        if os.path.splitext(file_path)[1].lower() not in ALL_EXTS:
-            continue
-        mtype = _mtype_from_info(file_path, vcodec, acodec)
-        results.append((file_path, {**meta, "size": os.path.getsize(file_path)}, mtype))
+    for file_path in _new_files(tmpdir, before):
+        if os.path.splitext(file_path)[1].lower() in ALL_EXTS:
+            mtype = _mtype_from_info(file_path, vcodec, acodec)
+            results.append((file_path, {**meta, "size": os.path.getsize(file_path)}, mtype))
     return results
 
 
-def _build_opts(tmpdir: str, cookie_file: str | None) -> dict:
+_PREFERRED_VIDEO = "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]"
+_PREFERRED_MUXED = "best[ext=mp4][height<=1080]"
+_VIDEO_FORMAT = f"{_PREFERRED_VIDEO}/{_PREFERRED_MUXED}/bestvideo+bestaudio/best"
+
+
+def _base_opts(tmpdir: str, cookie_file: str | None, max_filesize: int) -> dict:
     opts = {
-        "format": (
-            "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]"
-            "/best[ext=mp4][height<=1080]"
-            "/bestvideo+bestaudio/best"
-        ),
-        "merge_output_format": "mp4",
         "outtmpl": os.path.join(tmpdir, "%(id)s.%(ext)s"),
         "noplaylist": True,
         "quiet": True,
@@ -98,14 +99,46 @@ def _build_opts(tmpdir: str, cookie_file: str | None) -> dict:
         "logger": _Logger(),
         "socket_timeout": 30,
         "retries": 3,
-        "max_filesize": MAX_FILE_SIZE,
+        "max_filesize": max_filesize,
         "writeinfojson": False,
         "writethumbnail": False,
-        "postprocessors": [],
     }
     if cookie_file:
         opts["cookiefile"] = cookie_file
     return opts
+
+
+def _build_opts(tmpdir: str, cookie_file: str | None) -> dict:
+    return {
+        **_base_opts(tmpdir, cookie_file, MAX_FILE_SIZE),
+        "format": _VIDEO_FORMAT,
+        "merge_output_format": "mp4",
+        "postprocessors": [],
+    }
+
+
+def _duration_filter(max_duration: int):
+    def within_duration(info: dict, *, incomplete: bool) -> str | None:
+        duration = info.get("duration")
+        if duration is None:
+            if incomplete:
+                return None
+            return "Audio duration is unknown; refusing an unbounded voice-chat download"
+        if duration > max_duration:
+            return f"Audio exceeds the {max_duration}-second voice-chat limit"
+        return None
+
+    return within_duration
+
+
+def _size_hook(max_file_size: int):
+    def enforce_download_size(progress: dict) -> None:
+        if progress.get("downloaded_bytes", 0) > max_file_size:
+            raise yt_dlp.utils.DownloadError(
+                f"Audio exceeds the {max_file_size}-byte voice-chat limit"
+            )
+
+    return enforce_download_size
 
 
 def _build_audio_opts(
@@ -114,43 +147,35 @@ def _build_audio_opts(
     max_file_size: int,
     max_duration: int,
 ) -> dict:
-    def within_duration(info: dict, *, incomplete: bool) -> str | None:
-        duration = info.get("duration")
-        if duration is None:
-            if incomplete:
-                return None
-            return (
-                "Audio duration is unknown; refusing an unbounded "
-                "voice-chat download"
-            )
-        if duration > max_duration:
-            return f"Audio exceeds the {max_duration}-second voice-chat limit"
-        return None
-
-    def enforce_download_size(progress: dict) -> None:
-        if progress.get("downloaded_bytes", 0) > max_file_size:
-            raise yt_dlp.utils.DownloadError(
-                f"Audio exceeds the {max_file_size}-byte voice-chat limit"
-            )
-
-    opts = {
+    return {
+        **_base_opts(tmpdir, cookie_file, max_file_size),
         "format": "bestaudio/best",
-        "outtmpl": os.path.join(tmpdir, "%(id)s.%(ext)s"),
-        "noplaylist": True,
-        "quiet": True,
-        "no_warnings": False,
-        "logger": _Logger(),
-        "socket_timeout": 30,
-        "retries": 3,
-        "max_filesize": max_file_size,
-        "match_filter": within_duration,
-        "progress_hooks": [enforce_download_size],
-        "writeinfojson": False,
-        "writethumbnail": False,
+        "match_filter": _duration_filter(max_duration),
+        "progress_hooks": [_size_hook(max_file_size)],
     }
-    if cookie_file:
-        opts["cookiefile"] = cookie_file
-    return opts
+
+
+def _audio_path(ydl, info: dict, tmpdir: str) -> str:
+    path = ydl.prepare_filename(info)
+    if os.path.isfile(path):
+        return path
+    candidates = [
+        os.path.join(tmpdir, name)
+        for name in os.listdir(tmpdir)
+        if os.path.isfile(os.path.join(tmpdir, name))
+    ]
+    if len(candidates) != 1:
+        raise RuntimeError("yt-dlp did not produce one unambiguous audio file")
+    return candidates[0]
+
+
+def _checked_audio_size(path: str, max_file_size: int) -> int:
+    actual_size = os.path.getsize(path)
+    if actual_size > max_file_size:
+        raise ValueError("Downloaded audio exceeds the configured size limit")
+    if not actual_size:
+        raise RuntimeError("yt-dlp produced an empty audio file")
+    return actual_size
 
 
 async def download_audio(
@@ -169,28 +194,24 @@ async def download_audio(
             info = ydl.extract_info(url, download=True)
             if info is None:
                 raise RuntimeError("yt-dlp returned no audio information")
-            path = ydl.prepare_filename(info)
-        if not os.path.isfile(path):
-            candidates = [
-                os.path.join(tmpdir, name)
-                for name in os.listdir(tmpdir)
-                if os.path.isfile(os.path.join(tmpdir, name))
-            ]
-            if len(candidates) != 1:
-                raise RuntimeError("yt-dlp did not produce one unambiguous audio file")
-            path = candidates[0]
-        actual_size = os.path.getsize(path)
-        if actual_size > max_file_size:
-            raise ValueError("Downloaded audio exceeds the configured size limit")
-        if not actual_size:
-            raise RuntimeError("yt-dlp produced an empty audio file")
+            path = _audio_path(ydl, info, tmpdir)
         return path, {
             "title": info.get("title") or "Untitled audio",
             "duration": info.get("duration"),
-            "size": actual_size,
+            "size": _checked_audio_size(path, max_file_size),
         }
 
     return await loop.run_in_executor(None, _run)
+
+
+def _media_meta(info: Mapping[str, Any]) -> dict:
+    return {
+        "title": info.get("title"),
+        "uploader": info.get("uploader") or info.get("channel"),
+        "duration": info.get("duration"),
+        "width": info.get("width"),
+        "height": info.get("height"),
+    }
 
 
 async def download(url: str, tmpdir: str) -> list[MediaResult]:
@@ -204,19 +225,7 @@ async def download(url: str, tmpdir: str) -> list[MediaResult]:
             info = ydl.extract_info(url, download=True)
         if info is None:
             raise RuntimeError("yt-dlp returned no info")
-        meta = {
-            "title": info.get("title"),
-            "uploader": info.get("uploader") or info.get("channel"),
-            "duration": info.get("duration"),
-            "width": info.get("width"),
-            "height": info.get("height"),
-        }
-        return _scan_new_files(
-            tmpdir,
-            before,
-            meta,
-            info.get("vcodec", ""),
-            info.get("acodec", ""),
-        )
+        codecs = (info.get("vcodec", ""), info.get("acodec", ""))
+        return _scan_new_files(tmpdir, before, _media_meta(info), codecs)
 
     return await loop.run_in_executor(None, _run)

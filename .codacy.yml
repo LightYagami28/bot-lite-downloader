@@ -17,9 +17,3 @@ engines:
   oxlint:
     exclude_paths:
       - "botlite/webapp/static/app.js"
-  prospector:
-    exclude_paths:
-      # Codacy non installa le dipendenze (telethon, aiohttp, yt-dlp, pytgcalls): pyright segnala come
-      # irrisolti gli import e vulture come inutilizzate le funzioni registrate dai decoratori degli
-      # handler Telegram. Il tipo e il codice morto sono verificati da ruff e dalla CI.
-      - "botlite/**"

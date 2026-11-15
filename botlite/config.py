@@ -75,30 +75,42 @@ WEBAPP_PORT = _int("WEBAPP_PORT", 8080)
 WEBAPP_INIT_DATA_MAX_AGE = _int("WEBAPP_INIT_DATA_MAX_AGE", 3600)
 
 
-def validate() -> None:
-    """Abort with a clear message if required credentials are missing."""
+def _credential_errors() -> list[str]:
+    missing = (("API_ID", API_ID), ("API_HASH", API_HASH), ("BOT_TOKEN", BOT_TOKEN))
+    return [f"{name} is not set" for name, value in missing if not value]
+
+
+def _group_errors() -> list[str]:
     errors = []
-    if not API_ID:
-        errors.append("API_ID is not set")
-    if not API_HASH:
-        errors.append("API_HASH is not set")
-    if not BOT_TOKEN:
-        errors.append("BOT_TOKEN is not set")
+    if ALLOW_GROUPS and not ALLOWED_GROUP_IDS:
+        errors.append("ALLOW_GROUPS requires at least one non-zero ALLOWED_GROUP_IDS entry")
+    return errors + _voice_errors()
+
+
+def _voice_errors() -> list[str]:
+    if VOICE_ENABLED and not (ALLOW_GROUPS and ALLOWED_GROUP_IDS):
+        return ["VOICE_ENABLED requires ALLOW_GROUPS and an explicit ALLOWED_GROUP_IDS allowlist"]
+    return []
+
+
+def _limit_errors() -> list[str]:
+    limits = (
+        ("VOICE_MAX_DURATION", VOICE_MAX_DURATION),
+        ("VOICE_MAX_FILE_SIZE", VOICE_MAX_FILE_SIZE),
+    )
+    return [f"{name} must be greater than zero" for name, value in limits if value <= 0]
+
+
+def _config_errors() -> list[str]:
+    errors = _credential_errors()
     if WEBAPP_PUBLIC_URL and not WEBAPP_PUBLIC_URL.lower().startswith("https://"):
         errors.append("WEBAPP_PUBLIC_URL must use HTTPS")
-    if ALLOW_GROUPS and not ALLOWED_GROUP_IDS:
-        errors.append(
-            "ALLOW_GROUPS requires at least one non-zero ALLOWED_GROUP_IDS entry"
-        )
-    if VOICE_ENABLED and (not ALLOW_GROUPS or not ALLOWED_GROUP_IDS):
-        errors.append(
-            "VOICE_ENABLED requires ALLOW_GROUPS and an explicit "
-            "ALLOWED_GROUP_IDS allowlist"
-        )
-    if VOICE_MAX_DURATION <= 0:
-        errors.append("VOICE_MAX_DURATION must be greater than zero")
-    if VOICE_MAX_FILE_SIZE <= 0:
-        errors.append("VOICE_MAX_FILE_SIZE must be greater than zero")
+    return errors + _group_errors() + _limit_errors()
+
+
+def validate() -> None:
+    """Abort with a clear message if required credentials are missing."""
+    errors = _config_errors()
     if errors:
         for error in errors:
             print(f"[CONFIG ERROR] {error}", file=sys.stderr)

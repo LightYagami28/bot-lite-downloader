@@ -20,11 +20,11 @@ def test_fmt_uptime():
 
 
 def test_build_caption_variants():
-    caption = build_caption("video", "My Title", "Uploader", 75, 2048)
+    caption = build_caption("video", "My Title", "Uploader", (75, 2048))
     assert "🎬 **My Title**" in caption
     assert "👤 Uploader" in caption
     assert "⏱ 1:15" in caption
     assert "📦 2.0 KB" in caption
 
-    fallback = build_caption("unknown", None, None, None, None)
+    fallback = build_caption("unknown", None)
     assert fallback == "📎 **Media**"

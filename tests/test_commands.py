@@ -229,3 +229,18 @@ def test_cmd_voice_play_guards(monkeypatch):
         assert "Usage: `/play https://" in event_bad.replies[0][0]
 
     asyncio.run(exercise())
+
+
+def _command_patterns():
+    return {
+        callback.__name__: event.pattern
+        for callback, event in commands.client.list_event_handlers()
+        if callback.__name__ in {"cmd_voice_play", "cmd_voice_control"}
+    }
+
+
+def test_voice_command_patterns_accept_a_bot_username_suffix():
+    patterns = _command_patterns()
+    assert patterns["cmd_voice_play"]("/play@some_bot https://example.com/a")
+    assert patterns["cmd_voice_control"]("/pause@some_bot")
+    assert patterns["cmd_voice_control"]("/voice_stop")

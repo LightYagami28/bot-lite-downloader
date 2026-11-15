@@ -17,22 +17,26 @@ _MAX_INIT_DATA_LENGTH = 8 * 1024
 _INIT_DATA_CLOCK_SKEW = 60  # seconds of client clock skew tolerated
 
 
-def _parse_fields(init_data: str) -> dict[str, str] | None:
-    """Split initData into fields, rejecting malformed or duplicate-key input."""
-    if not init_data or len(init_data) > _MAX_INIT_DATA_LENGTH:
-        return None
+def _query_pairs(init_data: str) -> list[tuple[str, str]]:
     # Telegram signs the exact decoded key/value set. Reject duplicate keys
     # instead of silently accepting whichever value happens to win in a dict;
     # this prevents parser differentials between proxies and the application.
     try:
-        pairs = urllib.parse.parse_qsl(
+        return urllib.parse.parse_qsl(
             init_data,
             keep_blank_values=True,
             strict_parsing=True,
             max_num_fields=32,
         )
     except ValueError:
+        return []
+
+
+def _parse_fields(init_data: str) -> dict[str, str] | None:
+    """Split initData into fields, rejecting malformed or duplicate-key input."""
+    if not init_data or len(init_data) > _MAX_INIT_DATA_LENGTH:
         return None
+    pairs = _query_pairs(init_data)
     params = dict(pairs)
     return params if pairs and len(params) == len(pairs) else None
 
@@ -73,6 +77,10 @@ def _parse_user(params: dict[str, str]) -> dict[str, Any] | None:
     return user
 
 
+def _authentic(params: dict[str, str], received_hash: str) -> bool:
+    return _signature_valid(params, received_hash) and _fresh(params)
+
+
 def validate_init_data(init_data: str) -> dict[str, Any] | None:
     """
     Validate the initData string sent by Telegram WebApp.
@@ -82,8 +90,6 @@ def validate_init_data(init_data: str) -> dict[str, Any] | None:
     """
     params = _parse_fields(init_data) if BOT_TOKEN else None
     received_hash = params.pop("hash", None) if params else None
-    if not received_hash:
-        return None
-    if not _signature_valid(params, received_hash) or not _fresh(params):
+    if not received_hash or not _authentic(params, received_hash):
         return None
     return _parse_user(params)
