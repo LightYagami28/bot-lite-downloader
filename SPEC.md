@@ -36,12 +36,12 @@ Moduli e test: `botlite/` (app, client, config, db, errors, voice, `handlers/`,
 `downloader/`, `utils/`, `webapp/`), 20 file di test in `tests/`. `pytest` è
 configurato con `filterwarnings = ["error"]`.
 
-CI: `sonarqube-linux.yml` esegue installazione, controllo dei lock, `pytest -W
-error::DeprecationWarning --cov=botlite`, `ruff check .`, regole di sicurezza
-`ruff check botlite --select S`, `pip-audit -r requirements-dev.lock`, build
-dell'immagine, scansione SonarQube (solo con `SONAR_TOKEN`). Esistono anche
-`sonarqube-macos.yml`, `sonarqube-windows.yml` e `docker-scout.yml` (servono
-segreti).
+CI: `sonarqube-linux.yml` esegue installazione, controllo dei lock,
+`pytest -W error::DeprecationWarning --cov=botlite`, `ruff check .`, regole di
+sicurezza `ruff check botlite --select S`, `pip-audit -r requirements-dev.lock`,
+build dell'immagine, scansione SonarQube (solo con `SONAR_TOKEN`). Esistono
+anche `sonarqube-macos.yml`, `sonarqube-windows.yml` e `docker-scout.yml`
+(servono segreti).
 
 Incongruenze trovate:
 
@@ -200,13 +200,13 @@ python -m venv .venv && .venv/bin/python -m pip install -r requirements-dev.txt 
 docker build --tag botlite-downloader:ci .
 ```
 
-Per usare i lock con hash: `pip install --require-hashes -r
-requirements-dev.lock`.
+Per usare i lock con hash:
+`pip install --require-hashes -r requirements-dev.lock`.
 
 ### Verifica eseguita
 
 Il 2026-11-11 con Python 3.14.10 su Windows, in un ambiente nuovo da
-`requirements-dev.txt`: `ruff check .` riporta «All checks passed!»; `pytest -W
-error::DeprecationWarning --cov=botlite` riporta 144 test passati e coverage del
-100% (1010 istruzioni, 0 non coperte). `pip-audit` e `docker build` non sono
-stati eseguiti in questa revisione (da confermare in CI).
+`requirements-dev.txt`: `ruff check .` riporta «All checks passed!»;
+`pytest -W error::DeprecationWarning --cov=botlite` riporta 144 test passati e
+coverage del 100% (1010 istruzioni, 0 non coperte). `pip-audit` e `docker build`
+non sono stati eseguiti in questa revisione (da confermare in CI).

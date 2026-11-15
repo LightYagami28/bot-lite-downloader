@@ -1,10 +1,9 @@
 # Contributing
 
-BotLite Downloader is under active maintenance after a period of several
-months without regular updates. Light is currently coordinating the renewal of
-the codebase, dependency updates, Telegram WebApp hardening and documentation;
-the original authors and all prior contributors remain part of the project
-history.
+BotLite Downloader is under active maintenance after a period of several months
+without regular updates. Light is currently coordinating the renewal of the
+codebase, dependency updates, Telegram WebApp hardening and documentation; the
+original authors and all prior contributors remain part of the project history.
 
 ## Before opening a pull request
 
@@ -19,9 +18,9 @@ Do not commit `.env`, Telegram sessions, cookie files, databases, downloaded
 media or credentials. New WebApp endpoints must validate Telegram `initData`
 server-side and admin routes must enforce `SUDO_USERS`.
 
-Group support must remain opt-in, rate-limited and safe for shared chats. Do
-not log message contents, cookies or bot tokens. Prefer small, reviewable
-commits and add regression tests for security-sensitive behavior.
+Group support must remain opt-in, rate-limited and safe for shared chats. Do not
+log message contents, cookies or bot tokens. Prefer small, reviewable commits
+and add regression tests for security-sensitive behavior.
 
 ## Release checklist
 
@@ -32,8 +31,8 @@ commits and add regression tests for security-sensitive behavior.
 
 ## Dependency updates
 
-Edit `requirements.txt` / `requirements-dev.txt` / `pyproject.toml`, then regenerate the locks
-exactly as CI checks them:
+Edit `requirements.txt` / `requirements-dev.txt` / `pyproject.toml`, then
+regenerate the locks exactly as CI checks them:
 
 ```bash
 uv pip compile requirements.txt --universal --python-version 3.14 --generate-hashes --no-header -o requirements.lock
