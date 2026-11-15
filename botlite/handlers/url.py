@@ -34,8 +34,8 @@ _URL_RE = re.compile(r"https?://(?!t\.me/)[^\s<>\"{}|\\^`\[\]]+")
 # ── Media sender ──────────────────────────────────────────────────────────────
 
 
-async def _send_media(event, fp: str, meta: dict, mtype: str) -> None:
-    size = os.path.getsize(fp)
+async def _send_media(event, file_path: str, meta: dict, mtype: str) -> None:
+    size = os.path.getsize(file_path)
     caption = build_caption(
         mtype, meta.get("title"), meta.get("uploader"), meta.get("duration"), size
     )
@@ -63,7 +63,7 @@ async def _send_media(event, fp: str, meta: dict, mtype: str) -> None:
             )
         ]
 
-    await client.send_file(event.chat_id, fp, **kwargs)
+    await client.send_file(event.chat_id, file_path, **kwargs)
 
 
 async def _safe_edit(msg, text: str) -> None:
@@ -108,8 +108,8 @@ async def _upload_results(event, status, results: list) -> int:
     )
 
     sent = 0
-    for i, (fp, meta, mtype) in enumerate(results, 1):
-        size = os.path.getsize(fp)
+    for i, (file_path, meta, mtype) in enumerate(results, 1):
+        size = os.path.getsize(file_path)
         if size > MAX_FILE_SIZE:
             await event.reply(
                 f"⚠️ File {i}/{total} skipped — too large ({fmt_size(size)}).",
@@ -119,19 +119,19 @@ async def _upload_results(event, status, results: list) -> int:
         if total > 1:
             await _safe_edit(status, f"📤 **Uploading {i}/{total}…**")
         try:
-            await _send_media(event, fp, meta, mtype)
+            await _send_media(event, file_path, meta, mtype)
             sent += 1
         except RECOVERABLE_ERRORS as exc:
-            log.exception("Send failed for %s", fp)
+            log.exception("Send failed for %s", file_path)
             await event.reply(
                 f"❌ Failed to send file {i}: `{str(exc)[:150]}`",
                 parse_mode="md",
             )
         finally:
             try:
-                os.remove(fp)
+                os.remove(file_path)
             except OSError as exc:
-                log.debug("Unable to remove downloaded file %s: %s", fp, exc)
+                log.debug("Unable to remove downloaded file %s: %s", file_path, exc)
     return sent
 
 

@@ -25,16 +25,20 @@ MediaResult = tuple[str, dict, str]  # (filepath, meta, mediatype)
 
 class _Logger:
     def debug(self, msg: str) -> None:
+        """Forward a yt-dlp debug message to the botlite logger."""
         if not msg.startswith("[debug] "):
             log.debug(_LOG_FMT, msg)
 
     def info(self, msg: str) -> None:
+        """Forward a yt-dlp info message to the botlite logger."""
         log.info(_LOG_FMT, msg)
 
     def warning(self, msg: str) -> None:
+        """Forward a yt-dlp warning message to the botlite logger."""
         log.warning(_LOG_FMT, msg)
 
     def error(self, msg: str) -> None:
+        """Forward a yt-dlp error message to the botlite logger."""
         log.error(_LOG_FMT, msg)
 
 
@@ -49,15 +53,15 @@ def _guess_mtype(path: str) -> str:
     return "video"
 
 
-def _mtype_from_info(fp: str, vcodec: str, acodec: str) -> str:
-    ext = os.path.splitext(fp)[1].lower()
+def _mtype_from_info(file_path: str, vcodec: str, acodec: str) -> str:
+    ext = os.path.splitext(file_path)[1].lower()
     if ext in _IMAGE_EXTS:
         return "photo"
     if vcodec and vcodec != "none":
         return "video"
     if acodec and acodec != "none":
         return "audio"
-    return _guess_mtype(fp)
+    return _guess_mtype(file_path)
 
 
 def _scan_new_files(
@@ -72,11 +76,11 @@ def _scan_new_files(
         raise RuntimeError("yt-dlp finished but no file was written")
 
     results = []
-    for fp in new_files:
-        if os.path.splitext(fp)[1].lower() not in ALL_EXTS:
+    for file_path in new_files:
+        if os.path.splitext(file_path)[1].lower() not in ALL_EXTS:
             continue
-        mtype = _mtype_from_info(fp, vcodec, acodec)
-        results.append((fp, {**meta, "size": os.path.getsize(fp)}, mtype))
+        mtype = _mtype_from_info(file_path, vcodec, acodec)
+        results.append((file_path, {**meta, "size": os.path.getsize(file_path)}, mtype))
     return results
 
 

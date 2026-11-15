@@ -33,7 +33,7 @@ def _int_list(key: str) -> list[int]:
 
 def _nonzero_int_list(key: str) -> set[int]:
     # Telegram supergroup/channel IDs are commonly negative.
-    return {value for value in _int_list(key) if value != 0}
+    return {value for value in _int_list(key) if value}
 
 
 def _bool(key: str, default: bool = False) -> bool:
@@ -100,7 +100,7 @@ def validate() -> None:
     if VOICE_MAX_FILE_SIZE <= 0:
         errors.append("VOICE_MAX_FILE_SIZE must be greater than zero")
     if errors:
-        for e in errors:
-            print(f"[CONFIG ERROR] {e}", file=sys.stderr)
+        for error in errors:
+            print(f"[CONFIG ERROR] {error}", file=sys.stderr)
         print("Set these in a .env file or as environment variables.", file=sys.stderr)
         sys.exit(1)

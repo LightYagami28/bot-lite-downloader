@@ -32,15 +32,15 @@ def free_disk(path: str = ".") -> int:
 def cleanup_old_temps() -> None:
     """Remove stale botlite_ temp dirs older than 1 hour left by crashes."""
     pattern = os.path.join(tempfile.gettempdir(), "botlite_*")
-    for d in glob.glob(pattern):
+    for stale_dir in glob.glob(pattern):
         try:
-            if os.path.isdir(d) and (
-                time.time() - os.path.getmtime(d)
+            if os.path.isdir(stale_dir) and (
+                time.time() - os.path.getmtime(stale_dir)
             ) > _STALE_TEMP_MAX_AGE:
-                shutil.rmtree(d, ignore_errors=True)
-                log.info("Cleaned stale temp dir: %s", d)
+                shutil.rmtree(stale_dir, ignore_errors=True)
+                log.info("Cleaned stale temp dir: %s", stale_dir)
         except OSError as exc:
-            log.warning("Unable to clean stale temp dir %s: %s", d, exc)
+            log.warning("Unable to clean stale temp dir %s: %s", stale_dir, exc)
 
 
 def check_cooldown(user_cooldowns: dict[int, float], user_id: int) -> float:

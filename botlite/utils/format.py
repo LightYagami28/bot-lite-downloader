@@ -5,24 +5,24 @@ from __future__ import annotations
 _BYTES_PER_UNIT = 1024
 
 
-def fmt_size(n: float | None) -> str:
+def fmt_size(size: float | None) -> str:
     """Format a byte count in human-readable units (B, KB, MB, …)."""
-    if n is None:
+    if size is None:
         return "Unknown"
     for unit in ("B", "KB", "MB", "GB"):
-        if n < _BYTES_PER_UNIT:
-            return f"{n:.1f} {unit}"
-        n /= _BYTES_PER_UNIT
-    return f"{n:.1f} TB"
+        if size < _BYTES_PER_UNIT:
+            return f"{size:.1f} {unit}"
+        size /= _BYTES_PER_UNIT
+    return f"{size:.1f} TB"
 
 
 def fmt_dur(secs: int | None) -> str:
     """Format a duration as H:MM:SS (M:SS below one hour); empty for falsy input."""
     if not secs:
         return ""
-    s = int(secs)
-    h, m, sec = s // 3600, (s % 3600) // 60, s % 60
-    return f"{h}:{m:02d}:{sec:02d}" if h else f"{m}:{sec:02d}"
+    total = int(secs)
+    hours, minutes, sec = total // 3600, (total % 3600) // 60, total % 60
+    return f"{hours}:{minutes:02d}:{sec:02d}" if hours else f"{minutes}:{sec:02d}"
 
 
 def fmt_uptime(secs: float) -> str:
