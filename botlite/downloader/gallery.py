@@ -25,9 +25,9 @@ MediaResult = tuple[str, dict, str]
 def _scan_files(tmpdir: str) -> list[MediaResult]:
     results = []
     for fname in sorted(os.listdir(tmpdir)):
-        fp = os.path.join(tmpdir, fname)
+        file_path = os.path.join(tmpdir, fname)
         ext = os.path.splitext(fname)[1].lower()
-        if not os.path.isfile(fp) or os.path.getsize(fp) < _MIN_FILE_SIZE:
+        if not os.path.isfile(file_path) or os.path.getsize(file_path) < _MIN_FILE_SIZE:
             continue
         if ext in _VIDEO_EXTS:
             mtype = "video"
@@ -37,7 +37,7 @@ def _scan_files(tmpdir: str) -> list[MediaResult]:
             mtype = "audio"
         else:
             continue
-        results.append((fp, {"size": os.path.getsize(fp)}, mtype))
+        results.append((file_path, {"size": os.path.getsize(file_path)}, mtype))
     if not results:
         raise RuntimeError("gallery-dl produced no usable files")
     return results
