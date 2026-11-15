@@ -38,7 +38,7 @@ def test_dashboard_references_external_same_origin_script():
 
     assert status == 200
     assert headers["Cache-Control"] == "no-store"
-    assert '<script defer src="/app.js"></script>' in body
+    assert '<script type="module" src="/app.js"></script>' in body
     assert '<script type="module">' not in body
 
 
