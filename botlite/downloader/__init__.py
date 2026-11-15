@@ -41,13 +41,7 @@ async def _extract(url: str, tmpdir: str) -> list[MediaResult]:
 
 
 async def download(url: str) -> tuple[str, list[MediaResult]]:
-    """Download media from *url*.
-
-    Returns (tmpdir, results). The caller is responsible for
-    cleaning up tmpdir (shutil.rmtree) after sending files.
-
-    Raises RuntimeError if both engines fail.
-    """
+    """Download *url*; return (tmpdir, results) or raise RuntimeError if both engines fail."""
     tmpdir = tempfile.mkdtemp(prefix="botlite_")
     try:
         results = await _extract(url, tmpdir)

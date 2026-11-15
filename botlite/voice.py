@@ -19,6 +19,8 @@ log = logging.getLogger("botlite.voice")
 
 @dataclass
 class Playback:
+    """The temporary directory and title of one voice-chat stream."""
+
     directory: tempfile.TemporaryDirectory[str]
     title: str
 
