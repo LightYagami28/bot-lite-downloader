@@ -27,9 +27,9 @@ def fmt_dur(secs: int | None) -> str:
 
 def fmt_uptime(secs: float) -> str:
     """Format seconds as ``Xh Ym Zs``."""
-    s = int(secs)
-    h, m, sec = s // 3600, (s % 3600) // 60, s % 60
-    return f"{h}h {m}m {sec}s"
+    total = int(secs)
+    hours, minutes, sec = total // 3600, (total % 3600) // 60, total % 60
+    return f"{hours}h {minutes}m {sec}s"
 
 
 def build_caption(

@@ -225,7 +225,8 @@ cookies{sitename}.txt
 2. Log in to the target site in Chrome
 3. Export → save the file with the correct name next to `run.py`
 
-> Cookie files contain sensitive session tokens — they are excluded from git by default.
+> Cookie files contain sensitive session tokens — they are excluded from git
+> by default.
 
 ---
 

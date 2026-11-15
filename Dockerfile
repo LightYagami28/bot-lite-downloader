@@ -26,8 +26,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # The runtime never installs anything: drop pip and its bundled wheels together with their
 # vendored libraries (urllib3, certifi, msgpack), which only add CVE noise to the image.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends ca-certificates ffmpeg \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && python -m pip uninstall --yes pip \
     && rm -rf /usr/local/lib/python3.14/ensurepip/_bundled
