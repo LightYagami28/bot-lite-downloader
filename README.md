@@ -1,18 +1,21 @@
 # BotLite Downloader
 
 <!-- ── Row 1 — Identity ─────────────────────────────────────────────────── -->
+
 [![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](https://python.org)
 [![Version](https://img.shields.io/badge/version-1.2.0-f97316?logo=git&logoColor=white)](https://github.com/LightYagami28/bot-lite-downloader/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-22c55e?logo=opensourceinitiative&logoColor=white)](LICENSE.md)
 [![Telegram](https://img.shields.io/badge/channel-LinuxBotsNews-26A5E4?logo=telegram&logoColor=white)](https://t.me/LinuxBotsNews)
 
 <!-- ── Row 2 — CI ────────────────────────────────────────────────────────── -->
+
 [![SonarCloud Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=LightYagami28_bot-lite-downloader&metric=alert_status)](https://sonarcloud.io/project/overview?id=LightYagami28_bot-lite-downloader)
 [![SonarCloud Security](https://sonarcloud.io/api/project_badges/measure?project=LightYagami28_bot-lite-downloader&metric=security_rating)](https://sonarcloud.io/project/overview?id=LightYagami28_bot-lite-downloader)
 [![SonarCloud Maintainability](https://sonarcloud.io/api/project_badges/measure?project=LightYagami28_bot-lite-downloader&metric=sqale_rating)](https://sonarcloud.io/project/overview?id=LightYagami28_bot-lite-downloader)
 [![SonarCloud Reliability](https://sonarcloud.io/api/project_badges/measure?project=LightYagami28_bot-lite-downloader&metric=reliability_rating)](https://sonarcloud.io/project/overview?id=LightYagami28_bot-lite-downloader)
 
 <!-- ── Row 3 — Security & deps ──────────────────────────────────────────── -->
+
 [![SonarQube Linux](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/sonarqube-linux.yml/badge.svg)](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/sonarqube-linux.yml)
 [![SonarQube macOS](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/sonarqube-macos.yml/badge.svg)](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/sonarqube-macos.yml)
 [![SonarQube Windows](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/sonarqube-windows.yml/badge.svg)](https://github.com/LightYagami28/bot-lite-downloader/actions/workflows/sonarqube-windows.yml)
@@ -20,6 +23,7 @@
 [![Dependabot](https://img.shields.io/badge/dependabot-enabled-0366d6?logo=dependabot&logoColor=white)](https://github.com/LightYagami28/bot-lite-downloader/network/updates)
 
 <!-- ── Row 4 — Stack ────────────────────────────────────────────────────── -->
+
 [![yt-dlp](https://img.shields.io/badge/engine-yt--dlp-FF0000?logo=youtube&logoColor=white)](https://github.com/yt-dlp/yt-dlp)
 [![Telethon](https://img.shields.io/badge/library-Telethon-26A5E4?logo=telegram&logoColor=white)](https://github.com/LonamiWebs/Telethon)
 [![Docker](https://img.shields.io/badge/base-Debian%20slim-2496ED?logo=docker&logoColor=white)](Dockerfile)
@@ -27,8 +31,8 @@
 
 ---
 
-Minimal, self-hosted Telegram bot that downloads media from 1 000+ sites
-and sends files straight to your DMs — with an optional **WebApp dashboard**
+Minimal, self-hosted Telegram bot that downloads media from 1 000+ sites and
+sends files straight to your DMs — with an optional **WebApp dashboard**
 accessible directly inside Telegram.
 
 > **Maintenance note:** the repository had gone several months without a
@@ -36,7 +40,7 @@ accessible directly inside Telegram.
 > refreshed its dependencies, restored automated checks and is progressively
 > modernising the Telegram WebApp and group-safety model. The original project
 > and contributors remain credited below.
-
+>
 > Open-source lite release of **[@UltimateFilesDownloaderBot](https://t.me/UltimateFilesDownloaderBot)**,
 > originally designed by **[linuxuser825](https://t.me/LinuxBotsNews)**.
 
@@ -44,18 +48,27 @@ accessible directly inside Telegram.
 
 ## Features
 
-- **1 000+ sites** — YouTube, TikTok, Instagram, Twitter/X, Reddit, Pinterest, Vimeo, SoundCloud, and [many more](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md)
-- **Dual download engine** — yt-dlp for video/audio, gallery-dl as fallback for photo carousels
-- **Telegram WebApp dashboard** — full-screen admin panel openable inside Telegram (status, stats, ban/unban)
-- **Inline keyboard buttons** — `/start`, `/status`, `/stats` all show a **📊 Open Dashboard** button when the webapp is enabled
-- **Cookie support** — drop a `cookiesSiteName.txt` to unlock age-restricted or private content
+- **1 000+ sites** — YouTube, TikTok, Instagram, Twitter/X, Reddit, Pinterest,
+  Vimeo, SoundCloud, and [many
+  more](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md)
+- **Dual download engine** — yt-dlp for video/audio, gallery-dl as fallback for
+  photo carousels
+- **Telegram WebApp dashboard** — full-screen admin panel openable inside
+  Telegram (status, stats, ban/unban)
+- **Inline keyboard buttons** — `/start`, `/status`, `/stats` all show a **📊
+  Open Dashboard** button when the webapp is enabled
+- **Cookie support** — drop a `cookiesSiteName.txt` to unlock age-restricted or
+  private content
 - **Private chats by default** — group handling is opt-in through `ALLOW_GROUPS`
   and remains subject to the same limits and permissions
 - **Config via `.env`** — no hardcoded secrets, Docker-friendly
-- **Built-in safeguards** — disk space guard, per-user cooldown, concurrent download semaphore
+- **Built-in safeguards** — disk space guard, per-user cooldown, concurrent
+  download semaphore
 - **Graceful shutdown** — handles `SIGTERM` cleanly for Docker and systemd
-- **Hardened Docker image** — digest-pinned Debian slim, non-root user, minimal runtime packages
-- **Optional voice-chat playback** — bounded audio streaming in explicitly allowlisted groups
+- **Hardened Docker image** — digest-pinned Debian slim, non-root user, minimal
+  runtime packages
+- **Optional voice-chat playback** — bounded audio streaming in explicitly
+  allowlisted groups
 
 ---
 
@@ -139,8 +152,8 @@ Copy `.env.example` to `.env` and fill in your values:
 
 ## WebApp Dashboard
 
-When `WEBAPP_PUBLIC_URL` is set, BotLite starts an embedded **aiohttp** web server and
-adds a **📊 Open Dashboard** button to every command reply.
+When `WEBAPP_PUBLIC_URL` is set, BotLite starts an embedded **aiohttp** web
+server and adds a **📊 Open Dashboard** button to every command reply.
 
 The dashboard opens full-screen inside Telegram and provides:
 
@@ -150,11 +163,12 @@ The dashboard opens full-screen inside Telegram and provides:
 | Download statistics (succeeded / failed / success rate) | `SUDO_USERS` only |
 | Ban / Unban by User ID | `SUDO_USERS` only |
 
-Access is authenticated via Telegram's **WebApp `initData`** (HMAC-SHA256 signature verified server-side).
+Access is authenticated via Telegram's **WebApp `initData`** (HMAC-SHA256
+signature verified server-side).
 
-Group downloads are disabled by default. To enable them safely, set `ALLOW_GROUPS=true`
-and provide only the required IDs in `ALLOWED_GROUP_IDS`; an empty allowlist is rejected
-by configuration validation.
+Group downloads are disabled by default. To enable them safely, set
+`ALLOW_GROUPS=true` and provide only the required IDs in `ALLOWED_GROUP_IDS`; an
+empty allowlist is rejected by configuration validation.
 
 Voice playback is opt-in and requires `ALLOW_GROUPS=true`, an explicit
 `ALLOWED_GROUP_IDS` list, and `VOICE_ENABLED=true`. Install the bot in an
@@ -162,13 +176,14 @@ allowlisted group and start a Telegram voice chat manually before issuing
 `/play https://…`; BotLite will not create a call automatically. Playback uses
 PyTgCalls/NTgCalls over the existing Telethon client. `/pause`, `/resume` and
 `/voice_stop` control the current track. Unknown-duration media, playlists, and
-tracks exceeding the configured duration/size are rejected. The local audio
-file remains until playback ends or is stopped, then is removed. Test this with
-a dedicated bot and private test group before production use.
+tracks exceeding the configured duration/size are rejected. The local audio file
+remains until playback ends or is stopped, then is removed. Test this with a
+dedicated bot and private test group before production use.
 
 The native NTgCalls wheels target glibc, so the Docker image uses Debian slim
-instead of Alpine/musl. `ffmpeg` is installed for media decoding. The CI workflow
-builds the image to catch dependency and native-library integration failures.
+instead of Alpine/musl. `ffmpeg` is installed for media decoding. The CI
+workflow builds the image to catch dependency and native-library integration
+failures.
 
 ### HTTPS requirement
 
@@ -189,8 +204,8 @@ Then set `WEBAPP_PUBLIC_URL=https://your-domain-or-tunnel.com` in `.env`.
 
 ## Cookie Setup (optional)
 
-Some sites require authentication for age-restricted or private content.
-Place Netscape-format cookie files next to `run.py`:
+Some sites require authentication for age-restricted or private content. Place
+Netscape-format cookie files next to `run.py`:
 
 ```text
 cookies{sitename}.txt
@@ -205,7 +220,8 @@ cookies{sitename}.txt
 
 **How to export:**
 
-1. Install [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)
+1. Install [Get cookies.txt
+   LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)
 2. Log in to the target site in Chrome
 3. Export → save the file with the correct name next to `run.py`
 
@@ -314,7 +330,8 @@ BotLite-Downloader/
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) for vulnerability reporting and self-hosting hardening notes.
+See [SECURITY.md](SECURITY.md) for vulnerability reporting and self-hosting
+hardening notes.
 
 ---
 
