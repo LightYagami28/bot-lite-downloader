@@ -28,7 +28,7 @@ from botlite.config import (
 )
 from botlite.downloader.ytdlp import download_audio
 from botlite.errors import RECOVERABLE_ERRORS
-from botlite.handlers.access import group_allowed
+from botlite.handlers.access import group_allowed, origin_of
 from botlite.utils.format import fmt_size, fmt_uptime
 from botlite.utils.system import check_cooldown, free_disk
 from botlite.voice import get_voice_manager
@@ -115,7 +115,7 @@ async def cmd_help(event):
     if not group_allowed(event):
         return
     await event.reply(
-        _help_text(event.is_group),
+        _help_text(origin_of(event).group),
         parse_mode="md",
         link_preview=False,
         buttons=_dashboard_button(),
@@ -282,7 +282,7 @@ async def _play_from_url(event, url: str) -> None:
 
 
 def _voice_group_allowed(event) -> bool:
-    return VOICE_ENABLED and event.is_group and group_allowed(event)
+    return VOICE_ENABLED and origin_of(event).group and group_allowed(event)
 
 
 async def cmd_voice_play(event):

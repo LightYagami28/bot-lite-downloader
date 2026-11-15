@@ -81,17 +81,16 @@ def _credential_errors() -> list[str]:
 
 
 def _group_errors() -> list[str]:
-    checks = (
-        (
-            ALLOW_GROUPS and not ALLOWED_GROUP_IDS,
-            "ALLOW_GROUPS requires at least one non-zero ALLOWED_GROUP_IDS entry",
-        ),
-        (
-            VOICE_ENABLED and (not ALLOW_GROUPS or not ALLOWED_GROUP_IDS),
-            "VOICE_ENABLED requires ALLOW_GROUPS and an explicit ALLOWED_GROUP_IDS allowlist",
-        ),
-    )
-    return [message for failed, message in checks if failed]
+    errors = []
+    if ALLOW_GROUPS and not ALLOWED_GROUP_IDS:
+        errors.append("ALLOW_GROUPS requires at least one non-zero ALLOWED_GROUP_IDS entry")
+    return errors + _voice_errors()
+
+
+def _voice_errors() -> list[str]:
+    if VOICE_ENABLED and not (ALLOW_GROUPS and ALLOWED_GROUP_IDS):
+        return ["VOICE_ENABLED requires ALLOW_GROUPS and an explicit ALLOWED_GROUP_IDS allowlist"]
+    return []
 
 
 def _limit_errors() -> list[str]:

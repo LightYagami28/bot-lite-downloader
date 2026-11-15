@@ -37,7 +37,11 @@ def is_message_allowed(
     return origin.private or _group_allowed(origin, allow_groups, allowed_group_ids)
 
 
+def origin_of(event) -> MessageOrigin:
+    """Describe where a Telethon event came from."""
+    return MessageOrigin(event.is_private, event.is_group, event.chat_id, event.sender_id)
+
+
 def group_allowed(event) -> bool:
     """Apply the configured group policy to a Telethon event."""
-    origin = MessageOrigin(event.is_private, event.is_group, event.chat_id, event.sender_id)
-    return is_message_allowed(origin, ALLOW_GROUPS, ALLOWED_GROUP_IDS)
+    return is_message_allowed(origin_of(event), ALLOW_GROUPS, ALLOWED_GROUP_IDS)
