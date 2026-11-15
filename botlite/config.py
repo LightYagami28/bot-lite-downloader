@@ -75,28 +75,38 @@ WEBAPP_PORT = _int("WEBAPP_PORT", 8080)
 WEBAPP_INIT_DATA_MAX_AGE = _int("WEBAPP_INIT_DATA_MAX_AGE", 3600)
 
 
-def _config_errors() -> list[str]:
+def _credential_errors() -> list[str]:
+    missing = (("API_ID", API_ID), ("API_HASH", API_HASH), ("BOT_TOKEN", BOT_TOKEN))
+    return [f"{name} is not set" for name, value in missing if not value]
+
+
+def _group_errors() -> list[str]:
     checks = (
-        (not API_ID, "API_ID is not set"),
-        (not API_HASH, "API_HASH is not set"),
-        (not BOT_TOKEN, "BOT_TOKEN is not set"),
-        (
-            bool(WEBAPP_PUBLIC_URL)
-            and not WEBAPP_PUBLIC_URL.lower().startswith("https://"),
-            "WEBAPP_PUBLIC_URL must use HTTPS",
-        ),
         (
             ALLOW_GROUPS and not ALLOWED_GROUP_IDS,
             "ALLOW_GROUPS requires at least one non-zero ALLOWED_GROUP_IDS entry",
         ),
         (
             VOICE_ENABLED and (not ALLOW_GROUPS or not ALLOWED_GROUP_IDS),
-            ("VOICE_ENABLED requires ALLOW_GROUPS and an explicit ALLOWED_GROUP_IDS allowlist"),
+            "VOICE_ENABLED requires ALLOW_GROUPS and an explicit ALLOWED_GROUP_IDS allowlist",
         ),
-        (VOICE_MAX_DURATION <= 0, "VOICE_MAX_DURATION must be greater than zero"),
-        (VOICE_MAX_FILE_SIZE <= 0, "VOICE_MAX_FILE_SIZE must be greater than zero"),
     )
     return [message for failed, message in checks if failed]
+
+
+def _limit_errors() -> list[str]:
+    limits = (
+        ("VOICE_MAX_DURATION", VOICE_MAX_DURATION),
+        ("VOICE_MAX_FILE_SIZE", VOICE_MAX_FILE_SIZE),
+    )
+    return [f"{name} must be greater than zero" for name, value in limits if value <= 0]
+
+
+def _config_errors() -> list[str]:
+    errors = _credential_errors()
+    if WEBAPP_PUBLIC_URL and not WEBAPP_PUBLIC_URL.lower().startswith("https://"):
+        errors.append("WEBAPP_PUBLIC_URL must use HTTPS")
+    return errors + _group_errors() + _limit_errors()
 
 
 def validate() -> None:

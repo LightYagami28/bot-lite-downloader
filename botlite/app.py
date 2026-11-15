@@ -56,18 +56,26 @@ async def _start_services() -> None:
         await importlib.import_module("botlite.webapp").start_webapp()
 
 
+async def _stop_extras() -> None:
+    if VOICE_ENABLED:
+        await get_voice_manager().shutdown()
+    if WEBAPP_PUBLIC_URL:
+        await importlib.import_module("botlite.webapp").stop_webapp()
+
+
+async def _disconnect_client() -> None:
+    try:
+        await client.disconnect()
+    finally:
+        if VOICE_ENABLED:
+            get_voice_manager().cleanup_after_disconnect()
+
+
 async def _stop_services() -> None:
     try:
-        if VOICE_ENABLED:
-            await get_voice_manager().shutdown()
-        if WEBAPP_PUBLIC_URL:
-            await importlib.import_module("botlite.webapp").stop_webapp()
+        await _stop_extras()
     finally:
-        try:
-            await client.disconnect()
-        finally:
-            if VOICE_ENABLED:
-                get_voice_manager().cleanup_after_disconnect()
+        await _disconnect_client()
 
 
 async def _main() -> None:

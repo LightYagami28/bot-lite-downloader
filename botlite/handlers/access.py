@@ -12,8 +12,8 @@ from botlite.config import ALLOW_GROUPS, ALLOWED_GROUP_IDS
 class MessageOrigin:
     """Where a message came from."""
 
-    is_private: bool
-    is_group: bool
+    private: bool
+    group: bool
     chat_id: int | None
     sender_id: int | None
 
@@ -21,7 +21,7 @@ class MessageOrigin:
 def _group_allowed(
     origin: MessageOrigin, allow_groups: bool, allowed_group_ids: Collection[int]
 ) -> bool:
-    if not (allow_groups and origin.is_group):
+    if not (allow_groups and origin.group):
         return False
     return origin.chat_id is not None and origin.chat_id in allowed_group_ids
 
@@ -34,7 +34,7 @@ def is_message_allowed(
     """Allow a real user in private chats or an allowlisted group only."""
     if origin.sender_id is None or origin.sender_id <= 0:
         return False
-    return origin.is_private or _group_allowed(origin, allow_groups, allowed_group_ids)
+    return origin.private or _group_allowed(origin, allow_groups, allowed_group_ids)
 
 
 def group_allowed(event) -> bool:

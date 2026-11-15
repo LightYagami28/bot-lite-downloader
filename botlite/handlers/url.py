@@ -34,26 +34,37 @@ _URL_RE = re.compile(r"https?://(?!t\.me/)[^\s<>\"{}|\\^`\[\]]+")
 # ── Media sender ──────────────────────────────────────────────────────────────
 
 
+def _int_field(meta: dict, key: str) -> int:
+    return int(meta.get(key) or 0)
+
+
+def _video_attributes(meta: dict) -> list:
+    return [
+        DocumentAttributeVideo(
+            duration=_int_field(meta, "duration"),
+            w=_int_field(meta, "width"),
+            h=_int_field(meta, "height"),
+            supports_streaming=True,
+        )
+    ]
+
+
+def _audio_attributes(meta: dict) -> list:
+    return [
+        DocumentAttributeAudio(
+            duration=_int_field(meta, "duration"),
+            title=meta.get("title") or "",
+            performer=meta.get("uploader") or "",
+        )
+    ]
+
+
+_ATTRIBUTE_BUILDERS = {"video": _video_attributes, "audio": _audio_attributes}
+
+
 def _media_attributes(meta: dict, mtype: str) -> list:
-    duration = int(meta.get("duration") or 0)
-    if mtype == "video":
-        return [
-            DocumentAttributeVideo(
-                duration=duration,
-                w=int(meta.get("width") or 0),
-                h=int(meta.get("height") or 0),
-                supports_streaming=True,
-            )
-        ]
-    if mtype == "audio":
-        return [
-            DocumentAttributeAudio(
-                duration=duration,
-                title=meta.get("title") or "",
-                performer=meta.get("uploader") or "",
-            )
-        ]
-    return []
+    builder = _ATTRIBUTE_BUILDERS.get(mtype)
+    return builder(meta) if builder else []
 
 
 async def _send_media(event, file_path: str, meta: dict, mtype: str) -> None:
@@ -115,20 +126,26 @@ def _remove_file(file_path: str) -> None:
         log.debug("Unable to remove downloaded file %s: %s", file_path, exc)
 
 
+async def _reject_oversize(event, size: int, position: tuple[int, int]) -> bool:
+    if size <= MAX_FILE_SIZE:
+        return False
+    index, total = position
+    await event.reply(
+        f"⚠️ File {index}/{total} skipped — too large ({fmt_size(size)}).",
+        parse_mode="md",
+    )
+    return True
+
+
 async def _upload_one(event, status, item: tuple, position: tuple[int, int]) -> bool:
     """Upload a single result; return True when it was sent."""
     file_path, meta, mtype = item
     index, total = position
-    size = os.path.getsize(file_path)
-    if size > MAX_FILE_SIZE:
-        await event.reply(
-            f"⚠️ File {index}/{total} skipped — too large ({fmt_size(size)}).",
-            parse_mode="md",
-        )
-        return False
-    if total > 1:
-        await _safe_edit(status, f"📤 **Uploading {index}/{total}…**")
     try:
+        if await _reject_oversize(event, os.path.getsize(file_path), position):
+            return False
+        if total > 1:
+            await _safe_edit(status, f"📤 **Uploading {index}/{total}…**")
         await _send_media(event, file_path, meta, mtype)
         return True
     except RECOVERABLE_ERRORS as exc:
@@ -170,7 +187,7 @@ async def _finish(event, status, results: list) -> None:
         await _safe_edit(status, "❌ No media found at that URL.")
         db.increment("failed_downloads")
         return
-    if await _upload_results(event, status, results) == 0:
+    if not await _upload_results(event, status, results):
         await _safe_edit(status, "❌ Could not send any files.")
         db.increment("failed_downloads")
         return
@@ -181,16 +198,7 @@ async def _finish(event, status, results: list) -> None:
         log.debug("Unable to delete status message: %s", exc)
 
 
-@client.on(events.NewMessage())
-async def url_handler(event):
-    """Download and send the first media URL found in a non-command message."""
-    if not group_allowed(event):
-        return
-    url = _first_url(event)
-    user_id = event.sender_id
-    if url is None or await _check_guards(event, user_id):
-        return
-
+async def _handle_url(event, url: str, user_id: int) -> None:
     _user_cooldowns[user_id] = time.time()
     active_downloads.add(user_id)
     status = await event.reply("⏳ **Fetching…**", parse_mode="md")
@@ -207,3 +215,13 @@ async def url_handler(event):
         active_downloads.discard(user_id)
         if tmpdir:
             shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+async def url_handler(event):
+    """Download and send the first media URL found in a non-command message."""
+    url = _first_url(event) if group_allowed(event) else None
+    if url is not None and not await _check_guards(event, event.sender_id):
+        await _handle_url(event, url, event.sender_id)
+
+
+client.add_event_handler(url_handler, events.NewMessage())

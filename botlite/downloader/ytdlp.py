@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+from collections.abc import Mapping
+from typing import Any
 
 import yt_dlp
 
@@ -83,6 +85,11 @@ def _scan_new_files(
     return results
 
 
+_PREFERRED_VIDEO = "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]"
+_PREFERRED_MUXED = "best[ext=mp4][height<=1080]"
+_VIDEO_FORMAT = f"{_PREFERRED_VIDEO}/{_PREFERRED_MUXED}/bestvideo+bestaudio/best"
+
+
 def _base_opts(tmpdir: str, cookie_file: str | None, max_filesize: int) -> dict:
     opts = {
         "outtmpl": os.path.join(tmpdir, "%(id)s.%(ext)s"),
@@ -104,11 +111,7 @@ def _base_opts(tmpdir: str, cookie_file: str | None, max_filesize: int) -> dict:
 def _build_opts(tmpdir: str, cookie_file: str | None) -> dict:
     return {
         **_base_opts(tmpdir, cookie_file, MAX_FILE_SIZE),
-        "format": (
-            "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]"
-            "/best[ext=mp4][height<=1080]"
-            "/bestvideo+bestaudio/best"
-        ),
+        "format": _VIDEO_FORMAT,
         "merge_output_format": "mp4",
         "postprocessors": [],
     }
@@ -201,7 +204,7 @@ async def download_audio(
     return await loop.run_in_executor(None, _run)
 
 
-def _media_meta(info: dict) -> dict:
+def _media_meta(info: Mapping[str, Any]) -> dict:
     return {
         "title": info.get("title"),
         "uploader": info.get("uploader") or info.get("channel"),

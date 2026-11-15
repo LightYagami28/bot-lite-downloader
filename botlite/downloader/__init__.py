@@ -16,7 +16,8 @@ log = logging.getLogger("botlite.downloader")
 MediaResult = tuple[str, dict, str]  # (filepath, meta, mediatype)
 
 
-async def _attempt(engine, name: str, url: str, subdir: str, errors: tuple) -> list[MediaResult]:
+async def _attempt(url: str, spec: tuple) -> list[MediaResult]:
+    engine, name, subdir, errors = spec
     os.makedirs(subdir, exist_ok=True)
     try:
         return await engine.download(url, subdir)
@@ -37,17 +38,21 @@ async def download(url: str) -> tuple[str, list[MediaResult]]:
     tmpdir = tempfile.mkdtemp(prefix="botlite_")
     try:
         results = await _attempt(
-            ytdlp,
-            "yt-dlp",
             url,
-            os.path.join(tmpdir, "yt"),
-            (YoutubeDLError, RuntimeError, ValueError, OSError),
+            (
+                ytdlp,
+                "yt-dlp",
+                os.path.join(tmpdir, "yt"),
+                (YoutubeDLError, RuntimeError, ValueError, OSError),
+            ),
         ) or await _attempt(
-            gallery,
-            "gallery-dl",
             url,
-            os.path.join(tmpdir, "gd"),
-            (RuntimeError, ValueError, OSError),
+            (
+                gallery,
+                "gallery-dl",
+                os.path.join(tmpdir, "gd"),
+                (RuntimeError, ValueError, OSError),
+            ),
         )
         if not results:
             raise RuntimeError(

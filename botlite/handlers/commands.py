@@ -63,7 +63,6 @@ def _dashboard_button() -> list | None:
 # ── /start ────────────────────────────────────────────────────────────────────
 
 
-@client.on(events.NewMessage(pattern="/start"))
 async def cmd_start(event):
     """Reply to /start with the bot introduction."""
     if not group_allowed(event):
@@ -111,7 +110,6 @@ def _help_text(is_group: bool) -> str:
     )
 
 
-@client.on(events.NewMessage(pattern="/help"))
 async def cmd_help(event):
     """Reply to /help with usage, limits and cookie instructions."""
     if not group_allowed(event):
@@ -127,7 +125,6 @@ async def cmd_help(event):
 # ── /status ───────────────────────────────────────────────────────────────────
 
 
-@client.on(events.NewMessage(pattern="/status"))
 async def cmd_status(event):
     """Reply to /status with uptime, active downloads and free disk."""
     if not group_allowed(event):
@@ -147,7 +144,6 @@ async def cmd_status(event):
 # ── /stats ────────────────────────────────────────────────────────────────────
 
 
-@client.on(events.NewMessage(pattern="/stats"))
 async def cmd_stats(event):
     """Reply to /stats (sudo, private chat) with the download counters."""
     if not event.is_private or not is_sudo(event.sender_id):
@@ -171,7 +167,6 @@ async def cmd_stats(event):
 # ── /ban ──────────────────────────────────────────────────────────────────────
 
 
-@client.on(events.NewMessage(pattern=r"/ban( \d+)?"))
 async def cmd_ban(event):
     """Ban a user via /ban USER_ID (sudo, private chat)."""
     if not event.is_private or not is_sudo(event.sender_id):
@@ -188,7 +183,6 @@ async def cmd_ban(event):
 # ── /unban ────────────────────────────────────────────────────────────────────
 
 
-@client.on(events.NewMessage(pattern=r"/unban( \d+)?"))
 async def cmd_unban(event):
     """Unban a user via /unban USER_ID (sudo, private chat)."""
     if not event.is_private or not is_sudo(event.sender_id):
@@ -291,7 +285,6 @@ def _voice_group_allowed(event) -> bool:
     return VOICE_ENABLED and event.is_group and group_allowed(event)
 
 
-@client.on(events.NewMessage(pattern=r"^/play(?:\w+)?(?:\s|$)"))
 async def cmd_voice_play(event):
     """Download and start voice playback via /play URL (allowlisted groups)."""
     if not _voice_group_allowed(event):
@@ -312,7 +305,6 @@ _VOICE_CONTROLS = {
 }
 
 
-@client.on(events.NewMessage(pattern=r"^/(pause|resume|voice_stop)(?:\w+)?$"))
 async def cmd_voice_control(event):
     """Handle /pause, /resume and /voice_stop in groups."""
     if not _voice_group_allowed(event):
@@ -320,3 +312,13 @@ async def cmd_voice_control(event):
     method, done, idle = _VOICE_CONTROLS[event.pattern_match.group(1)]
     changed = await getattr(get_voice_manager(), method)(event.chat_id)
     await event.reply(done if changed else idle)
+
+
+client.add_event_handler(cmd_start, events.NewMessage(pattern="/start"))
+client.add_event_handler(cmd_help, events.NewMessage(pattern="/help"))
+client.add_event_handler(cmd_status, events.NewMessage(pattern="/status"))
+client.add_event_handler(cmd_stats, events.NewMessage(pattern="/stats"))
+client.add_event_handler(cmd_ban, events.NewMessage(pattern=r"/ban( \d+)?"))
+client.add_event_handler(cmd_unban, events.NewMessage(pattern=r"/unban( \d+)?"))
+client.add_event_handler(cmd_voice_play, events.NewMessage(pattern=r"^/play(?:@\w+)?(?:\s|$)"))
+client.add_event_handler(cmd_voice_control, events.NewMessage(pattern=r"^/(pause|resume|voice_stop)(?:@\w+)?$"))
