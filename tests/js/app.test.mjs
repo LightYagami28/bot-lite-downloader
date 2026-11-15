@@ -1,12 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { pathToFileURL } from "node:url";
 import path from "node:path";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const APP_PATH = path.resolve(import.meta.dirname, "../../botlite/webapp/static/app.js");
-const APP = pathToFileURL(APP_PATH).href;
 const SOURCE = readFileSync(APP_PATH, "utf8");
 const MB = 1024 * 1024;
 const GB = 1024 * MB;
@@ -57,10 +55,9 @@ async function load({ initData = "", routes = {} }) {
     if (route instanceof Error) { throw route; }
     return route;
   };
-  // Same identifier on every run, so V8 coverage is attributed to the real file.
-  const module = new vm.SourceTextModule(SOURCE, { identifier: APP, context: vm.createContext(globalThis) });
-  await module.link(() => { throw new Error("app.js has no imports"); });
-  await module.evaluate();
+  globalThis.window = globalThis;
+  vm.runInContext(SOURCE, vm.createContext(globalThis), { filename: APP_PATH });
+  await new Promise((resolve) => setImmediate(resolve));
   const el = (id) => document.getElementById(id);
   return { el, calls, timers };
 }

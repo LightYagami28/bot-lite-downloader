@@ -9,6 +9,7 @@ from collections.abc import Mapping
 from typing import Any
 
 import yt_dlp
+from yt_dlp.utils import DownloadError
 
 from botlite.config import MAX_FILE_SIZE
 from botlite.downloader.cookies import resolve as resolve_cookie
@@ -90,7 +91,7 @@ _PREFERRED_MUXED = "best[ext=mp4][height<=1080]"
 _VIDEO_FORMAT = f"{_PREFERRED_VIDEO}/{_PREFERRED_MUXED}/bestvideo+bestaudio/best"
 
 
-def _base_opts(tmpdir: str, cookie_file: str | None, max_filesize: int) -> dict:
+def _base_opts(tmpdir: str, cookie_file: str | None, max_filesize: int) -> dict[str, Any]:
     opts = {
         "outtmpl": os.path.join(tmpdir, "%(id)s.%(ext)s"),
         "noplaylist": True,
@@ -108,7 +109,7 @@ def _base_opts(tmpdir: str, cookie_file: str | None, max_filesize: int) -> dict:
     return opts
 
 
-def _build_opts(tmpdir: str, cookie_file: str | None) -> dict:
+def _build_opts(tmpdir: str, cookie_file: str | None) -> dict[str, Any]:
     return {
         **_base_opts(tmpdir, cookie_file, MAX_FILE_SIZE),
         "format": _VIDEO_FORMAT,
@@ -134,7 +135,7 @@ def _duration_filter(max_duration: int):
 def _size_hook(max_file_size: int):
     def enforce_download_size(progress: dict) -> None:
         if progress.get("downloaded_bytes", 0) > max_file_size:
-            raise yt_dlp.utils.DownloadError(
+            raise DownloadError(
                 f"Audio exceeds the {max_file_size}-byte voice-chat limit"
             )
 
@@ -146,7 +147,7 @@ def _build_audio_opts(
     cookie_file: str | None,
     max_file_size: int,
     max_duration: int,
-) -> dict:
+) -> dict[str, Any]:
     return {
         **_base_opts(tmpdir, cookie_file, max_file_size),
         "format": "bestaudio/best",
@@ -155,7 +156,7 @@ def _build_audio_opts(
     }
 
 
-def _audio_path(ydl, info: dict, tmpdir: str) -> str:
+def _audio_path(ydl, info: Mapping[str, Any], tmpdir: str) -> str:
     path = ydl.prepare_filename(info)
     if os.path.isfile(path):
         return path

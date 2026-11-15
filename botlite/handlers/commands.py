@@ -8,6 +8,7 @@ import os
 import re
 import tempfile
 import time
+from typing import Any
 
 from telethon import events
 from telethon.tl import types
@@ -230,7 +231,7 @@ def _cleanup_voice_temporary(temporary) -> None:
         temporary.cleanup()
 
 
-async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | None, object]:
+async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | None, Any]:
     """Download the audio and start playback; return (metadata, failure, status)."""
     temporary = None
     status = None

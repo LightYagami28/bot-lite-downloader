@@ -4,7 +4,8 @@ Guidance for Claude Code when working on the BotLite Downloader project.
 
 ## Panoramica
 
-**BotLite Downloader** è un Telegram bot self-hosted che scarica media da 1000+ siti e li invia direttamente ai DM dell'utente.
+**BotLite Downloader** è un Telegram bot self-hosted che scarica media da 1000+
+siti e li invia direttamente ai DM dell'utente.
 
 - **Versione**: 1.2.0
 - **License**: MIT
@@ -29,7 +30,7 @@ Guidance for Claude Code when working on the BotLite Downloader project.
 
 ## Struttura del progetto
 
-```
+```text
 Bot Lite Downloader/
 ├── botlite/                    # Main package
 │   ├── __init__.py             # Package root, VERSION constant
@@ -71,11 +72,13 @@ Bot Lite Downloader/
 ## Setup & Dipendenze
 
 ### Prerequisiti
+
 - **Python 3.12+** (or Docker)
 - **ffmpeg** in PATH (for audio extraction)
 - **Telegram account** + API credentials
 
 ### Option 1: Docker (Recommended)
+
 ```bash
 cd "Bot Lite Downloader"
 cp .env.example .env
@@ -85,6 +88,7 @@ docker compose logs -f  # Watch startup
 ```
 
 ### Option 2: Manual (Venv)
+
 ```bash
 cd "Bot Lite Downloader"
 python -m venv venv
@@ -96,14 +100,16 @@ python -m botlite
 ```
 
 ### Config Variables (Required)
+
 | Var | Source | Note |
 |-----|--------|------|
-| `API_ID` | https://my.telegram.org/apps | User account API ID |
-| `API_HASH` | https://my.telegram.org/apps | User account API hash |
+| `API_ID` | <https://my.telegram.org/apps> | User account API ID |
+| `API_HASH` | <https://my.telegram.org/apps> | User account API hash |
 | `BOT_TOKEN` | @BotFather (Telegram) | Bot token (not user token) |
 | `SUDO_USERS` | @userinfobot (Telegram) | Comma-separated user IDs with admin access |
 
 ### Optional Config
+
 - `MAX_FILE_SIZE`: Default 2GB (Telegram hard limit)
 - `MAX_CONCURRENT_DOWNLOADS`: Default 3
 - `MIN_FREE_DISK`: Default 500MB
@@ -115,61 +121,83 @@ python -m botlite
 ## Convenzioni & Patterns
 
 ### Module Organization
+
 - **`downloader/`**: Pure download engines. No Telegram dependencies. Testable.
 - **`handlers/`**: Telegram event handlers. Calls `downloader.download()`.
 - **`webapp/`**: Separate aiohttp server. Auth via Telegram `initData` HMAC.
 - **`utils/`**: No business logic. Only formatting and system utilities.
 
 ### Error Handling
-- **Network errors**: Graceful retries in yt-dlp (built-in). Gallery-dl as fallback.
-- **Disk full**: Check `system.free_disk()` before download. Reject if below `MIN_FREE_DISK`.
-- **Per-user cooldown**: Enforced in `handlers/url.py` before calling downloader.
+
+- **Network errors**: Graceful retries in yt-dlp (built-in). Gallery-dl as
+  fallback.
+- **Disk full**: Check `system.free_disk()` before download. Reject if below
+  `MIN_FREE_DISK`.
+- **Per-user cooldown**: Enforced in `handlers/url.py` before calling
+  downloader.
 - **Ban list**: Check `db.is_banned()` in every handler.
 
 ### Logging
-TBD (check for logging setup in `app.py` or `config.py`). If none exists, consider adding structured logging.
+
+TBD (check for logging setup in `app.py` or `config.py`). If none exists,
+consider adding structured logging.
 
 ### Database
-SQLite is embedded. No migrations framework — schema is created on-demand in `db.py`.
+
+SQLite is embedded. No migrations framework — schema is created on-demand in
+`db.py`.
 
 ---
 
 ## Decisioni Architetturali
 
 ### 1. Dual Download Engine (yt-dlp + gallery-dl)
-**Decisione**: yt-dlp for videos/audio; gallery-dl as fallback for photo carousels.
 
-**Motivo**: 
+**Decisione**: yt-dlp for videos/audio; gallery-dl as fallback for photo
+carousels.
+
+**Motivo**:
+
 - yt-dlp covers 90% of use cases (YouTube, TikTok, etc.)
 - gallery-dl excels at Instagram carousels and similar
 - Fallback strategy increases reliability
 
-**When to change**: If one engine becomes unmaintained or incompatible with Telegram API.
+**When to change**: If one engine becomes unmaintained or incompatible with
+Telegram API.
 
 ### 2. Embedded SQLite (not PostgreSQL)
+
 **Decisione**: SQLite for ban list and statistics.
 
 **Motivo**:
+
 - Self-hosted bot. No external DB infrastructure needed.
 - Small dataset (ban list, counters). SQLite is sufficient.
 - Easier deployment (no DB container).
 
-**When to migrate**: If scaling to thousands of concurrent users or multiple bot instances.
+**When to migrate**: If scaling to thousands of concurrent users or multiple bot
+instances.
 
 ### 3. Separate aiohttp WebApp (not integrated in bot)
+
 **Decisione**: Dashboard runs in a separate aiohttp process.
 
 **Motivo**:
+
 - Bot core stays lightweight and responsive
 - Dashboard can be disabled (no `WEBAPP_PUBLIC_URL`)
 - Easier to test and maintain separately
 
-**When to merge**: If dashboard becomes mission-critical and you want a single process.
+**When to merge**: If dashboard becomes mission-critical and you want a single
+process.
 
 ### 4. Graceful Shutdown with systemd/Docker Signals
-**Decisione**: Handle `SIGTERM` cleanly. Complete active downloads before exiting.
+
+**Decisione**: Handle `SIGTERM` cleanly. Complete active downloads before
+exiting.
 
 **Motivo**:
+
 - Prevents corrupted partial files
 - Safe for rolling deployments
 - Docker/systemd expect signal handlers
@@ -191,8 +219,11 @@ If `WEBAPP_PUBLIC_URL` is set:
   - `POST /api/ban` — Ban/unban users (SUDO_USERS only)
 
 ### HTTPS Requirement
+
 Telegram WebApps only work over HTTPS. Options:
-- **Cloudflare Tunnel** (zero-config, free): `cloudflared tunnel --url http://localhost:8080`
+
+- **Cloudflare Tunnel** (zero-config, free):
+  `cloudflared tunnel --url http://localhost:8080`
 - **nginx + Let's Encrypt**: `certbot --nginx -d yourdomain.com`
 
 ---
@@ -201,20 +232,22 @@ Telegram WebApps only work over HTTPS. Options:
 
 For age-restricted or private content, drop Netscape-format cookie files:
 
-```
+```text
 cookiesyoutube.txt
 cookiesinstagram.txt
 cookiestiktok.txt
 cookiestwitter.txt
 ```
 
-These are gitignored (security). Export via [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/).
+These are gitignored (security). Export via [Get cookies.txt
+LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/).
 
 ---
 
 ## Debugging & Monitoring
 
 ### View Logs
+
 ```bash
 # Docker
 docker compose logs -f botlite
@@ -227,12 +260,15 @@ journalctl -u botlite -f
 ```
 
 ### Check Bot Status
+
 Send `/status` in Telegram DM. Response shows:
+
 - Uptime
 - Active downloads
 - Free disk space
 
 ### Database Inspection
+
 ```bash
 sqlite3 media_bot.db
 > .tables
@@ -243,19 +279,27 @@ sqlite3 media_bot.db
 
 ## Conocimientos para Claude
 
-### Cuando edites el código:
-1. **Downloader engines** (`downloader/*.py`) son independientes. Testables sin Telegram.
-2. **Handlers** llaman a `downloader.download()`. No modifiques la signature sin actualizar todas las calls.
-3. **WebApp auth** usa HMAC-SHA256. Si tocas `webapp/auth.py`, verifica que signature validation siga siendo correcto.
-4. **Signals** en `utils/system.py` son críticos. No los remuevas sin entender el graceful shutdown.
+### Cuando edites el código
 
-### Best Practices para este proyecto:
+1. **Downloader engines** (`downloader/*.py`) son independientes. Testables sin
+   Telegram.
+2. **Handlers** llaman a `downloader.download()`. No modifiques la signature sin
+   actualizar todas las calls.
+3. **WebApp auth** usa HMAC-SHA256. Si tocas `webapp/auth.py`, verifica que
+   signature validation siga siendo correcto.
+4. **Signals** en `utils/system.py` son críticos. No los remuevas sin entender
+   el graceful shutdown.
+
+### Best Practices para este proyecto
+
 - **Test downloads localmente** antes de cambiar `downloader/*.py`
 - **No hardcodear secrets** en código. Usa `.env`.
 - **Cookie files** no deben committirse. `.gitignore` las bloquea.
-- **yt-dlp updates** pueden cambiar comportamiento. Prueba después de actualizar.
+- **yt-dlp updates** pueden cambiar comportamiento. Prueba después de
+  actualizar.
 
-### Qué no hacer:
+### Qué no hacer
+
 - No remuevas el manejo de señales (SIGTERM)
 - No simplifiques el fallback engine — es crítico para reliability
 - No stores secrets en git (API keys, tokens, cookies)

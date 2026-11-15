@@ -27,8 +27,7 @@ async def _attempt(url: str, spec: tuple) -> list[MediaResult]:
 
 
 async def download(url: str) -> tuple[str, list[MediaResult]]:
-    """
-    Download media from *url*.
+    """Download media from *url*.
 
     Returns (tmpdir, results). The caller is responsible for
     cleaning up tmpdir (shutil.rmtree) after sending files.
