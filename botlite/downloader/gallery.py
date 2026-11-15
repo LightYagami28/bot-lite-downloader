@@ -33,16 +33,18 @@ def _media_type(ext: str) -> str | None:
     return None
 
 
+def _usable_result(tmpdir: str, name: str) -> MediaResult | None:
+    file_path = os.path.join(tmpdir, name)
+    mtype = _media_type(os.path.splitext(name)[1].lower())
+    if mtype is None or not os.path.isfile(file_path):
+        return None
+    size = os.path.getsize(file_path)
+    return (file_path, {"size": size}, mtype) if size >= _MIN_FILE_SIZE else None
+
+
 def _scan_files(tmpdir: str) -> list[MediaResult]:
-    results = []
-    for name in sorted(os.listdir(tmpdir)):
-        file_path = os.path.join(tmpdir, name)
-        mtype = _media_type(os.path.splitext(name)[1].lower())
-        if mtype is None or not os.path.isfile(file_path):
-            continue
-        size = os.path.getsize(file_path)
-        if size >= _MIN_FILE_SIZE:
-            results.append((file_path, {"size": size}, mtype))
+    candidates = (_usable_result(tmpdir, name) for name in sorted(os.listdir(tmpdir)))
+    results = [result for result in candidates if result is not None]
     if not results:
         raise RuntimeError("gallery-dl produced no usable files")
     return results

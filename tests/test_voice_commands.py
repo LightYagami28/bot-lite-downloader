@@ -31,8 +31,8 @@ def test_voice_command_downloads_only_for_explicitly_allowed_group(monkeypatch):
         def __init__(self):
             self.play_request = None
 
-        async def play(self, chat_id, path, title, directory):
-            self.play_request = (chat_id, path, title, directory)
+        async def play(self, chat_id, path, playback):
+            self.play_request = (chat_id, path, playback.title, playback.directory)
 
     async def exercise():
         event = FakeEvent()

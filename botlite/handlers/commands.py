@@ -32,7 +32,7 @@ from botlite.errors import RECOVERABLE_ERRORS
 from botlite.handlers.access import group_allowed, origin_of
 from botlite.utils.format import fmt_size, fmt_uptime
 from botlite.utils.system import check_cooldown, free_disk
-from botlite.voice import get_voice_manager
+from botlite.voice import Playback, get_voice_manager
 
 _start_time = time.time()
 _VOICE_URL_RE = re.compile(r"^/play(?:@\w+)?\s+(https?://\S+)\s*$", re.IGNORECASE)
@@ -240,7 +240,7 @@ async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | N
         temporary = tempfile.TemporaryDirectory(prefix="botlite_voice_")
         path, metadata = await _download_voice_audio(url, temporary.name)
         await get_voice_manager().play(
-            event.chat_id, path, metadata["title"], temporary
+            event.chat_id, path, Playback(temporary, metadata["title"])
         )
         temporary = None
     except RECOVERABLE_ERRORS as exc:

@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 
 from botlite import voice
-from botlite.voice import VoiceChatManager
+from botlite.voice import Playback, VoiceChatManager
 
 
 class FakeCalls:
@@ -41,14 +41,14 @@ def test_voice_manager_keeps_audio_until_stop_then_removes_it():
         first_file = Path(first.name) / "first.ogg"
         first_file.write_bytes(b"audio")
 
-        await manager.play(-100123, str(first_file), "First", first)
+        await manager.play(-100123, str(first_file), Playback(first, "First"))
         assert first_file.exists()
         assert calls.played == [(-100123, str(first_file), False)]
 
         second = tempfile.TemporaryDirectory()
         second_file = Path(second.name) / "second.ogg"
         second_file.write_bytes(b"audio")
-        await manager.play(-100123, str(second_file), "Second", second)
+        await manager.play(-100123, str(second_file), Playback(second, "Second"))
         assert not first_file.exists()
         assert calls.left == [-100123]
         assert await manager.stop(-100123)
@@ -69,7 +69,7 @@ def test_stream_end_leaves_call_and_releases_audio():
         directory = tempfile.TemporaryDirectory()
         audio_file = Path(directory.name) / "track.ogg"
         audio_file.write_bytes(b"audio")
-        await manager.play(-100123, str(audio_file), "Track", directory)
+        await manager.play(-100123, str(audio_file), Playback(directory, "Track"))
 
         await manager._on_update(
             calls,
@@ -102,7 +102,7 @@ def test_shutdown_waits_for_inflight_play_and_closes_its_session():
         audio_file = Path(directory.name) / "track.ogg"
         audio_file.write_bytes(b"audio")
 
-        play_task = asyncio.create_task(manager.play(-100123, str(audio_file), "Track", directory))
+        play_task = asyncio.create_task(manager.play(-100123, str(audio_file), Playback(directory, "Track")))
         await calls.play_entered.wait()
         shutdown_task = asyncio.create_task(manager.shutdown())
         await asyncio.sleep(0)
