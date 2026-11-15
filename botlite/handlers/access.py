@@ -18,6 +18,14 @@ class MessageOrigin:
     sender_id: int | None
 
 
+def _group_allowed(
+    origin: MessageOrigin, allow_groups: bool, allowed_group_ids: Collection[int]
+) -> bool:
+    if not (allow_groups and origin.is_group):
+        return False
+    return origin.chat_id is not None and origin.chat_id in allowed_group_ids
+
+
 def is_message_allowed(
     origin: MessageOrigin,
     allow_groups: bool,
@@ -26,14 +34,7 @@ def is_message_allowed(
     """Allow a real user in private chats or an allowlisted group only."""
     if origin.sender_id is None or origin.sender_id <= 0:
         return False
-    if origin.is_private:
-        return True
-    return (
-        allow_groups
-        and origin.is_group
-        and origin.chat_id is not None
-        and origin.chat_id in allowed_group_ids
-    )
+    return origin.is_private or _group_allowed(origin, allow_groups, allowed_group_ids)
 
 
 def group_allowed(event) -> bool:

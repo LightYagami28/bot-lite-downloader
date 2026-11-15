@@ -62,7 +62,7 @@ def test_scan_new_files(tmp_path):
     file_txt.write_bytes(b"x" * 200)  # non-media ext ignored
 
     meta = {"title": "Sample"}
-    results = ytdlp._scan_new_files(str(tmp_path), before, meta, vcodec="h264", acodec="aac")
+    results = ytdlp._scan_new_files(str(tmp_path), before, meta, ("h264", "aac"))
 
     assert len(results) == 1
     path, result_meta, mtype = results[0]
@@ -74,7 +74,7 @@ def test_scan_new_files(tmp_path):
 
 def test_scan_new_files_empty_raises(tmp_path):
     with pytest.raises(RuntimeError, match="yt-dlp finished but no file was written"):
-        ytdlp._scan_new_files(str(tmp_path), set(), {}, vcodec="none", acodec="none")
+        ytdlp._scan_new_files(str(tmp_path), set(), {}, ("none", "none"))
 
 
 def test_build_opts(tmp_path):

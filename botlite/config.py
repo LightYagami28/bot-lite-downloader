@@ -75,30 +75,33 @@ WEBAPP_PORT = _int("WEBAPP_PORT", 8080)
 WEBAPP_INIT_DATA_MAX_AGE = _int("WEBAPP_INIT_DATA_MAX_AGE", 3600)
 
 
+def _config_errors() -> list[str]:
+    checks = (
+        (not API_ID, "API_ID is not set"),
+        (not API_HASH, "API_HASH is not set"),
+        (not BOT_TOKEN, "BOT_TOKEN is not set"),
+        (
+            bool(WEBAPP_PUBLIC_URL)
+            and not WEBAPP_PUBLIC_URL.lower().startswith("https://"),
+            "WEBAPP_PUBLIC_URL must use HTTPS",
+        ),
+        (
+            ALLOW_GROUPS and not ALLOWED_GROUP_IDS,
+            "ALLOW_GROUPS requires at least one non-zero ALLOWED_GROUP_IDS entry",
+        ),
+        (
+            VOICE_ENABLED and (not ALLOW_GROUPS or not ALLOWED_GROUP_IDS),
+            ("VOICE_ENABLED requires ALLOW_GROUPS and an explicit ALLOWED_GROUP_IDS allowlist"),
+        ),
+        (VOICE_MAX_DURATION <= 0, "VOICE_MAX_DURATION must be greater than zero"),
+        (VOICE_MAX_FILE_SIZE <= 0, "VOICE_MAX_FILE_SIZE must be greater than zero"),
+    )
+    return [message for failed, message in checks if failed]
+
+
 def validate() -> None:
     """Abort with a clear message if required credentials are missing."""
-    errors = []
-    if not API_ID:
-        errors.append("API_ID is not set")
-    if not API_HASH:
-        errors.append("API_HASH is not set")
-    if not BOT_TOKEN:
-        errors.append("BOT_TOKEN is not set")
-    if WEBAPP_PUBLIC_URL and not WEBAPP_PUBLIC_URL.lower().startswith("https://"):
-        errors.append("WEBAPP_PUBLIC_URL must use HTTPS")
-    if ALLOW_GROUPS and not ALLOWED_GROUP_IDS:
-        errors.append(
-            "ALLOW_GROUPS requires at least one non-zero ALLOWED_GROUP_IDS entry"
-        )
-    if VOICE_ENABLED and (not ALLOW_GROUPS or not ALLOWED_GROUP_IDS):
-        errors.append(
-            "VOICE_ENABLED requires ALLOW_GROUPS and an explicit "
-            "ALLOWED_GROUP_IDS allowlist"
-        )
-    if VOICE_MAX_DURATION <= 0:
-        errors.append("VOICE_MAX_DURATION must be greater than zero")
-    if VOICE_MAX_FILE_SIZE <= 0:
-        errors.append("VOICE_MAX_FILE_SIZE must be greater than zero")
+    errors = _config_errors()
     if errors:
         for error in errors:
             print(f"[CONFIG ERROR] {error}", file=sys.stderr)

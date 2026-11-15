@@ -22,34 +22,33 @@ log = logging.getLogger("botlite.gallery")
 MediaResult = tuple[str, dict, str]
 
 
+def _media_type(ext: str) -> str | None:
+    for extensions, mtype in (
+        (_VIDEO_EXTS, "video"),
+        (_IMAGE_EXTS, "photo"),
+        (_AUDIO_EXTS, "audio"),
+    ):
+        if ext in extensions:
+            return mtype
+    return None
+
+
 def _scan_files(tmpdir: str) -> list[MediaResult]:
     results = []
-    for fname in sorted(os.listdir(tmpdir)):
-        file_path = os.path.join(tmpdir, fname)
-        ext = os.path.splitext(fname)[1].lower()
-        if not os.path.isfile(file_path) or os.path.getsize(file_path) < _MIN_FILE_SIZE:
+    for name in sorted(os.listdir(tmpdir)):
+        file_path = os.path.join(tmpdir, name)
+        mtype = _media_type(os.path.splitext(name)[1].lower())
+        if mtype is None or not os.path.isfile(file_path):
             continue
-        if ext in _VIDEO_EXTS:
-            mtype = "video"
-        elif ext in _IMAGE_EXTS:
-            mtype = "photo"
-        elif ext in _AUDIO_EXTS:
-            mtype = "audio"
-        else:
-            continue
-        results.append((file_path, {"size": os.path.getsize(file_path)}, mtype))
+        size = os.path.getsize(file_path)
+        if size >= _MIN_FILE_SIZE:
+            results.append((file_path, {"size": size}, mtype))
     if not results:
         raise RuntimeError("gallery-dl produced no usable files")
     return results
 
 
-async def download(url: str, tmpdir: str) -> list[MediaResult]:
-    """Download via gallery-dl. Returns [(filepath, meta, mediatype), ...]."""
-    parsed_url = urlsplit(url)
-    if parsed_url.scheme not in {"http", "https"} or not parsed_url.hostname:
-        raise ValueError("gallery-dl only accepts absolute HTTP(S) URLs")
-
-    cookie_file = resolve_cookie(url)
+def _command(url: str, tmpdir: str) -> list[str]:
     command = [
         sys.executable,
         "-m",
@@ -60,10 +59,14 @@ async def download(url: str, tmpdir: str) -> list[MediaResult]:
         "{num:>03}_{id}.{extension}",
         "--no-part",
     ]
+    cookie_file = resolve_cookie(url)
     if cookie_file:
         command.extend(("--cookies", cookie_file))
     command.append(url)
+    return command
 
+
+async def _run(command: list[str]) -> None:
     process = await asyncio.create_subprocess_exec(
         *command,
         stdout=asyncio.subprocess.DEVNULL,
@@ -82,5 +85,13 @@ async def download(url: str, tmpdir: str) -> list[MediaResult]:
         error = stderr.decode("utf-8", errors="replace")
         raise RuntimeError(f"gallery-dl exited {process.returncode}: {error[:300]}")
 
+
+async def download(url: str, tmpdir: str) -> list[MediaResult]:
+    """Download via gallery-dl. Returns [(filepath, meta, mediatype), ...]."""
+    parsed_url = urlsplit(url)
+    if parsed_url.scheme not in {"http", "https"} or not parsed_url.hostname:
+        raise ValueError("gallery-dl only accepts absolute HTTP(S) URLs")
+
+    await _run(_command(url, tmpdir))
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, _scan_files, tmpdir)

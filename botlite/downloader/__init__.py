@@ -16,6 +16,15 @@ log = logging.getLogger("botlite.downloader")
 MediaResult = tuple[str, dict, str]  # (filepath, meta, mediatype)
 
 
+async def _attempt(engine, name: str, url: str, subdir: str, errors: tuple) -> list[MediaResult]:
+    os.makedirs(subdir, exist_ok=True)
+    try:
+        return await engine.download(url, subdir)
+    except errors as exc:
+        log.warning("[%s] failed (%s): %s", name, url, exc)
+        return []
+
+
 async def download(url: str) -> tuple[str, list[MediaResult]]:
     """
     Download media from *url*.
@@ -26,30 +35,26 @@ async def download(url: str) -> tuple[str, list[MediaResult]]:
     Raises RuntimeError if both engines fail.
     """
     tmpdir = tempfile.mkdtemp(prefix="botlite_")
-
     try:
-        ytdir = os.path.join(tmpdir, "yt")
-        os.makedirs(ytdir, exist_ok=True)
-        try:
-            results = await ytdlp.download(url, ytdir)
-            if results:
-                return tmpdir, results
-        except (YoutubeDLError, RuntimeError, ValueError, OSError) as exc:
-            log.warning("[yt-dlp] failed (%s): %s", url, exc)
-
-        gddir = os.path.join(tmpdir, "gd")
-        os.makedirs(gddir, exist_ok=True)
-        try:
-            results = await gallery.download(url, gddir)
-            if results:
-                return tmpdir, results
-        except (RuntimeError, ValueError, OSError) as exc:
-            log.warning("[gallery-dl] failed (%s): %s", url, exc)
-
-        raise RuntimeError(
-            "Both yt-dlp and gallery-dl could not extract media from this URL.\n"
-            "The site may require cookies, or the content may be unavailable."
+        results = await _attempt(
+            ytdlp,
+            "yt-dlp",
+            url,
+            os.path.join(tmpdir, "yt"),
+            (YoutubeDLError, RuntimeError, ValueError, OSError),
+        ) or await _attempt(
+            gallery,
+            "gallery-dl",
+            url,
+            os.path.join(tmpdir, "gd"),
+            (RuntimeError, ValueError, OSError),
         )
+        if not results:
+            raise RuntimeError(
+                "Both yt-dlp and gallery-dl could not extract media from this URL.\n"
+                "The site may require cookies, or the content may be unavailable."
+            )
+        return tmpdir, results
     except Exception:
         shutil.rmtree(tmpdir, ignore_errors=True)
         raise

@@ -84,34 +84,40 @@ async def cmd_start(event):
 # ── /help ─────────────────────────────────────────────────────────────────────
 
 
+_HELP_HEAD = (
+    "**📖 Usage**\n\n"
+    "Just send a link — no commands needed.\n\n"
+    "**🍪 Cookies (optional)**\n"
+    "Place a `cookiesSiteName.txt` file (Netscape format) next to `run.py` "
+    "to access age-restricted or private content.\n"
+    "Examples: `cookiesyoutube.txt`, `cookiesinstagram.txt`\n\n"
+    "Export with the "
+    "[Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/"
+    "get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) extension.\n\n"
+    "**⚠️ Limits**\n"
+)
+
+
+def _help_text(is_group: bool) -> str:
+    cooldown_line = f"• Cooldown between requests: {USER_COOLDOWN}s\n" if USER_COOLDOWN else ""
+    voice_line = (
+        "• In allowlisted groups: `/play URL`, `/pause`, `/resume`, `/voice_stop`\n"
+        if VOICE_ENABLED and is_group
+        else ""
+    )
+    return (
+        f"{_HELP_HEAD}• Max file size: {fmt_size(MAX_FILE_SIZE)}\n"
+        f"{cooldown_line}{voice_line}• Some sites actively block bots"
+    )
+
+
 @client.on(events.NewMessage(pattern="/help"))
 async def cmd_help(event):
     """Reply to /help with usage, limits and cookie instructions."""
     if not group_allowed(event):
         return
-    cooldown_line = (
-        f"• Cooldown between requests: {USER_COOLDOWN}s\n" if USER_COOLDOWN else ""
-    )
-    voice_line = (
-        "• In allowlisted groups: `/play URL`, `/pause`, `/resume`, `/voice_stop`\n"
-        if VOICE_ENABLED and event.is_group
-        else ""
-    )
     await event.reply(
-        "**📖 Usage**\n\n"
-        "Just send a link — no commands needed.\n\n"
-        "**🍪 Cookies (optional)**\n"
-        "Place a `cookiesSiteName.txt` file (Netscape format) next to `run.py` "
-        "to access age-restricted or private content.\n"
-        "Examples: `cookiesyoutube.txt`, `cookiesinstagram.txt`\n\n"
-        "Export with the "
-        "[Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/"
-        "get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) extension.\n\n"
-        "**⚠️ Limits**\n"
-        f"• Max file size: {fmt_size(MAX_FILE_SIZE)}\n"
-        f"{cooldown_line}"
-        f"{voice_line}"
-        "• Some sites actively block bots",
+        _help_text(event.is_group),
         parse_mode="md",
         link_preview=False,
         buttons=_dashboard_button(),
@@ -249,39 +255,29 @@ async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | N
     return metadata, None, status
 
 
-@client.on(events.NewMessage(pattern=r"^/play(?:@\w+)?(?:\s|$)"))
-async def cmd_voice_play(event):
-    """Download and start voice playback via /play URL (allowlisted groups)."""
-    if not VOICE_ENABLED or not event.is_group or not group_allowed(event):
+async def _report_voice_failure(status, failure: Exception) -> None:
+    if status is None:
+        log.error("Unable to prepare voice playback status: %s", failure)
         return
-    match = _VOICE_URL_RE.fullmatch((event.raw_text or "").strip())
-    if match is None:
-        await event.reply("Usage: `/play https://…`", parse_mode="md")
-        return
+    await status.edit(
+        "❌ Could not start voice playback. "
+        "Ensure this group already has an active voice chat.\n"
+        f"<code>{html.escape(str(failure)[:240])}</code>",
+        parse_mode="html",
+    )
 
+
+async def _play_from_url(event, url: str) -> None:
     user_id = event.sender_id
-    if await _voice_guard_reply(event, user_id):
-        return
-
     active_downloads.add(user_id)
     _user_cooldowns[user_id] = time.time()
     try:
-        metadata, failure, status = await _prepare_and_play(
-            event, match.group(1).rstrip(".,!?)];}")
-        )
+        metadata, failure, status = await _prepare_and_play(event, url)
     finally:
         active_downloads.discard(user_id)
 
     if failure is not None:
-        if status is None:
-            log.error("Unable to prepare voice playback status: %s", failure)
-        else:
-            await status.edit(
-                "❌ Could not start voice playback. "
-                "Ensure this group already has an active voice chat.\n"
-                f"<code>{html.escape(str(failure)[:240])}</code>",
-                parse_mode="html",
-            )
+        await _report_voice_failure(status, failure)
         return
 
     await status.edit(
@@ -291,31 +287,36 @@ async def cmd_voice_play(event):
     )
 
 
-@client.on(events.NewMessage(pattern=r"^/(pause|resume|voice_stop)(?:@\w+)?$"))
+def _voice_group_allowed(event) -> bool:
+    return VOICE_ENABLED and event.is_group and group_allowed(event)
+
+
+@client.on(events.NewMessage(pattern=r"^/play(?:\w+)?(?:\s|$)"))
+async def cmd_voice_play(event):
+    """Download and start voice playback via /play URL (allowlisted groups)."""
+    if not _voice_group_allowed(event):
+        return
+    match = _VOICE_URL_RE.fullmatch((event.raw_text or "").strip())
+    if match is None:
+        await event.reply("Usage: `/play https://…`", parse_mode="md")
+        return
+    if await _voice_guard_reply(event, event.sender_id):
+        return
+    await _play_from_url(event, match.group(1).rstrip(".,!?)];}"))
+
+
+_VOICE_CONTROLS = {
+    "pause": ("pause", "⏸ Playback paused.", "No active playback in this group."),
+    "resume": ("resume", "▶️ Playback resumed.", "No paused playback in this group."),
+    "voice_stop": ("stop", "⏹ Playback stopped.", "No active playback in this group."),
+}
+
+
+@client.on(events.NewMessage(pattern=r"^/(pause|resume|voice_stop)(?:\w+)?$"))
 async def cmd_voice_control(event):
     """Handle /pause, /resume and /voice_stop in groups."""
-    if not VOICE_ENABLED or not event.is_group or not group_allowed(event):
+    if not _voice_group_allowed(event):
         return
-    command = event.pattern_match.group(1)
-    if command == "pause":
-        changed = await get_voice_manager().pause(event.chat_id)
-        message = (
-            "⏸ Playback paused."
-            if changed
-            else "No active playback in this group."
-        )
-    elif command == "resume":
-        changed = await get_voice_manager().resume(event.chat_id)
-        message = (
-            "▶️ Playback resumed."
-            if changed
-            else "No paused playback in this group."
-        )
-    else:
-        changed = await get_voice_manager().stop(event.chat_id)
-        message = (
-            "⏹ Playback stopped."
-            if changed
-            else "No active playback in this group."
-        )
-    await event.reply(message)
+    method, done, idle = _VOICE_CONTROLS[event.pattern_match.group(1)]
+    changed = await getattr(get_voice_manager(), method)(event.chat_id)
+    await event.reply(done if changed else idle)
