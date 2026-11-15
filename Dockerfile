@@ -29,7 +29,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends ca-certificates ffmpeg \
-    \&\& apt-get clean 
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && python -m pip uninstall --yes pip \
     && rm -rf /usr/local/lib/python3.14/ensurepip/_bundled
