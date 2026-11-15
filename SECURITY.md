@@ -32,8 +32,8 @@ days** for confirmed issues.
 
 ## Security Notes for Self-Hosters
 
-- **Never commit `.env` or `cookies*.txt`** — both are excluded by `.gitignore`
-  by default
+- **Keep `.env` and `cookies*.txt` out of commits** — both are excluded by
+  `.gitignore`
 - **Keep dependencies up to date** — Dependabot is configured to open PRs
   automatically
 - **Run as a non-root user** — especially important in Docker; the bot does not
