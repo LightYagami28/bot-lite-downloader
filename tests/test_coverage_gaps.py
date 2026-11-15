@@ -24,7 +24,7 @@ from botlite import webapp as webapp_pkg
 from botlite.downloader import download, gallery, ytdlp
 from botlite.handlers import commands, url
 from botlite.utils import system
-from botlite.voice import VoiceChatManager
+from botlite.voice import Playback, VoiceChatManager
 from botlite.webapp import auth, server
 
 # ── config ────────────────────────────────────────────────────────────────────
@@ -705,7 +705,7 @@ def test_voice_start_is_idempotent():
 def test_voice_play_requires_a_started_manager():
     async def exercise():
         directory, path = _directory()
-        pending = VoiceChatManager(Calls()).play(1, str(path), "T", directory)
+        pending = VoiceChatManager(Calls()).play(1, str(path), Playback(directory, "T"))
         with pytest.raises(RuntimeError, match="not running"):
             await pending
         directory.cleanup()
@@ -719,7 +719,7 @@ def test_voice_play_rechecks_the_state_after_waiting_for_the_lock():
         await manager.start()
         directory, path = _directory()
         async with manager._lock_for(1):
-            task = asyncio.create_task(manager.play(1, str(path), "T", directory))
+            task = asyncio.create_task(manager.play(1, str(path), Playback(directory, "T")))
             await asyncio.sleep(0)
             manager._closed = True
         with pytest.raises(RuntimeError, match="not running"):
@@ -737,7 +737,7 @@ def test_voice_pause_and_resume_need_an_active_session():
         assert await manager.resume(1) is False
 
         directory, path = _directory()
-        await manager.play(1, str(path), "T", directory)
+        await manager.play(1, str(path), Playback(directory, "T"))
         assert await manager.pause(1) is True
         assert await manager.resume(1) is True
         await manager.stop(1)
@@ -752,7 +752,7 @@ def test_voice_shutdown_is_idempotent_and_survives_leave_failures():
         await manager.start()
         manager._lock_for(99)  # a lock without a session is skipped
         directory, path = _directory()
-        await manager.play(1, str(path), "T", directory)
+        await manager.play(1, str(path), Playback(directory, "T"))
         calls.leave_error = RuntimeError("network")
 
         await manager.shutdown()
@@ -767,7 +767,7 @@ def test_voice_cleanup_after_disconnect_removes_pending_files():
         await manager.start()
         directory, path = _directory()
         path.write_bytes(b"a")
-        await manager.play(1, str(path), "T", directory)
+        await manager.play(1, str(path), Playback(directory, "T"))
 
         manager.cleanup_after_disconnect()
 
@@ -782,7 +782,7 @@ def test_voice_stop_tolerates_a_call_that_already_ended():
         manager = VoiceChatManager(Calls(leave_error=NotInCallError()))
         await manager.start()
         directory, path = _directory()
-        await manager.play(1, str(path), "T", directory)
+        await manager.play(1, str(path), Playback(directory, "T"))
         assert await manager.stop(1) is True
 
     asyncio.run(exercise())
@@ -799,7 +799,7 @@ def test_voice_updates_only_react_to_ended_streams_of_active_chats():
         await manager._on_update(None, ended)  # chat without a session
 
         directory, path = _directory()
-        await manager.play(7, str(path), "T", directory)
+        await manager.play(7, str(path), Playback(directory, "T"))
         calls.leave_error = RuntimeError("network")
         await manager._on_update(None, ended)  # cleanup failure is logged, not raised
 

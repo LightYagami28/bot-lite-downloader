@@ -71,7 +71,7 @@ def setup_signals(disconnect_fn: Callable[[], Awaitable[object]]) -> None:
         shutdown_requested = True
         log.info("Received signal %s, shutting down…", signum)
         loop.call_soon_threadsafe(
-            lambda: loop.create_task(disconnect_fn()).add_done_callback(
+            lambda: asyncio.ensure_future(disconnect_fn()).add_done_callback(
                 _observe_disconnect
             )
         )

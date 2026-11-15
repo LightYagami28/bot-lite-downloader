@@ -18,7 +18,9 @@ log = logging.getLogger("botlite.voice")
 
 
 @dataclass
-class _Playback:
+class Playback:
+    """The temporary directory and title of one voice-chat stream."""
+
     directory: tempfile.TemporaryDirectory[str]
     title: str
 
@@ -29,7 +31,7 @@ class VoiceChatManager:
     def __init__(self, calls) -> None:
         """Bind to *calls* and register the stream-end update listener."""
         self._calls = calls
-        self._sessions: dict[int, _Playback] = {}
+        self._sessions: dict[int, Playback] = {}
         self._locks: dict[int, asyncio.Lock] = {}
         self._started = False
         self._closed = False
@@ -49,8 +51,7 @@ class VoiceChatManager:
         self,
         chat_id: int,
         path: str,
-        title: str,
-        directory: tempfile.TemporaryDirectory[str],
+        playback: Playback,
     ) -> None:
         """Play *path* in chat *chat_id*, replacing any existing stream."""
         if not self._started or self._closed:
@@ -67,7 +68,7 @@ class VoiceChatManager:
                 path,
                 config=GroupCallConfig(auto_start=False),
             )
-            self._sessions[chat_id] = _Playback(directory, title)
+            self._sessions[chat_id] = playback
 
     async def pause(self, chat_id: int) -> bool:
         """Pause the stream in *chat_id*; return False when there is none."""

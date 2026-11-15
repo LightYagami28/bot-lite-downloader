@@ -2,18 +2,3 @@
 exclude_paths:
   # I test usano assert e nomi descrittivi lunghi: non entrano nel quality gate del prodotto.
   - "tests/**"
-  # File di istruzioni per gli assistenti di sviluppo: non sono documentazione del prodotto.
-  - "CLAUDE.md"
-  - ".github/instructions/**"
-  # File di lock generati dagli strumenti di packaging.
-  - "uv.lock"
-  - "requirements*.lock"
-engines:
-  eslint-8:
-    exclude_paths:
-      # Script del WebApp Telegram scritto in JavaScript moderno (moduli, let/const, optional chaining,
-      # fetch): le regole es-x, fp e lwc di questo motore vietano proprio quelle funzioni.
-      - "botlite/webapp/static/app.js"
-  oxlint:
-    exclude_paths:
-      - "botlite/webapp/static/app.js"
