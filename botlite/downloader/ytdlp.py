@@ -57,10 +57,9 @@ def _mtype_from_info(file_path: str, vcodec: str, acodec: str) -> str:
     ext = os.path.splitext(file_path)[1].lower()
     if ext in _IMAGE_EXTS:
         return "photo"
-    if vcodec and vcodec != "none":
-        return "video"
-    if acodec and acodec != "none":
-        return "audio"
+    for codec, mtype in ((vcodec, "video"), (acodec, "audio")):
+        if codec and codec != "none":
+            return mtype
     return _guess_mtype(file_path)
 
 
