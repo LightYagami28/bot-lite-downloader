@@ -31,6 +31,7 @@ from botlite.webapp import auth, server
 
 
 def test_config_loads_without_dotenv():
+    """Config loads without dotenv."""
     saved = sys.modules.get("dotenv")
     sys.modules["dotenv"] = None  # makes "from dotenv import ..." raise ImportError
     try:
@@ -47,10 +48,13 @@ def test_config_loads_without_dotenv():
 
 
 def test_download_reports_error_when_gallery_dl_raises(monkeypatch):
+    """Download reports error when gallery dl raises."""
     async def no_results(_url, _outdir):
+        """No results."""
         return []
 
     async def gallery_boom(_url, _outdir):
+        """Gallery boom."""
         raise RuntimeError("gallery-dl broke")
 
     monkeypatch.setattr("botlite.downloader.ytdlp.download", no_results)
@@ -65,7 +69,9 @@ def test_download_reports_error_when_gallery_dl_raises(monkeypatch):
 
 
 class FakeProcess:
+    """Fake process."""
     def __init__(self, returncode=0, stderr=b"", kill_error=None, block=False):
+        """Init."""
         self.returncode = returncode
         self._stderr = stderr
         self._kill_error = kill_error
@@ -73,17 +79,20 @@ class FakeProcess:
         self.killed = False
 
     async def communicate(self):
+        """Communicate."""
         if self._block and not self.killed:
             await asyncio.sleep(3600)
         return b"", self._stderr
 
     def kill(self):
+        """Kill."""
         self.killed = True
         if self._kill_error:
             raise self._kill_error
 
 
 def test_gallery_scan_files_classifies_and_skips(tmp_path):
+    """Gallery scan files classifies and skips."""
     (tmp_path / "tiny.mp4").write_bytes(b"x" * 10)
     (tmp_path / "folder").mkdir()
     (tmp_path / "a.mp4").write_bytes(b"x" * 200)
@@ -101,15 +110,18 @@ def test_gallery_scan_files_classifies_and_skips(tmp_path):
 
 
 def test_gallery_scan_files_without_usable_files_fails(tmp_path):
+    """Gallery scan files without usable files fails."""
     (tmp_path / "d.txt").write_bytes(b"x" * 200)
     with pytest.raises(RuntimeError, match="no usable files"):
         gallery._scan_files(str(tmp_path))
 
 
 def test_gallery_download_passes_cookie_file(monkeypatch, tmp_path):
+    """Gallery download passes cookie file."""
     seen = {}
 
     async def create_process(*args, **_kwargs):
+        """Create process."""
         seen["command"] = args
         return FakeProcess()
 
@@ -125,12 +137,15 @@ def test_gallery_download_passes_cookie_file(monkeypatch, tmp_path):
 
 
 def test_gallery_download_survives_a_process_that_already_exited(monkeypatch, tmp_path):
+    """Gallery download survives a process that already exited."""
     process = FakeProcess(block=True, kill_error=ProcessLookupError())
 
     async def create_process(*_args, **_kwargs):
+        """Create process."""
         return process
 
     async def timeout_immediately(awaitable, timeout):
+        """Timeout immediately."""
         awaitable.close()
         raise TimeoutError
 
@@ -144,7 +159,9 @@ def test_gallery_download_survives_a_process_that_already_exited(monkeypatch, tm
 
 
 def test_gallery_download_rejects_failing_exit_code(monkeypatch, tmp_path):
+    """Gallery download rejects failing exit code."""
     async def create_process(*_args, **_kwargs):
+        """Create process."""
         return FakeProcess(returncode=2, stderr=b"boom")
 
     monkeypatch.setattr(gallery.asyncio, "create_subprocess_exec", create_process)
@@ -158,26 +175,32 @@ def test_gallery_download_rejects_failing_exit_code(monkeypatch, tmp_path):
 
 
 class FakeYoutubeDL:
+    """Fake youtube d l."""
     info: dict | None = None
     filename = ""
 
     def __init__(self, _opts):
-        pass
+        """Init."""
 
     def __enter__(self):
+        """Enter."""
         return self
 
     def __exit__(self, *_exc):
+        """Exit."""
         return False
 
     def extract_info(self, _url, download=True):
+        """Extract info."""
         return type(self).info
 
     def prepare_filename(self, _info):
+        """Prepare filename."""
         return type(self).filename
 
 
 def _download_audio(tmp_path, *, max_file_size=100):
+    """Download audio."""
     return asyncio.run(
         ytdlp.download_audio(
             "https://example.test/a", str(tmp_path), max_file_size=max_file_size, max_duration=60
@@ -187,6 +210,7 @@ def _download_audio(tmp_path, *, max_file_size=100):
 
 @pytest.fixture
 def fake_ydl(monkeypatch, tmp_path):
+    """Fake ydl."""
     monkeypatch.setattr(ytdlp.yt_dlp, "YoutubeDL", FakeYoutubeDL)
     monkeypatch.setattr(ytdlp, "resolve_cookie", lambda _url: None)
     FakeYoutubeDL.info = {"title": "Song", "duration": 5}
@@ -195,17 +219,20 @@ def fake_ydl(monkeypatch, tmp_path):
 
 
 def test_audio_options_include_cookie_file(tmp_path):
+    """Audio options include cookie file."""
     opts = ytdlp._build_audio_opts(str(tmp_path), "cookies.txt", 10, 10)
     assert opts["cookiefile"] == "cookies.txt"
 
 
 def test_download_audio_without_info_fails(fake_ydl, tmp_path):
+    """Download audio without info fails."""
     fake_ydl.info = None
     with pytest.raises(RuntimeError, match="no audio information"):
         _download_audio(tmp_path)
 
 
 def test_download_audio_recovers_the_single_downloaded_file(fake_ydl, tmp_path):
+    """Download audio recovers the single downloaded file."""
     produced = tmp_path / "real.m4a"
     produced.write_bytes(b"audio")
 
@@ -216,6 +243,7 @@ def test_download_audio_recovers_the_single_downloaded_file(fake_ydl, tmp_path):
 
 
 def test_download_audio_rejects_ambiguous_output(fake_ydl, tmp_path):
+    """Download audio rejects ambiguous output."""
     (tmp_path / "one.m4a").write_bytes(b"a")
     (tmp_path / "two.m4a").write_bytes(b"a")
     with pytest.raises(RuntimeError, match="unambiguous"):
@@ -223,6 +251,7 @@ def test_download_audio_rejects_ambiguous_output(fake_ydl, tmp_path):
 
 
 def test_download_audio_rejects_oversized_file(fake_ydl, tmp_path):
+    """Download audio rejects oversized file."""
     produced = tmp_path / "big.m4a"
     produced.write_bytes(b"x" * 50)
     fake_ydl.filename = str(produced)
@@ -231,6 +260,7 @@ def test_download_audio_rejects_oversized_file(fake_ydl, tmp_path):
 
 
 def test_download_audio_rejects_empty_file(fake_ydl, tmp_path):
+    """Download audio rejects empty file."""
     produced = tmp_path / "empty.m4a"
     produced.write_bytes(b"")
     fake_ydl.filename = str(produced)
@@ -242,10 +272,12 @@ def test_download_audio_rejects_empty_file(fake_ydl, tmp_path):
 
 
 def test_cleanup_old_temps_logs_when_the_directory_cannot_be_inspected(monkeypatch, tmp_path):
+    """Cleanup old temps logs when the directory cannot be inspected."""
     (tmp_path / "botlite_stale").mkdir()
     monkeypatch.setattr(system.tempfile, "gettempdir", lambda: str(tmp_path))
 
     def unreadable(_path):
+        """Unreadable."""
         raise OSError("denied")
 
     monkeypatch.setattr(system.os.path, "getmtime", unreadable)
@@ -256,6 +288,7 @@ def test_cleanup_old_temps_logs_when_the_directory_cannot_be_inspected(monkeypat
 
 
 def _install_signal_handlers(monkeypatch):
+    """Install signal handlers."""
     handlers = {}
     monkeypatch.setattr(
         system.signal, "signal", lambda sig, handler: handlers.update({sig: handler})
@@ -264,10 +297,13 @@ def _install_signal_handlers(monkeypatch):
 
 
 def test_setup_signals_reports_a_failing_disconnect(monkeypatch, caplog):
+    """Setup signals reports a failing disconnect."""
     handlers = _install_signal_handlers(monkeypatch)
 
     async def exercise():
+        """Exercise."""
         async def disconnect():
+            """Disconnect."""
             raise RuntimeError("disconnect failed")
 
         system.setup_signals(disconnect)
@@ -280,10 +316,13 @@ def test_setup_signals_reports_a_failing_disconnect(monkeypatch, caplog):
 
 
 def test_setup_signals_reports_a_cancelled_disconnect(monkeypatch, caplog):
+    """Setup signals reports a cancelled disconnect."""
     handlers = _install_signal_handlers(monkeypatch)
 
     async def exercise():
+        """Exercise."""
         async def disconnect():
+            """Disconnect."""
             raise asyncio.CancelledError
 
         system.setup_signals(disconnect)
@@ -296,12 +335,15 @@ def test_setup_signals_reports_a_cancelled_disconnect(monkeypatch, caplog):
 
 
 def test_setup_signals_tolerates_unregistrable_signals(monkeypatch, caplog):
+    """Setup signals tolerates unregistrable signals."""
     def refuse(_sig, _handler):
+        """Refuse."""
         raise ValueError("not in main thread")
 
     monkeypatch.setattr(system.signal, "signal", refuse)
 
     async def exercise():
+        """Exercise."""
         system.setup_signals(AsyncMock())
 
     with caplog.at_level(logging.WARNING, logger="botlite.system"):
@@ -313,6 +355,7 @@ def test_setup_signals_tolerates_unregistrable_signals(monkeypatch, caplog):
 
 
 def test_setup_logging_configures_handlers_when_none_exist(monkeypatch, tmp_path):
+    """Setup logging configures handlers when none exist."""
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(logging.root, "handlers", [])
     captured = {}
@@ -326,9 +369,11 @@ def test_setup_logging_configures_handlers_when_none_exist(monkeypatch, tmp_path
 
 
 def test_run_starts_the_event_loop(monkeypatch):
+    """Run starts the event loop."""
     called = []
 
     async def fake_main():
+        """Fake main."""
         called.append(True)
 
     monkeypatch.setattr(app, "_main", fake_main)
@@ -337,10 +382,12 @@ def test_run_starts_the_event_loop(monkeypatch):
 
 
 def test_disconnect_callback_shuts_voice_down_and_cleans_up(monkeypatch):
+    """Disconnect callback shuts voice down and cleans up."""
     captured = {}
     actions = []
 
     async def exercise():
+        """Exercise."""
         monkeypatch.setattr(app.config, "validate", lambda: None)
         monkeypatch.setattr(app, "setup_signals", lambda fn: captured.update(disconnect=fn))
         monkeypatch.setattr(app, "cleanup_old_temps", lambda: None)
@@ -376,14 +423,18 @@ def test_disconnect_callback_shuts_voice_down_and_cleans_up(monkeypatch):
 
 
 class StatusMessage:
+    """Status message."""
     def __init__(self):
+        """Init."""
         self.edits = []
 
     async def edit(self, text, **kwargs):
+        """Edit."""
         self.edits.append((text, kwargs))
 
 
 class CommandEvent:
+    """Command event."""
     def __init__(
         self,
         *,
@@ -395,6 +446,7 @@ class CommandEvent:
         match=None,
         reply_error=None,
     ):
+        """Init."""
         self.chat_id = chat_id
         self.sender_id = sender_id
         self.is_private = is_private
@@ -406,6 +458,7 @@ class CommandEvent:
         self._reply_error = reply_error
 
     async def reply(self, text, **kwargs):
+        """Reply."""
         if self._reply_error is not None:
             raise self._reply_error
         self.replies.append((text, kwargs))
@@ -413,6 +466,7 @@ class CommandEvent:
 
 
 def test_dashboard_button_falls_back_to_a_url_button(monkeypatch):
+    """Dashboard button falls back to a url button."""
     import telethon.tl.types as tl_types
 
     monkeypatch.setattr(commands, "WEBAPP_PUBLIC_URL", "https://example.test/app")
@@ -424,6 +478,7 @@ def test_dashboard_button_falls_back_to_a_url_button(monkeypatch):
 
 @pytest.mark.parametrize("handler", ["cmd_start", "cmd_help", "cmd_status"])
 def test_public_commands_ignore_disallowed_chats(monkeypatch, handler):
+    """Public commands ignore disallowed chats."""
     monkeypatch.setattr(commands, "group_allowed", lambda _event: False)
     event = CommandEvent()
     asyncio.run(getattr(commands, handler)(event))
@@ -432,6 +487,7 @@ def test_public_commands_ignore_disallowed_chats(monkeypatch, handler):
 
 @pytest.mark.parametrize("handler", ["cmd_ban", "cmd_unban"])
 def test_ban_commands_ignore_non_sudo_users(monkeypatch, handler):
+    """Ban commands ignore non sudo users."""
     monkeypatch.setattr(commands, "SUDO_USERS", [1])
     event = CommandEvent(sender_id=999)
     asyncio.run(getattr(commands, handler)(event))
@@ -439,6 +495,7 @@ def test_ban_commands_ignore_non_sudo_users(monkeypatch, handler):
 
 
 def _enable_voice(monkeypatch):
+    """Enable voice."""
     monkeypatch.setattr(commands, "VOICE_ENABLED", True)
     monkeypatch.setattr(commands, "group_allowed", lambda _event: True)
     monkeypatch.setattr(commands.db, "is_banned", lambda _uid: False)
@@ -447,12 +504,14 @@ def _enable_voice(monkeypatch):
 
 
 def _play_event(**kwargs):
+    """Play event."""
     return CommandEvent(
         is_private=False, is_group=True, text="/play https://example.test/a", **kwargs
     )
 
 
 def test_voice_play_respects_the_cooldown(monkeypatch):
+    """Voice play respects the cooldown."""
     _enable_voice(monkeypatch)
     monkeypatch.setattr(commands, "check_cooldown", lambda _cooldowns, _uid: 7.0)
     event = _play_event()
@@ -463,16 +522,20 @@ def test_voice_play_respects_the_cooldown(monkeypatch):
 
 
 def test_voice_play_reports_a_download_failure_and_cleans_up(monkeypatch):
+    """Voice play reports a download failure and cleans up."""
     _enable_voice(monkeypatch)
     cleaned = []
 
     class TrackedDirectory:
+        """Tracked directory."""
         name = tempfile.gettempdir()
 
         def cleanup(self):
+            """Cleanup."""
             cleaned.append(True)
 
     async def failing_download(*_args, **_kwargs):
+        """Failing download."""
         raise ValueError("<too long>")
 
     monkeypatch.setattr(commands.tempfile, "TemporaryDirectory", lambda **_kw: TrackedDirectory())
@@ -490,6 +553,7 @@ def test_voice_play_reports_a_download_failure_and_cleans_up(monkeypatch):
 
 
 def test_voice_play_logs_when_the_status_message_cannot_be_sent(monkeypatch, caplog):
+    """Voice play logs when the status message cannot be sent."""
     _enable_voice(monkeypatch)
     event = _play_event(reply_error=RuntimeError("telegram down"))
     # The first reply (the one that creates the status message) must fail.
@@ -502,6 +566,7 @@ def test_voice_play_logs_when_the_status_message_cannot_be_sent(monkeypatch, cap
 
 
 def test_voice_controls_are_ignored_when_voice_is_disabled(monkeypatch):
+    """Voice controls are ignored when voice is disabled."""
     monkeypatch.setattr(commands, "VOICE_ENABLED", False)
     event = _play_event()
     asyncio.run(commands.cmd_voice_control(event))
@@ -512,29 +577,37 @@ def test_voice_controls_are_ignored_when_voice_is_disabled(monkeypatch):
 
 
 class UrlMessage:
+    """Url message."""
     def __init__(self, text):
+        """Init."""
         self.text = text
         self.caption = None
         self.id = 1
 
 
 class UrlStatus:
+    """Url status."""
     def __init__(self, delete_error=None):
+        """Init."""
         self.edits = []
         self.deleted = False
         self._delete_error = delete_error
 
     async def edit(self, text, **kwargs):
+        """Edit."""
         self.edits.append(text)
 
     async def delete(self):
+        """Delete."""
         if self._delete_error is not None:
             raise self._delete_error
         self.deleted = True
 
 
 class UrlEvent:
+    """Url event."""
     def __init__(self, text="https://example.test/v", status=None):
+        """Init."""
         self.chat_id = 1
         self.sender_id = 4242
         self.is_private = True
@@ -544,11 +617,13 @@ class UrlEvent:
         self.status = status or UrlStatus()
 
     async def reply(self, text, **kwargs):
+        """Reply."""
         self.replies.append(text)
         return self.status
 
 
 def test_send_media_attaches_audio_attributes(monkeypatch, tmp_path):
+    """Send media attaches audio attributes."""
     fp = tmp_path / "song.mp3"
     fp.write_bytes(b"x" * 200)
     send_file = AsyncMock()
@@ -561,11 +636,13 @@ def test_send_media_attaches_audio_attributes(monkeypatch, tmp_path):
 
 
 def test_upload_results_reports_a_failed_send(monkeypatch, tmp_path):
+    """Upload results reports a failed send."""
     fp = tmp_path / "clip.mp4"
     fp.write_bytes(b"x" * 200)
     event = UrlEvent()
 
     async def broken_send(*_args, **_kwargs):
+        """Broken send."""
         raise RuntimeError("upload failed")
 
     monkeypatch.setattr(url, "_send_media", broken_send)
@@ -578,11 +655,13 @@ def test_upload_results_reports_a_failed_send(monkeypatch, tmp_path):
 
 
 def test_upload_results_tolerates_a_file_that_cannot_be_removed(monkeypatch, tmp_path):
+    """Upload results tolerates a file that cannot be removed."""
     fp = tmp_path / "clip.mp4"
     fp.write_bytes(b"x" * 200)
     event = UrlEvent()
 
     def refuse(_path):
+        """Refuse."""
         raise OSError("busy")
 
     monkeypatch.setattr(url, "_send_media", AsyncMock())
@@ -594,6 +673,7 @@ def test_upload_results_tolerates_a_file_that_cannot_be_removed(monkeypatch, tmp
 
 
 def test_url_handler_ignores_disallowed_chats(monkeypatch):
+    """Url handler ignores disallowed chats."""
     monkeypatch.setattr(url, "group_allowed", lambda _event: False)
     event = UrlEvent()
     asyncio.run(url.url_handler(event))
@@ -601,6 +681,7 @@ def test_url_handler_ignores_disallowed_chats(monkeypatch):
 
 
 def test_url_handler_stops_when_a_guard_rejects(monkeypatch):
+    """Url handler stops when a guard rejects."""
     monkeypatch.setattr(url, "group_allowed", lambda _event: True)
     monkeypatch.setattr(url, "_check_guards", AsyncMock(return_value=True))
     event = UrlEvent()
@@ -609,12 +690,14 @@ def test_url_handler_stops_when_a_guard_rejects(monkeypatch):
 
 
 def _handler_setup(monkeypatch, tmp_path, *, results, uploaded=1, status=None):
+    """Handler setup."""
     monkeypatch.setattr(url, "group_allowed", lambda _event: True)
     monkeypatch.setattr(url, "_check_guards", AsyncMock(return_value=False))
     counters = []
     monkeypatch.setattr(url.db, "increment", counters.append)
 
     async def fake_download(_url):
+        """Fake download."""
         return str(tmp_path), results
 
     monkeypatch.setattr(url, "download", fake_download)
@@ -623,6 +706,7 @@ def _handler_setup(monkeypatch, tmp_path, *, results, uploaded=1, status=None):
 
 
 def test_url_handler_reports_missing_media(monkeypatch, tmp_path):
+    """Url handler reports missing media."""
     event, counters = _handler_setup(monkeypatch, tmp_path, results=[])
     asyncio.run(url.url_handler(event))
     assert "No media found" in event.status.edits[0]
@@ -630,6 +714,7 @@ def test_url_handler_reports_missing_media(monkeypatch, tmp_path):
 
 
 def test_url_handler_ignores_a_status_message_that_cannot_be_deleted(monkeypatch, tmp_path):
+    """Url handler ignores a status message that cannot be deleted."""
     status = UrlStatus(delete_error=RuntimeError("gone"))
     event, counters = _handler_setup(
         monkeypatch, tmp_path, results=[("f", {}, "video")], status=status
@@ -639,6 +724,7 @@ def test_url_handler_ignores_a_status_message_that_cannot_be_deleted(monkeypatch
 
 
 def test_url_handler_reports_when_nothing_could_be_sent(monkeypatch, tmp_path):
+    """Url handler reports when nothing could be sent."""
     event, counters = _handler_setup(
         monkeypatch, tmp_path, results=[("f", {}, "video")], uploaded=0
     )
@@ -651,27 +737,34 @@ def test_url_handler_reports_when_nothing_could_be_sent(monkeypatch, tmp_path):
 
 
 class Calls:
+    """Calls."""
     def __init__(self, leave_error=None):
+        """Init."""
         self.start_count = 0
         self.leave_error = leave_error
 
     def on_update(self):
+        """On update."""
         return lambda callback: callback
 
     async def start(self):
+        """Start."""
         self.start_count += 1
 
     async def play(self, chat_id, path, *, config):
-        pass
+        """Play."""
 
     async def leave_call(self, chat_id):
+        """Leave call."""
         if self.leave_error is not None:
             raise self.leave_error
 
     async def pause(self, chat_id):
+        """Pause."""
         return True
 
     async def resume(self, chat_id):
+        """Resume."""
         return True
 
 
@@ -680,19 +773,23 @@ _created_directories = []
 
 @pytest.fixture(autouse=True)
 def _release_directories():
+    """Release directories."""
     yield
     while _created_directories:
         _created_directories.pop().cleanup()
 
 
 def _directory():
+    """Directory."""
     directory = tempfile.TemporaryDirectory()
     _created_directories.append(directory)
     return directory, Path(directory.name) / "a.ogg"
 
 
 def test_voice_start_is_idempotent():
+    """Voice start is idempotent."""
     async def exercise():
+        """Exercise."""
         calls = Calls()
         manager = VoiceChatManager(calls)
         await manager.start()
@@ -703,7 +800,9 @@ def test_voice_start_is_idempotent():
 
 
 def test_voice_play_requires_a_started_manager():
+    """Voice play requires a started manager."""
     async def exercise():
+        """Exercise."""
         directory, path = _directory()
         pending = VoiceChatManager(Calls()).play(1, str(path), Playback(directory, "T"))
         with pytest.raises(RuntimeError, match="not running"):
@@ -714,7 +813,9 @@ def test_voice_play_requires_a_started_manager():
 
 
 def test_voice_play_rechecks_the_state_after_waiting_for_the_lock():
+    """Voice play rechecks the state after waiting for the lock."""
     async def exercise():
+        """Exercise."""
         manager = VoiceChatManager(Calls())
         await manager.start()
         directory, path = _directory()
@@ -730,7 +831,9 @@ def test_voice_play_rechecks_the_state_after_waiting_for_the_lock():
 
 
 def test_voice_pause_and_resume_need_an_active_session():
+    """Voice pause and resume need an active session."""
     async def exercise():
+        """Exercise."""
         manager = VoiceChatManager(Calls())
         await manager.start()
         assert await manager.pause(1) is False
@@ -746,7 +849,9 @@ def test_voice_pause_and_resume_need_an_active_session():
 
 
 def test_voice_shutdown_is_idempotent_and_survives_leave_failures():
+    """Voice shutdown is idempotent and survives leave failures."""
     async def exercise():
+        """Exercise."""
         calls = Calls()
         manager = VoiceChatManager(calls)
         await manager.start()
@@ -762,7 +867,9 @@ def test_voice_shutdown_is_idempotent_and_survives_leave_failures():
 
 
 def test_voice_cleanup_after_disconnect_removes_pending_files():
+    """Voice cleanup after disconnect removes pending files."""
     async def exercise():
+        """Exercise."""
         manager = VoiceChatManager(Calls())
         await manager.start()
         directory, path = _directory()
@@ -778,7 +885,9 @@ def test_voice_cleanup_after_disconnect_removes_pending_files():
 
 
 def test_voice_stop_tolerates_a_call_that_already_ended():
+    """Voice stop tolerates a call that already ended."""
     async def exercise():
+        """Exercise."""
         manager = VoiceChatManager(Calls(leave_error=NotInCallError()))
         await manager.start()
         directory, path = _directory()
@@ -789,7 +898,9 @@ def test_voice_stop_tolerates_a_call_that_already_ended():
 
 
 def test_voice_updates_only_react_to_ended_streams_of_active_chats():
+    """Voice updates only react to ended streams of active chats."""
     async def exercise():
+        """Exercise."""
         calls = Calls()
         manager = VoiceChatManager(calls)
         await manager.start()
@@ -807,12 +918,14 @@ def test_voice_updates_only_react_to_ended_streams_of_active_chats():
 
 
 def test_get_voice_manager_returns_the_initialised_manager(monkeypatch):
+    """Get voice manager returns the initialised manager."""
     sentinel = object()
     monkeypatch.setattr(voice._state, "manager", sentinel)
     assert voice.get_voice_manager() is sentinel
 
 
 def test_get_voice_manager_requires_initialisation(monkeypatch):
+    """Get voice manager requires initialisation."""
     monkeypatch.setattr(voice._state, "manager", None)
     with pytest.raises(RuntimeError, match="disabled or not initialized"):
         voice.get_voice_manager()
@@ -822,16 +935,20 @@ def test_get_voice_manager_requires_initialisation(monkeypatch):
 
 
 def test_start_webapp_cleans_up_when_the_server_cannot_start(monkeypatch):
+    """Start webapp cleans up when the server cannot start."""
     cleaned = []
 
     class FailingRunner:
+        """Failing runner."""
         def __init__(self, *_args, **_kwargs):
-            pass
+            """Init."""
 
         async def setup(self):
+            """Setup."""
             raise RuntimeError("port busy")
 
         async def cleanup(self):
+            """Cleanup."""
             cleaned.append(True)
 
     monkeypatch.setattr(webapp_pkg, "_runners", [])
@@ -844,36 +961,42 @@ def test_start_webapp_cleans_up_when_the_server_cannot_start(monkeypatch):
     assert webapp_pkg._runners == []
 
 
-TOKEN = "123456:TEST-TOKEN"
+BOT_AUTH = "123456:TEST-BOT_AUTH"
 
 
 def _signed(params):
+    """Signed."""
     data_check = "\n".join(f"{k}={v}" for k, v in sorted(params.items()))
-    secret = hmac.new(b"WebAppData", TOKEN.encode(), hashlib.sha256).digest()
+    secret = hmac.new(b"WebAppData", BOT_AUTH.encode(), hashlib.sha256).digest()
     digest = hmac.new(secret, data_check.encode(), hashlib.sha256).hexdigest()
     return urllib.parse.urlencode({**params, "hash": digest})
 
 
 @pytest.fixture
 def bot_token(monkeypatch):
-    monkeypatch.setattr(auth, "BOT_TOKEN", TOKEN)
+    """Bot token."""
+    monkeypatch.setattr(auth, "BOT_TOKEN", BOT_AUTH)
 
 
 def test_init_data_with_a_malformed_query_string_is_rejected(bot_token):
+    """Init data with a malformed query string is rejected."""
     assert auth.validate_init_data("not-a-query-string") is None
 
 
 def test_init_data_without_any_field_is_rejected(bot_token, monkeypatch):
+    """Init data without any field is rejected."""
     monkeypatch.setattr(auth.urllib.parse, "parse_qsl", lambda *_a, **_k: [])
     assert auth.validate_init_data("x=1") is None
 
 
 @pytest.mark.parametrize("params", [{"user": "{}"}, {"auth_date": "yesterday", "user": "{}"}])
 def test_init_data_with_a_missing_or_invalid_auth_date_is_rejected(bot_token, params):
+    """Init data with a missing or invalid auth date is rejected."""
     assert auth.validate_init_data(_signed(params)) is None
 
 
 def test_init_data_with_a_valid_signature_is_accepted(bot_token):
+    """Init data with a valid signature is accepted."""
     user = auth.validate_init_data(
         _signed({"auth_date": str(int(time.time())), "user": '{"id": 5}'})
     )
@@ -881,12 +1004,15 @@ def test_init_data_with_a_valid_signature_is_accepted(bot_token):
 
 
 def test_unhandled_handler_errors_become_500_with_security_headers(monkeypatch):
+    """Unhandled handler errors become 500 with security headers."""
     async def broken(_request):
+        """Broken."""
         raise RuntimeError("boom")
 
     monkeypatch.setattr(server, "api_status", broken)
 
     async def exercise():
+        """Exercise."""
         async with TestClient(TestServer(server.create_app())) as client:
             response = await client.get("/api/status")
             return response.status, dict(response.headers)

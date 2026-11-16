@@ -1,3 +1,5 @@
+"""Tests for config."""
+
 import pytest
 
 from botlite import config
@@ -5,6 +7,7 @@ from botlite.config import _int_list, _nonzero_int_list
 
 
 def test_int_list_keeps_signed_decimal_ids_and_ignores_malformed_items(monkeypatch):
+    """Int list keeps signed decimal ids and ignores malformed items."""
     monkeypatch.setenv("TEST_ID_LIST", "-100123, 42, --7, nope, 0, +9, ,")
 
     assert _int_list("TEST_ID_LIST") == [-100123, 42, 0, 9]
@@ -12,6 +15,7 @@ def test_int_list_keeps_signed_decimal_ids_and_ignores_malformed_items(monkeypat
 
 
 def test_voice_requires_enabled_group_allowlist(monkeypatch):
+    """Voice requires enabled group allowlist."""
     monkeypatch.setattr(config, "VOICE_ENABLED", True)
     monkeypatch.setattr(config, "ALLOW_GROUPS", False)
     monkeypatch.setattr(config, "ALLOWED_GROUP_IDS", set())
@@ -21,6 +25,7 @@ def test_voice_requires_enabled_group_allowlist(monkeypatch):
 
 
 def test_voice_configuration_accepts_explicit_group_allowlist(monkeypatch):
+    """Voice configuration accepts explicit group allowlist."""
     monkeypatch.setattr(config, "API_ID", 123)
     monkeypatch.setattr(config, "API_HASH", "hash")
     monkeypatch.setattr(config, "BOT_TOKEN", "token")
@@ -35,6 +40,7 @@ def test_voice_configuration_accepts_explicit_group_allowlist(monkeypatch):
 
 
 def test_helpers_int_and_bool(monkeypatch):
+    """Helpers int and bool."""
     from botlite.config import _bool, _int
 
     # _int
@@ -62,6 +68,7 @@ def test_helpers_int_and_bool(monkeypatch):
 
 
 def test_validate_missing_required_fields(monkeypatch):
+    """Validate missing required fields."""
     monkeypatch.setattr(config, "API_ID", 0)
     monkeypatch.setattr(config, "API_HASH", "")
     monkeypatch.setattr(config, "BOT_TOKEN", "")

@@ -1,3 +1,5 @@
+"""Tests for ytdlp audio."""
+
 import pytest
 import yt_dlp
 
@@ -5,7 +7,8 @@ from botlite.downloader.ytdlp import _build_audio_opts
 
 
 def test_audio_options_reject_unknown_or_overlong_duration():
-    options = _build_audio_opts("/tmp/voice", None, 1024, 600)
+    """Audio options reject unknown or overlong duration."""
+    options = _build_audio_opts("voice-dir", None, 1024, 600)
     duration_filter = options["match_filter"]
 
     assert options["noplaylist"] is True
@@ -17,7 +20,8 @@ def test_audio_options_reject_unknown_or_overlong_duration():
 
 
 def test_audio_progress_hook_enforces_size_limit():
-    options = _build_audio_opts("/tmp/voice", None, 1024, 600)
+    """Audio progress hook enforces size limit."""
+    options = _build_audio_opts("voice-dir", None, 1024, 600)
     hook = options["progress_hooks"][0]
 
     hook({"downloaded_bytes": 1024})
@@ -26,6 +30,7 @@ def test_audio_progress_hook_enforces_size_limit():
 
 
 def test_download_audio_success(tmp_path, monkeypatch):
+    """Download audio success."""
     import asyncio
 
     from botlite.downloader.ytdlp import download_audio
@@ -34,24 +39,30 @@ def test_download_audio_success(tmp_path, monkeypatch):
     fake_file.write_bytes(b"x" * 500)
 
     class FakeYDL:
+        """Fake y d l."""
         def __init__(self, opts):
+            """Init."""
             self.opts = opts
 
         def __enter__(self):
+            """Enter."""
             return self
 
         def __exit__(self, *args):
-            pass
+            """Exit."""
 
         def extract_info(self, url, download=True):
+            """Extract info."""
             return {"title": "Cool Song", "duration": 180}
 
         def prepare_filename(self, info):
+            """Prepare filename."""
             return str(fake_file)
 
     monkeypatch.setattr(yt_dlp, "YoutubeDL", FakeYDL)
 
     async def exercise():
+        """Exercise."""
         path, meta = await download_audio(
             "https://soundcloud.com/song",
             str(tmp_path),
@@ -67,26 +78,31 @@ def test_download_audio_success(tmp_path, monkeypatch):
 
 
 def test_download_audio_no_info_raises(tmp_path, monkeypatch):
+    """Download audio no info raises."""
     import asyncio
 
     from botlite.downloader.ytdlp import download_audio
 
     class FakeYDL:
+        """Fake y d l."""
         def __init__(self, opts):
-            pass
+            """Init."""
 
         def __enter__(self):
+            """Enter."""
             return self
 
         def __exit__(self, *args):
-            pass
+            """Exit."""
 
         def extract_info(self, url, download=True):
-            return None
+            """Extract info."""
+            return
 
     monkeypatch.setattr(yt_dlp, "YoutubeDL", FakeYDL)
 
     async def exercise():
+        """Exercise."""
         with pytest.raises(RuntimeError, match="yt-dlp returned no audio information"):
             await download_audio(
                 "https://soundcloud.com/song",

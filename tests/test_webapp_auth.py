@@ -1,3 +1,5 @@
+"""Tests for webapp auth."""
+
 import hashlib
 import hmac
 import json
@@ -10,6 +12,7 @@ from botlite.webapp.auth import validate_init_data
 
 
 def _build_init_data(bot_token: str, user: dict[str, Any]) -> str:
+    """Build init data."""
     params = {
         "auth_date": str(int(time.time())),
         "query_id": "AAHx",
@@ -27,6 +30,7 @@ def _build_init_data(bot_token: str, user: dict[str, Any]) -> str:
 
 
 def test_validate_init_data_success():
+    """Validate init data success."""
     init_data = _build_init_data("token123", {"id": 42, "username": "admin"})
     with patch("botlite.webapp.auth.BOT_TOKEN", "token123"):
         user_data = validate_init_data(init_data)
@@ -35,6 +39,7 @@ def test_validate_init_data_success():
 
 
 def test_validate_init_data_failures():
+    """Validate init data failures."""
     with patch("botlite.webapp.auth.BOT_TOKEN", ""):
         assert validate_init_data("a=b") is None
 
@@ -45,6 +50,7 @@ def test_validate_init_data_failures():
 
 
 def test_validate_init_data_invalid_user_json_is_rejected():
+    """Validate init data invalid user json is rejected."""
     params = {
         "auth_date": str(int(time.time())),
         "query_id": "AAHx",
@@ -60,6 +66,7 @@ def test_validate_init_data_invalid_user_json_is_rejected():
 
 
 def test_validate_init_data_rejects_expired_data():
+    """Validate init data rejects expired data."""
     init_data = _build_init_data("token123", {"id": 42})
     with (
         patch("botlite.webapp.auth.BOT_TOKEN", "token123"),
@@ -69,12 +76,14 @@ def test_validate_init_data_rejects_expired_data():
 
 
 def test_validate_init_data_rejects_duplicate_parameters():
+    """Validate init data rejects duplicate parameters."""
     init_data = _build_init_data("token123", {"id": 42})
     with patch("botlite.webapp.auth.BOT_TOKEN", "token123"):
         assert validate_init_data(f"{init_data}&auth_date=invalid") is None
 
 
 def test_validate_init_data_rejects_invalid_user_payload():
+    """Validate init data rejects invalid user payload."""
     params = {
         "auth_date": str(int(time.time())),
         "query_id": "AAHx",
@@ -90,11 +99,13 @@ def test_validate_init_data_rejects_invalid_user_payload():
 
 
 def test_validate_init_data_rejects_oversized_payload():
+    """Validate init data rejects oversized payload."""
     with patch("botlite.webapp.auth.BOT_TOKEN", "token123"):
         assert validate_init_data("a=" + ("x" * 8192)) is None
 
 
 def test_validate_init_data_rejects_boolean_user_id():
+    """Validate init data rejects boolean user id."""
     init_data = _build_init_data("token123", {"id": True})
     with patch("botlite.webapp.auth.BOT_TOKEN", "token123"):
         assert validate_init_data(init_data) is None

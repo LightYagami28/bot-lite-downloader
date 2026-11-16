@@ -1,7 +1,10 @@
+"""Tests for db."""
+
 from botlite import db
 
 
 def test_db_init_and_stats(tmp_path, monkeypatch):
+    """Db init and stats."""
     test_db = tmp_path / "test_media.db"
     monkeypatch.setattr(db, "DB_FILE", str(test_db))
 
@@ -28,6 +31,7 @@ def test_db_init_and_stats(tmp_path, monkeypatch):
 
 
 def test_db_ban_unban(tmp_path, monkeypatch):
+    """Db ban unban."""
     test_db = tmp_path / "test_media.db"
     monkeypatch.setattr(db, "DB_FILE", str(test_db))
 

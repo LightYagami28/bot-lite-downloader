@@ -1,3 +1,5 @@
+"""Tests for app."""
+
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
@@ -5,7 +7,9 @@ from botlite import app
 
 
 def test_app_main_lifecycle(monkeypatch):
+    """App main lifecycle."""
     async def exercise():
+        """Exercise."""
         actions = []
 
         monkeypatch.setattr(app.config, "validate", lambda: actions.append("config.validate"))
@@ -40,7 +44,9 @@ def test_app_main_lifecycle(monkeypatch):
 
 
 def test_app_main_with_voice_and_webapp(monkeypatch):
+    """App main with voice and webapp."""
     async def exercise():
+        """Exercise."""
         actions = []
 
         monkeypatch.setattr(app.config, "validate", lambda: None)
