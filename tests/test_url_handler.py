@@ -1,3 +1,5 @@
+"""Tests for url handler."""
+
 import asyncio
 from unittest.mock import MagicMock
 
@@ -5,7 +7,9 @@ from botlite.handlers import url
 
 
 class FakeMessage:
+    """Fake message."""
     def __init__(self, text="", caption=None, msg_id=1):
+        """Init."""
         self.text = text
         self.caption = caption
         self.id = msg_id
@@ -13,13 +17,16 @@ class FakeMessage:
         self.deleted = False
 
     async def edit(self, text, **kwargs):
+        """Edit."""
         self.edits.append((text, kwargs))
 
     async def delete(self):
+        """Delete."""
         self.deleted = True
 
 
 class FakeEvent:
+    """Fake event."""
     def __init__(
         self,
         *,
@@ -30,6 +37,7 @@ class FakeEvent:
         text="",
         caption=None,
     ):
+        """Init."""
         self.chat_id = chat_id
         self.sender_id = sender_id
         self.is_private = is_private
@@ -39,12 +47,15 @@ class FakeEvent:
         self.status = FakeMessage()
 
     async def reply(self, text, **kwargs):
+        """Reply."""
         self.replies.append((text, kwargs))
         return self.status
 
 
 def test_url_handler_ignores_commands():
+    """Url handler ignores commands."""
     async def exercise():
+        """Exercise."""
         event = FakeEvent(text="/start https://example.com/video")
         await url.url_handler(event)
         assert len(event.replies) == 0
@@ -53,7 +64,9 @@ def test_url_handler_ignores_commands():
 
 
 def test_url_handler_ignores_no_url():
+    """Url handler ignores no url."""
     async def exercise():
+        """Exercise."""
         event = FakeEvent(text="Hello world, no link here!")
         await url.url_handler(event)
         assert len(event.replies) == 0
@@ -62,7 +75,9 @@ def test_url_handler_ignores_no_url():
 
 
 def test_url_handler_ignores_tme_links():
+    """Url handler ignores tme links."""
     async def exercise():
+        """Exercise."""
         event = FakeEvent(text="Check this out: https://t.me/somechannel/123")
         await url.url_handler(event)
         assert len(event.replies) == 0
@@ -71,7 +86,9 @@ def test_url_handler_ignores_tme_links():
 
 
 def test_check_guards_banned(monkeypatch):
+    """Check guards banned."""
     async def exercise():
+        """Exercise."""
         monkeypatch.setattr(url.db, "is_banned", lambda uid: True)
         event = FakeEvent(sender_id=42)
         rejected = await url._check_guards(event, 42)
@@ -82,7 +99,9 @@ def test_check_guards_banned(monkeypatch):
 
 
 def test_check_guards_active_download(monkeypatch):
+    """Check guards active download."""
     async def exercise():
+        """Exercise."""
         monkeypatch.setattr(url.db, "is_banned", lambda uid: False)
         event = FakeEvent(sender_id=42)
         url.active_downloads.add(42)
@@ -97,7 +116,9 @@ def test_check_guards_active_download(monkeypatch):
 
 
 def test_check_guards_cooldown(monkeypatch):
+    """Check guards cooldown."""
     async def exercise():
+        """Exercise."""
         monkeypatch.setattr(url.db, "is_banned", lambda uid: False)
         monkeypatch.setattr(url, "check_cooldown", lambda cooldowns, uid: 15.0)
         event = FakeEvent(sender_id=42)
@@ -109,7 +130,9 @@ def test_check_guards_cooldown(monkeypatch):
 
 
 def test_check_guards_low_disk(monkeypatch):
+    """Check guards low disk."""
     async def exercise():
+        """Exercise."""
         monkeypatch.setattr(url.db, "is_banned", lambda uid: False)
         monkeypatch.setattr(url, "check_cooldown", lambda cooldowns, uid: 0.0)
         monkeypatch.setattr(url, "free_disk", lambda: 100)  # low disk
@@ -122,7 +145,9 @@ def test_check_guards_low_disk(monkeypatch):
 
 
 def test_upload_results_skips_oversized_files(tmp_path):
+    """Upload results skips oversized files."""
     async def exercise():
+        """Exercise."""
         oversized = tmp_path / "big.mp4"
         oversized.write_bytes(b"x" * 2000)
 
@@ -135,6 +160,7 @@ def test_upload_results_skips_oversized_files(tmp_path):
         sent_files = []
 
         async def fake_send_media(ev, fp, meta, mtype):
+            """Fake send media."""
             sent_files.append((fp, mtype))
 
         orig_send = url._send_media
@@ -163,7 +189,9 @@ def test_upload_results_skips_oversized_files(tmp_path):
 
 
 def test_url_handler_success(tmp_path, monkeypatch):
+    """Url handler success."""
     async def exercise():
+        """Exercise."""
         test_file = tmp_path / "video.mp4"
         test_file.write_bytes(b"x" * 500)
 
@@ -172,6 +200,7 @@ def test_url_handler_success(tmp_path, monkeypatch):
         ]
 
         async def mock_download(url_arg):
+            """Mock download."""
             return str(tmp_path), fake_results
 
         monkeypatch.setattr(url, "download", mock_download)
@@ -182,6 +211,7 @@ def test_url_handler_success(tmp_path, monkeypatch):
         sent_calls = []
 
         async def mock_send_file(chat_id, fp, **kwargs):
+            """Mock send file."""
             sent_calls.append((chat_id, fp, kwargs))
 
         monkeypatch.setattr(url.client, "send_file", mock_send_file)
@@ -200,8 +230,11 @@ def test_url_handler_success(tmp_path, monkeypatch):
 
 
 def test_url_handler_download_failure(monkeypatch):
+    """Url handler download failure."""
     async def exercise():
+        """Exercise."""
         async def mock_download(url_arg):
+            """Mock download."""
             raise RuntimeError("Extraction failed completely")
 
         monkeypatch.setattr(url, "download", mock_download)
@@ -222,7 +255,9 @@ def test_url_handler_download_failure(monkeypatch):
 
 
 def test_safe_edit():
+    """Safe edit."""
     async def exercise():
+        """Exercise."""
         msg = FakeMessage()
         await url._safe_edit(msg, "new text")
         assert msg.edits[0][0] == "new text"

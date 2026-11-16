@@ -1,3 +1,5 @@
+"""Tests for ytdlp."""
+
 import asyncio
 
 import pytest
@@ -6,6 +8,7 @@ from botlite.downloader import ytdlp
 
 
 def test_guess_mtype():
+    """Guess mtype."""
     assert ytdlp._guess_mtype("file.mp4") == "video"
     assert ytdlp._guess_mtype("file.MKV") == "video"
     assert ytdlp._guess_mtype("file.mp3") == "audio"
@@ -16,6 +19,7 @@ def test_guess_mtype():
 
 
 def test_mtype_from_info():
+    """Mtype from info."""
     assert ytdlp._mtype_from_info("pic.jpg", vcodec="h264", acodec="aac") == "photo"
     assert ytdlp._mtype_from_info("vid.mkv", vcodec="h264", acodec="aac") == "video"
     assert ytdlp._mtype_from_info("audio.opus", vcodec="none", acodec="opus") == "audio"
@@ -24,9 +28,11 @@ def test_mtype_from_info():
 
 
 def test_logger(monkeypatch):
+    """Logger."""
     logged = []
 
     def fake_log(lvl, fmt, msg):
+        """Fake log."""
         logged.append((lvl, msg))
 
     monkeypatch.setattr(ytdlp.log, "debug", lambda fmt, msg: fake_log("debug", fmt, msg))
@@ -51,6 +57,7 @@ def test_logger(monkeypatch):
 
 
 def test_scan_new_files(tmp_path):
+    """Scan new files."""
     before = set()
     file_vid = tmp_path / "video.mp4"
     file_vid.write_bytes(b"x" * 200)
@@ -73,11 +80,13 @@ def test_scan_new_files(tmp_path):
 
 
 def test_scan_new_files_empty_raises(tmp_path):
+    """Scan new files empty raises."""
     with pytest.raises(RuntimeError, match="yt-dlp finished but no file was written"):
         ytdlp._scan_new_files(str(tmp_path), set(), {}, ("none", "none"))
 
 
 def test_build_opts(tmp_path):
+    """Build opts."""
     opts = ytdlp._build_opts(str(tmp_path), None)
     assert opts["noplaylist"] is True
     assert "cookiefile" not in opts
@@ -87,7 +96,9 @@ def test_build_opts(tmp_path):
 
 
 def test_download_success(tmp_path, monkeypatch):
+    """Download success."""
     async def exercise():
+        """Exercise."""
         fake_info = {
             "title": "My Video",
             "uploader": "Uploader",
@@ -99,17 +110,21 @@ def test_download_success(tmp_path, monkeypatch):
         }
 
         class FakeYDL:
+            """Fake y d l."""
             def __init__(self, opts):
+                """Init."""
                 self.opts = opts
 
             def __enter__(self):
+                """Enter."""
                 return self
 
             def __exit__(self, *args):
-                pass
+                """Exit."""
 
             def extract_info(self, url, download=True):
                 # Write an actual file into tmpdir
+                """Extract info."""
                 out_file = tmp_path / "vid123.mp4"
                 out_file.write_bytes(b"x" * 500)
                 return fake_info
@@ -127,19 +142,24 @@ def test_download_success(tmp_path, monkeypatch):
 
 
 def test_download_no_info_raises(tmp_path, monkeypatch):
+    """Download no info raises."""
     async def exercise():
+        """Exercise."""
         class FakeYDL:
+            """Fake y d l."""
             def __init__(self, opts):
-                pass
+                """Init."""
 
             def __enter__(self):
+                """Enter."""
                 return self
 
             def __exit__(self, *args):
-                pass
+                """Exit."""
 
             def extract_info(self, url, download=True):
-                return None
+                """Extract info."""
+                return
 
         monkeypatch.setattr(ytdlp.yt_dlp, "YoutubeDL", FakeYDL)
 

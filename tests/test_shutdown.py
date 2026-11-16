@@ -1,3 +1,5 @@
+"""Tests for shutdown."""
+
 import asyncio
 import signal
 
@@ -5,7 +7,9 @@ from botlite.utils.system import setup_signals
 
 
 def test_shutdown_signal_awaits_disconnect_and_ignores_duplicates(monkeypatch):
+    """Shutdown signal awaits disconnect and ignores duplicates."""
     async def exercise():
+        """Exercise."""
         handlers = {}
         monkeypatch.setattr(
             signal,
@@ -16,6 +20,7 @@ def test_shutdown_signal_awaits_disconnect_and_ignores_duplicates(monkeypatch):
         calls = 0
 
         async def disconnect():
+            """Disconnect."""
             nonlocal calls
             calls += 1
             disconnected.set()

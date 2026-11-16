@@ -1,3 +1,5 @@
+"""Tests for gallery."""
+
 import asyncio
 from pathlib import Path
 
@@ -5,26 +7,33 @@ from botlite.downloader import gallery
 
 
 class FakeProcess:
+    """Fake process."""
     def __init__(self, returncode=0, stderr=b"", block=False):
+        """Init."""
         self.returncode = returncode
         self.stderr = stderr
         self.block = block
         self.killed = False
 
     async def communicate(self):
+        """Communicate."""
         if self.block and not self.killed:
             await asyncio.Event().wait()
         return b"", self.stderr
 
     def kill(self):
+        """Kill."""
         self.killed = True
 
 
 def test_gallery_download_uses_exec_args_and_keeps_partial_results(monkeypatch, tmp_path):
+    """Gallery download uses exec args and keeps partial results."""
     async def exercise():
+        """Exercise."""
         captured = {}
 
         async def create_process(*args, **kwargs):
+            """Create process."""
             captured["args"] = args
             captured["kwargs"] = kwargs
             directory = Path(args[args.index("--directory") + 1])
@@ -42,13 +51,17 @@ def test_gallery_download_uses_exec_args_and_keeps_partial_results(monkeypatch, 
 
 
 def test_gallery_download_kills_process_on_timeout(monkeypatch, tmp_path):
+    """Gallery download kills process on timeout."""
     async def exercise():
+        """Exercise."""
         process = FakeProcess(block=True)
 
         async def create_process(*_args, **_kwargs):
+            """Create process."""
             return process
 
         async def timeout_immediately(awaitable, timeout):
+            """Timeout immediately."""
             awaitable.close()
             raise TimeoutError
 
@@ -67,7 +80,9 @@ def test_gallery_download_kills_process_on_timeout(monkeypatch, tmp_path):
 
 
 def test_gallery_download_rejects_non_http_url_before_launch(tmp_path):
+    """Gallery download rejects non http url before launch."""
     async def exercise():
+        """Exercise."""
         try:
             await gallery.download("file:///etc/passwd", str(tmp_path))
         except ValueError as exc:

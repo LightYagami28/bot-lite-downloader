@@ -1,3 +1,5 @@
+"""Tests for voice."""
+
 import asyncio
 import tempfile
 from pathlib import Path
@@ -7,33 +9,43 @@ from botlite.voice import Playback, VoiceChatManager
 
 
 class FakeCalls:
+    """Fake calls."""
     def __init__(self):
+        """Init."""
         self.started = False
         self.played = []
         self.left = []
 
     def on_update(self):
+        """On update."""
         return lambda callback: callback
 
     async def start(self):
+        """Start."""
         self.started = True
 
     async def play(self, chat_id, path, *, config):
+        """Play."""
         self.played.append((chat_id, path, config.auto_start))
 
     async def leave_call(self, chat_id):
+        """Leave call."""
         self.left.append(chat_id)
 
     async def pause(self, chat_id):
+        """Pause."""
         return True
 
     async def resume(self, chat_id):
+        """Resume."""
         return True
 
 
 def test_voice_manager_keeps_audio_until_stop_then_removes_it():
+    """Voice manager keeps audio until stop then removes it."""
     async def exercise():
 
+        """Exercise."""
         calls = FakeCalls()
         manager = VoiceChatManager(calls)
         await manager.start()
@@ -60,7 +72,9 @@ def test_voice_manager_keeps_audio_until_stop_then_removes_it():
 
 
 def test_stream_end_leaves_call_and_releases_audio():
+    """Stream end leaves call and releases audio."""
     async def exercise():
+        """Exercise."""
         from pytgcalls.types import Device, StreamEnded
 
         calls = FakeCalls()
@@ -83,18 +97,23 @@ def test_stream_end_leaves_call_and_releases_audio():
 
 
 def test_shutdown_waits_for_inflight_play_and_closes_its_session():
+    """Shutdown waits for inflight play and closes its session."""
     class BlockingCalls(FakeCalls):
+        """Blocking calls."""
         def __init__(self):
+            """Init."""
             super().__init__()
             self.play_entered = asyncio.Event()
             self.allow_play_to_finish = asyncio.Event()
 
         async def play(self, chat_id, path, *, config):
+            """Play."""
             self.play_entered.set()
             await self.allow_play_to_finish.wait()
             await super().play(chat_id, path, config=config)
 
     async def exercise():
+        """Exercise."""
         calls = BlockingCalls()
         manager = VoiceChatManager(calls)
         await manager.start()
@@ -121,9 +140,11 @@ def test_shutdown_waits_for_inflight_play_and_closes_its_session():
 
 
 def test_native_voice_client_initializes_inside_asyncio_lifecycle(monkeypatch):
+    """Native voice client initializes inside asyncio lifecycle."""
     monkeypatch.setattr(voice._state, "manager", None)
 
     async def exercise():
+        """Exercise."""
         manager = voice.initialize_voice()
         assert isinstance(manager, VoiceChatManager)
 

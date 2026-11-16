@@ -1,7 +1,10 @@
+"""Tests for access."""
+
 from botlite.handlers.access import MessageOrigin, is_message_allowed
 
 
 def _allowed(**overrides) -> bool:
+    """Allowed."""
     values = {
         "is_private": False,
         "is_group": True,
@@ -18,6 +21,7 @@ def _allowed(**overrides) -> bool:
 
 
 def test_private_user_is_allowed_without_group_configuration():
+    """Private user is allowed without group configuration."""
     assert _allowed(
         is_private=True,
         is_group=False,
@@ -28,25 +32,31 @@ def test_private_user_is_allowed_without_group_configuration():
 
 
 def test_allowlisted_group_user_is_allowed():
+    """Allowlisted group user is allowed."""
     assert _allowed()
 
 
 def test_group_is_denied_when_group_support_is_disabled():
+    """Group is denied when group support is disabled."""
     assert not _allowed(allow_groups=False)
 
 
 def test_group_is_denied_when_chat_id_is_not_allowlisted():
+    """Group is denied when chat id is not allowlisted."""
     assert not _allowed(chat_id=-1009876543210)
 
 
 def test_channel_is_denied_even_if_its_id_is_allowlisted():
+    """Channel is denied even if its id is allowlisted."""
     assert not _allowed(is_group=False)
 
 
 def test_missing_chat_id_is_denied():
+    """Missing chat id is denied."""
     assert not _allowed(chat_id=None)
 
 
 def test_anonymous_or_non_user_sender_is_denied():
+    """Anonymous or non user sender is denied."""
     assert not _allowed(sender_id=None)
     assert not _allowed(sender_id=-1001234567890)

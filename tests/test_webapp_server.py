@@ -1,3 +1,5 @@
+"""Tests for webapp server."""
+
 import asyncio
 
 from aiohttp.test_utils import TestClient, TestServer
@@ -8,12 +10,14 @@ from botlite.webapp.server import create_app
 async def _request(
     path: str, *, method: str = "GET", json: dict | None = None, headers: dict | None = None
 ):
+    """Request."""
     async with TestClient(TestServer(create_app())) as client:
         response = await client.request(method, path, json=json, headers=headers)
         return response.status, dict(response.headers), await response.text()
 
 
 def test_status_endpoint_is_live_and_not_cacheable():
+    """Status endpoint is live and not cacheable."""
     status, headers, body = asyncio.run(_request("/api/status"))
 
     assert status == 200
@@ -23,6 +27,7 @@ def test_status_endpoint_is_live_and_not_cacheable():
 
 
 def test_dashboard_script_is_served_same_origin_under_restrictive_script_csp():
+    """Dashboard script is served same origin under restrictive script csp."""
     status, headers, body = asyncio.run(_request("/app.js"))
 
     script_policy = headers["Content-Security-Policy"].split("script-src", 1)[1].split(";", 1)[0]
@@ -34,6 +39,7 @@ def test_dashboard_script_is_served_same_origin_under_restrictive_script_csp():
 
 
 def test_dashboard_references_external_same_origin_script():
+    """Dashboard references external same origin script."""
     status, headers, body = asyncio.run(_request("/"))
 
     assert status == 200
@@ -43,6 +49,7 @@ def test_dashboard_references_external_same_origin_script():
 
 
 def test_security_headers_are_applied_to_unauthorized_and_not_found_responses():
+    """Security headers are applied to unauthorized and not found responses."""
     for path in ("/api/me", "/api/stats", "/missing"):
         status, headers, _ = asyncio.run(_request(path))
 
@@ -54,6 +61,7 @@ def test_security_headers_are_applied_to_unauthorized_and_not_found_responses():
 
 
 def test_mutating_admin_endpoints_require_valid_telegram_authentication():
+    """Mutating admin endpoints require valid telegram authentication."""
     for path in ("/api/ban", "/api/unban"):
         status, headers, _ = asyncio.run(_request(path, method="POST", json={"user_id": 123}))
 
@@ -62,6 +70,7 @@ def test_mutating_admin_endpoints_require_valid_telegram_authentication():
 
 
 def test_api_me_authenticated(monkeypatch):
+    """Api me authenticated."""
     monkeypatch.setattr(
         "botlite.webapp.server.validate_init_data",
         lambda data: (
@@ -79,7 +88,9 @@ def test_api_me_authenticated(monkeypatch):
 
 
 def test_api_stats_sudo_and_forbidden(monkeypatch):
+    """Api stats sudo and forbidden."""
     def fake_validate(data):
+        """Fake validate."""
         if data == "sudo":
             return {"id": 100}
         if data == "user":
@@ -105,6 +116,7 @@ def test_api_stats_sudo_and_forbidden(monkeypatch):
 
 
 def test_api_ban_and_unban_actions(monkeypatch):
+    """Api ban and unban actions."""
     banned = []
     unbanned = []
     monkeypatch.setattr(

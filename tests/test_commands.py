@@ -1,3 +1,5 @@
+"""Tests for commands."""
+
 import asyncio
 from unittest.mock import MagicMock
 
@@ -5,6 +7,7 @@ from botlite.handlers import access, commands
 
 
 class FakeEvent:
+    """Fake event."""
     def __init__(
         self,
         *,
@@ -15,6 +18,7 @@ class FakeEvent:
         text="",
         pattern_match=None,
     ):
+        """Init."""
         self.chat_id = chat_id
         self.sender_id = sender_id
         self.is_private = is_private
@@ -24,6 +28,7 @@ class FakeEvent:
         self.replies = []
 
     async def reply(self, text, **kwargs):
+        """Reply."""
         self.replies.append((text, kwargs))
         msg = MagicMock()
         msg.edit = MagicMock()
@@ -31,12 +36,14 @@ class FakeEvent:
 
 
 def test_is_sudo(monkeypatch):
+    """Is sudo."""
     monkeypatch.setattr(commands, "SUDO_USERS", [111, 222])
     assert commands.is_sudo(111) is True
     assert commands.is_sudo(999) is False
 
 
 def test_dashboard_button(monkeypatch):
+    """Dashboard button."""
     monkeypatch.setattr(commands, "WEBAPP_PUBLIC_URL", "")
     assert commands._dashboard_button() is None
 
@@ -47,7 +54,9 @@ def test_dashboard_button(monkeypatch):
 
 
 def test_cmd_start():
+    """Cmd start."""
     async def exercise():
+        """Exercise."""
         event = FakeEvent(is_private=True, is_group=False)
         await commands.cmd_start(event)
         assert len(event.replies) == 1
@@ -59,7 +68,9 @@ def test_cmd_start():
 
 
 def test_cmd_help(monkeypatch):
+    """Cmd help."""
     async def exercise():
+        """Exercise."""
         monkeypatch.setattr(commands, "USER_COOLDOWN", 10)
         monkeypatch.setattr(commands, "VOICE_ENABLED", False)
         event = FakeEvent(is_private=True, is_group=False)
@@ -73,7 +84,9 @@ def test_cmd_help(monkeypatch):
 
 
 def test_cmd_status(monkeypatch):
+    """Cmd status."""
     async def exercise():
+        """Exercise."""
         monkeypatch.setattr(commands, "free_disk", lambda: 1024 * 1024 * 1024 * 10)
         event = FakeEvent(is_private=True, is_group=False)
         await commands.cmd_status(event)
@@ -86,7 +99,9 @@ def test_cmd_status(monkeypatch):
 
 
 def test_cmd_stats(monkeypatch):
+    """Cmd stats."""
     async def exercise():
+        """Exercise."""
         monkeypatch.setattr(commands, "SUDO_USERS", [100])
         monkeypatch.setattr(
             commands.db, "get_stat", lambda name: 42 if name == "total_downloads" else 3
@@ -113,7 +128,9 @@ def test_cmd_stats(monkeypatch):
 
 
 def test_cmd_ban_and_unban(monkeypatch):
+    """Cmd ban and unban."""
     async def exercise():
+        """Exercise."""
         monkeypatch.setattr(commands, "SUDO_USERS", [100])
         banned = []
         unbanned = []
@@ -146,23 +163,30 @@ def test_cmd_ban_and_unban(monkeypatch):
 
 
 def test_cmd_voice_control(monkeypatch):
+    """Cmd voice control."""
     class FakeVoiceManager:
+        """Fake voice manager."""
         def __init__(self):
+            """Init."""
             self.action = None
 
         async def pause(self, chat_id):
+            """Pause."""
             self.action = "pause"
             return True
 
         async def resume(self, chat_id):
+            """Resume."""
             self.action = "resume"
             return False
 
         async def stop(self, chat_id):
+            """Stop."""
             self.action = "stop"
             return True
 
     async def exercise():
+        """Exercise."""
         mgr = FakeVoiceManager()
         monkeypatch.setattr(commands, "VOICE_ENABLED", True)
         monkeypatch.setattr(access, "ALLOW_GROUPS", True)
@@ -198,7 +222,9 @@ def test_cmd_voice_control(monkeypatch):
 
 
 def test_cmd_voice_play_guards(monkeypatch):
+    """Cmd voice play guards."""
     async def exercise():
+        """Exercise."""
         monkeypatch.setattr(commands, "VOICE_ENABLED", True)
         monkeypatch.setattr(access, "ALLOW_GROUPS", True)
         monkeypatch.setattr(access, "ALLOWED_GROUP_IDS", {123})
@@ -232,6 +258,7 @@ def test_cmd_voice_play_guards(monkeypatch):
 
 
 def _command_patterns():
+    """Command patterns."""
     return {
         callback.__name__: event.pattern
         for callback, event in commands.client.list_event_handlers()
@@ -240,6 +267,7 @@ def _command_patterns():
 
 
 def test_voice_command_patterns_accept_a_bot_username_suffix():
+    """Voice command patterns accept a bot username suffix."""
     patterns = _command_patterns()
     assert patterns["cmd_voice_play"]("/play@some_bot https://example.com/a")
     assert patterns["cmd_voice_control"]("/pause@some_bot")

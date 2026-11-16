@@ -1,7 +1,10 @@
+"""Tests for format utils."""
+
 from botlite.utils.format import build_caption, fmt_dur, fmt_size, fmt_uptime
 
 
 def test_fmt_size_none_and_units():
+    """Fmt size none and units."""
     assert fmt_size(None) == "Unknown"
     assert fmt_size(512) == "512.0 B"
     assert fmt_size(1024) == "1.0 KB"
@@ -9,6 +12,7 @@ def test_fmt_size_none_and_units():
 
 
 def test_fmt_dur_variants():
+    """Fmt dur variants."""
     assert fmt_dur(None) == ""
     assert fmt_dur(0) == ""
     assert fmt_dur(59) == "0:59"
@@ -16,10 +20,12 @@ def test_fmt_dur_variants():
 
 
 def test_fmt_uptime():
+    """Fmt uptime."""
     assert fmt_uptime(3661.8) == "1h 1m 1s"
 
 
 def test_build_caption_variants():
+    """Build caption variants."""
     caption = build_caption("video", "My Title", "Uploader", (75, 2048))
     assert "🎬 **My Title**" in caption
     assert "👤 Uploader" in caption
