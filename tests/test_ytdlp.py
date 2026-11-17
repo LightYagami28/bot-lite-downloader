@@ -111,6 +111,7 @@ def test_download_success(tmp_path, monkeypatch):
 
         class FakeYDL:
             """Fake y d l."""
+
             def __init__(self, opts):
                 """Init."""
                 self.opts = opts
@@ -147,6 +148,7 @@ def test_download_no_info_raises(tmp_path, monkeypatch):
         """Exercise."""
         class FakeYDL:
             """Fake y d l."""
+
             def __init__(self, opts):
                 """Init."""
 

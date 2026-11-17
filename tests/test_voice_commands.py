@@ -7,6 +7,7 @@ from botlite.handlers import access, commands
 
 class FakeMessage:
     """Fake message."""
+
     def __init__(self):
         """Init."""
         self.edits = []
@@ -18,6 +19,7 @@ class FakeMessage:
 
 class FakeEvent:
     """Fake event."""
+
     def __init__(self, *, chat_id=-100123, is_group=True, sender_id=42):
         """Init."""
         self.chat_id = chat_id
@@ -38,6 +40,7 @@ def test_voice_command_downloads_only_for_explicitly_allowed_group(monkeypatch):
     """Voice command downloads only for explicitly allowed group."""
     class FakeVoiceManager:
         """Fake voice manager."""
+
         def __init__(self):
             """Init."""
             self.play_request = None

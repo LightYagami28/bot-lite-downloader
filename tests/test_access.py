@@ -4,7 +4,7 @@ from botlite.handlers.access import MessageOrigin, is_message_allowed
 
 
 def _allowed(**overrides) -> bool:
-    """Allowed."""
+    """Return whether the message is allowed."""
     values = {
         "is_private": False,
         "is_group": True,

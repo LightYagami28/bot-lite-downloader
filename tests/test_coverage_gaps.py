@@ -70,6 +70,7 @@ def test_download_reports_error_when_gallery_dl_raises(monkeypatch):
 
 class FakeProcess:
     """Fake process."""
+
     def __init__(self, returncode=0, stderr=b"", kill_error=None, block=False):
         """Init."""
         self.returncode = returncode
@@ -176,6 +177,7 @@ def test_gallery_download_rejects_failing_exit_code(monkeypatch, tmp_path):
 
 class FakeYoutubeDL:
     """Fake youtube d l."""
+
     info: dict | None = None
     filename = ""
 
@@ -424,6 +426,7 @@ def test_disconnect_callback_shuts_voice_down_and_cleans_up(monkeypatch):
 
 class StatusMessage:
     """Status message."""
+
     def __init__(self):
         """Init."""
         self.edits = []
@@ -435,6 +438,7 @@ class StatusMessage:
 
 class CommandEvent:
     """Command event."""
+
     def __init__(
         self,
         *,
@@ -528,6 +532,7 @@ def test_voice_play_reports_a_download_failure_and_cleans_up(monkeypatch):
 
     class TrackedDirectory:
         """Tracked directory."""
+
         name = tempfile.gettempdir()
 
         def cleanup(self):
@@ -578,6 +583,7 @@ def test_voice_controls_are_ignored_when_voice_is_disabled(monkeypatch):
 
 class UrlMessage:
     """Url message."""
+
     def __init__(self, text):
         """Init."""
         self.text = text
@@ -587,6 +593,7 @@ class UrlMessage:
 
 class UrlStatus:
     """Url status."""
+
     def __init__(self, delete_error=None):
         """Init."""
         self.edits = []
@@ -606,6 +613,7 @@ class UrlStatus:
 
 class UrlEvent:
     """Url event."""
+
     def __init__(self, text="https://example.test/v", status=None):
         """Init."""
         self.chat_id = 1
@@ -690,7 +698,7 @@ def test_url_handler_stops_when_a_guard_rejects(monkeypatch):
 
 
 def _handler_setup(monkeypatch, tmp_path, *, results, uploaded=1, status=None):
-    """Handler setup."""
+    """Set up the URL handler for test scenarios."""
     monkeypatch.setattr(url, "group_allowed", lambda _event: True)
     monkeypatch.setattr(url, "_check_guards", AsyncMock(return_value=False))
     counters = []
@@ -738,6 +746,7 @@ def test_url_handler_reports_when_nothing_could_be_sent(monkeypatch, tmp_path):
 
 class Calls:
     """Calls."""
+
     def __init__(self, leave_error=None):
         """Init."""
         self.start_count = 0
@@ -940,11 +949,12 @@ def test_start_webapp_cleans_up_when_the_server_cannot_start(monkeypatch):
 
     class FailingRunner:
         """Failing runner."""
+
         def __init__(self, *_args, **_kwargs):
             """Init."""
 
         async def setup(self):
-            """Setup."""
+            """Simulate failure during setup."""
             raise RuntimeError("port busy")
 
         async def cleanup(self):

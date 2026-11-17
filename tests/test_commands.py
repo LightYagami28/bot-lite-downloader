@@ -8,6 +8,7 @@ from botlite.handlers import access, commands
 
 class FakeEvent:
     """Fake event."""
+
     def __init__(
         self,
         *,
@@ -166,6 +167,7 @@ def test_cmd_voice_control(monkeypatch):
     """Cmd voice control."""
     class FakeVoiceManager:
         """Fake voice manager."""
+
         def __init__(self):
             """Init."""
             self.action = None

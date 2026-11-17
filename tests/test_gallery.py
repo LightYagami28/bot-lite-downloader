@@ -8,6 +8,7 @@ from botlite.downloader import gallery
 
 class FakeProcess:
     """Fake process."""
+
     def __init__(self, returncode=0, stderr=b"", block=False):
         """Init."""
         self.returncode = returncode

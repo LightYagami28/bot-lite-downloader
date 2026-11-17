@@ -8,6 +8,7 @@ from botlite.handlers import url
 
 class FakeMessage:
     """Fake message."""
+
     def __init__(self, text="", caption=None, msg_id=1):
         """Init."""
         self.text = text
@@ -27,6 +28,7 @@ class FakeMessage:
 
 class FakeEvent:
     """Fake event."""
+
     def __init__(
         self,
         *,

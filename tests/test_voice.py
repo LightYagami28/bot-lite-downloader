@@ -10,6 +10,7 @@ from botlite.voice import Playback, VoiceChatManager
 
 class FakeCalls:
     """Fake calls."""
+
     def __init__(self):
         """Init."""
         self.started = False
@@ -44,7 +45,6 @@ class FakeCalls:
 def test_voice_manager_keeps_audio_until_stop_then_removes_it():
     """Voice manager keeps audio until stop then removes it."""
     async def exercise():
-
         """Exercise."""
         calls = FakeCalls()
         manager = VoiceChatManager(calls)
@@ -100,6 +100,7 @@ def test_shutdown_waits_for_inflight_play_and_closes_its_session():
     """Shutdown waits for inflight play and closes its session."""
     class BlockingCalls(FakeCalls):
         """Blocking calls."""
+
         def __init__(self):
             """Init."""
             super().__init__()
