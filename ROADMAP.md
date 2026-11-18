@@ -11,7 +11,11 @@ The items below summarize candidates in [SPEC.md](SPEC.md) and priorities for ma
 3. **Ottimizzazione streaming audio e voice**: transcodifica ffmpeg asincrona in pipeline con buffer di memoria limitato.
 4. **Isolamento Docker e sessioni**: esecuzione rootless in container e rimozione di sessioni persistenti da ambienti non fidati.
 
-## Current scope & Proposals from SPEC
+## Current scope
+
+The project is a self-hosted Telegram download bot with a dashboard. See [README](README.md) for the current installation and usage instructions.
+
+## Proposals recorded in SPEC
 
 - Strengthen release checks and retain a coverage threshold.
 - Add integration coverage for Telegram transport behavior.
@@ -22,3 +26,5 @@ The items below summarize candidates in [SPEC.md](SPEC.md) and priorities for ma
 ## Fuori ambito
 
 - Supporto a gruppi Telegram aperti/non approvati (policy restrittiva con allowlist esplicita).
+
+Older test and coverage figures in `SPEC.md` are dated snapshots, not a claim about current CI. No milestones or delivery dates are committed here.
