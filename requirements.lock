@@ -491,9 +491,9 @@ frozenlist==1.8.0 \
     # via
     #   aiohttp
     #   aiosignal
-gallery-dl==1.32.19 \
-    --hash=sha256:63323bc1bc37b8ba25c19d2ef7a86158d1f79cccaee8d69dda907986f3f3e824 \
-    --hash=sha256:f6b1eb5e9a7409a988b754335d99dbb1873e130d133ed5d164d32e5e645d1c50
+gallery-dl==1.32.20 \
+    --hash=sha256:335792dc3af065dd70ec2908f28e46a5653ff66e35a447326be620e990d7c0f3 \
+    --hash=sha256:e09729c8f24f788ac64a663268603377fbf51d4b97818d49e2150c5d78067709
     # via -r requirements.txt
 idna==3.20 \
     --hash=sha256:a7db850025b95ded1eae8a46181a1a6c56c92c96f0e2b005d9ff8dc0210cab44 \
@@ -853,8 +853,8 @@ propcache==0.5.4 \
     # via
     #   aiohttp
     #   yarl
-py-tgcalls==3.0.0 \
-    --hash=sha256:c736066f3f79804f6f128231f4adad228e6aefb3418a473e0a52175c0a8baf49
+py-tgcalls==3.0.1 \
+    --hash=sha256:cbfc01edf855f068306be2ca4b31f20d903bc2ee2579d5068e8a12c1d3b9ec9c
     # via -r requirements.txt
 pyaes==1.6.1 \
     --hash=sha256:02c1b1405c38d3c370b085fb952dd8bea3fadcee6411ad99f312cc129c536d8f
