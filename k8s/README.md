@@ -18,8 +18,9 @@ WebApp dashboard, backed by a PersistentVolumeClaim for the SQLite database.
 - Kubernetes cluster with an Ingress controller (e.g. `ingress-nginx`)
 - cert-manager installed with a `ClusterIssuer` named `letsencrypt-prod`
 - A default StorageClass (or set `storageClassName` in `pvc.yaml`)
-- Container image `bot-lite-downloader:latest` available to the cluster
-  (build and push to your registry, then update `image:` in `deployment.yaml`)
+- Container image pinned by commit SHA in `deployment.yaml`
+  (`ghcr.io/lightyagami28/bot-lite-downloader:<sha>`). CI publishes one immutable
+  tag per commit; update the tag in `deployment.yaml` to upgrade.
 
 ## Deploy
 
@@ -55,7 +56,9 @@ kubectl -n bot-lite-downloader logs deploy/bot-lite-downloader
 
 - The Deployment uses `strategy: Recreate` because the PVC is `ReadWriteOnce`.
 - The WebApp dashboard is only enabled when `WEBAPP_PUBLIC_URL` is set (HTTPS).
-- The bot runs as a non-root user; the image already owns `/data`.
+- The bot runs as a non-root user with a read-only root filesystem; an
+  `emptyDir` is mounted at `/tmp` for download staging (the app uses `tempfile`).
+- The Pod does not mount a service account token: the bot needs no Kubernetes API access.
 - For Helm-based installs, package these manifests into a chart or use
   `helm create` and move the resources under `templates/`. No chart is shipped
   in this repository.

@@ -17,6 +17,7 @@ spec:
       labels:
         app.kubernetes.io/name: bot-lite-downloader
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         seccompProfile:
@@ -24,7 +25,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: bot
-          image: bot-lite-downloader:latest
+          image: ghcr.io/lightyagami28/bot-lite-downloader:b0b813bf00183ae34b44c4a3322daa901aa82aba
           imagePullPolicy: IfNotPresent
           ports:
             - name: webapp
@@ -38,18 +39,22 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: tmp
+              mountPath: /tmp
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
           resources:
             requests:
               cpu: 250m
               memory: 256Mi
+              ephemeral-storage: 1Gi
             limits:
               cpu: 500m
               memory: 512Mi
+              ephemeral-storage: 8Gi
           livenessProbe:
             httpGet:
               path: /api/status
@@ -76,3 +81,5 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: bot-lite-downloader-data
+        - name: tmp
+          emptyDir: {}
