@@ -59,8 +59,10 @@ jobs:
         run: node --experimental-vm-modules --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage-js.lcov tests/js/
       - name: Run Ruff
         run: ruff check .
-      - name: Run Bandit security rules
+      - name: Run Ruff security rules
         run: ruff check botlite --select S
+      - name: Run Bandit
+        run: bandit -r botlite run.py -q
       - name: Audit runtime and development dependencies
         run: pip-audit -r requirements-dev.lock
       - name: Build runtime container image
