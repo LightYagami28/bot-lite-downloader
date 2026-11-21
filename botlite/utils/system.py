@@ -11,6 +11,7 @@ import signal
 import tempfile
 import time
 from collections.abc import Awaitable, Callable
+from types import FrameType
 
 from botlite.config import USER_COOLDOWN
 from botlite.errors import RECOVERABLE_ERRORS
@@ -57,6 +58,11 @@ def setup_signals(disconnect_fn: Callable[[], Awaitable[object]]) -> None:
     shutdown_requested = False
 
     def _observe_disconnect(task: asyncio.Task[object]) -> None:
+        """Log the outcome of the scheduled shutdown coroutine.
+
+        Args:
+            task: Completed shutdown task.
+        """
         try:
             task.result()
         except asyncio.CancelledError:
@@ -65,6 +71,11 @@ def setup_signals(disconnect_fn: Callable[[], Awaitable[object]]) -> None:
             log.exception("Telegram client shutdown failed")
 
     def _request_disconnect(signum: int) -> None:
+        """Schedule shutdown once, ignoring repeated signals.
+
+        Args:
+            signum: Number of the received signal.
+        """
         nonlocal shutdown_requested
         if shutdown_requested:
             return
@@ -76,7 +87,13 @@ def setup_signals(disconnect_fn: Callable[[], Awaitable[object]]) -> None:
             )
         )
 
-    def _handler(signum, _frame):
+    def _handler(signum: int, _frame: FrameType | None) -> None:
+        """Forward a POSIX signal to the shutdown scheduler.
+
+        Args:
+            signum: Number of the received signal.
+            _frame: Interrupted stack frame, unused.
+        """
         _request_disconnect(signum)
 
     for shutdown_signal in (signal.SIGTERM, signal.SIGINT):
