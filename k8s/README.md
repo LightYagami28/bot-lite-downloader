@@ -18,9 +18,10 @@ WebApp dashboard, backed by a PersistentVolumeClaim for the SQLite database.
 - Kubernetes cluster with an Ingress controller (e.g. `ingress-nginx`)
 - cert-manager installed with a `ClusterIssuer` named `letsencrypt-prod`
 - A default StorageClass (or set `storageClassName` in `pvc.yaml`)
-- Container image pinned by commit SHA in `deployment.yaml`
-  (`ghcr.io/lightyagami28/bot-lite-downloader:<sha>`). CI publishes one immutable
-  tag per commit; update the tag in `deployment.yaml` to upgrade.
+- Container image pinned by digest in `deployment.yaml`
+  (`ghcr.io/lightyagami28/bot-lite-downloader@sha256:...`). CI publishes one
+  immutable digest per commit; to upgrade, take the digest printed by the Docker
+  Scout workflow for the new commit and update `deployment.yaml`.
 
 ## Deploy
 

@@ -20,6 +20,8 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
         fsGroup: 10001
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
@@ -27,8 +29,9 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: bot
-          image: ghcr.io/lightyagami28/bot-lite-downloader:b0b813bf00183ae34b44c4a3322daa901aa82aba
-          imagePullPolicy: IfNotPresent
+          # Digest published by CI for commit b0b813bf00183ae34b44c4a3322daa901aa82aba.
+          image: ghcr.io/lightyagami28/bot-lite-downloader@sha256:27cbcfde65816e016d4f0dd1f287c9ff5a26b00c049f4643d4a9fedc929f6bf8
+          imagePullPolicy: Always
           ports:
             - name: webapp
               containerPort: 8080
@@ -46,6 +49,8 @@ spec:
               mountPath: /tmp
           securityContext:
             runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
