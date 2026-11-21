@@ -40,11 +40,13 @@ WORKDIR /app
 COPY botlite/ ./botlite/
 COPY run.py .
 
-RUN useradd --system --no-create-home --home-dir /app --shell /usr/sbin/nologin botlite \
+RUN groupadd --system --gid 10001 botlite \
+    && useradd --system --uid 10001 --gid 10001 --no-create-home --home-dir /app \
+        --shell /usr/sbin/nologin botlite \
     && mkdir -p /data \
-    && chown -R botlite:botlite /app /data
+    && chown -R 10001:10001 /app /data
 
-USER botlite
+USER 10001:10001
 
 EXPOSE 8080
 VOLUME ["/data"]
