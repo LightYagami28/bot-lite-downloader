@@ -26,9 +26,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # The runtime never installs anything: drop pip and its bundled wheels together with their
 # vendored libraries (urllib3, certifi, msgpack), which only add CVE noise to the image.
-# hadolint ignore=DL3008
+# Versions pinned to the Debian trixie packages (packages.debian.org/trixie, verified 2026-11-21);
+# the trailing wildcard tracks trixie/trixie-security point releases without an unpinned install.
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends ca-certificates ffmpeg \
+    && apt-get install --yes --no-install-recommends ca-certificates=20250419* ffmpeg=7:7.1.5* \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && python -m pip uninstall --yes pip \
