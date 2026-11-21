@@ -69,7 +69,7 @@ def test_helpers_int_and_bool(monkeypatch):
 
 def test_secret_files_take_precedence_and_fall_back_to_environment(monkeypatch, tmp_path):
     """Credentials are read from mounted files before environment variables."""
-    monkeypatch.setattr(config, "_SECRET_FILES_DIR", str(tmp_path))
+    monkeypatch.setattr(config, "_CREDENTIAL_FILES_DIR", str(tmp_path))
     monkeypatch.setenv("API_ID", "7")
     monkeypatch.setenv("API_HASH", "from-env")
     monkeypatch.setenv("SUDO_USERS", "42")

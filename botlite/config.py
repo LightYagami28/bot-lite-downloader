@@ -38,8 +38,9 @@ DEFAULT_VOICE_MAX_FILE_SIZE: Final[int] = 100 * 1024 * 1024
 DEFAULT_WEBAPP_INIT_DATA_MAX_AGE: Final[int] = 3600
 
 # Kubernetes/Docker secrets are mounted as files, not injected as environment
-# variables. Each file contains a single credential value.
-_SECRET_FILES_DIR: Final[str] = "/etc/botlite-secrets"
+# variables. Each file contains a single credential value. The constant below
+# is only the mount path, not a credential.
+_CREDENTIAL_FILES_DIR: Final[str] = "/etc/botlite-secrets"
 
 
 def _secret(name: str) -> str:
@@ -51,7 +52,7 @@ def _secret(name: str) -> str:
     Returns:
         The credential value, or an empty string when it is not configured.
     """
-    path = Path(_SECRET_FILES_DIR) / name
+    path = Path(_CREDENTIAL_FILES_DIR) / name
     try:
         return path.read_text(encoding="utf-8").strip()
     except FileNotFoundError:
