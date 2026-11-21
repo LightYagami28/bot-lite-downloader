@@ -239,9 +239,7 @@ async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | N
         status = await event.reply("🎧 Preparing audio…")
         temporary = tempfile.TemporaryDirectory(prefix="botlite_voice_")
         path, metadata = await _download_voice_audio(url, temporary.name)
-        await get_voice_manager().play(
-            event.chat_id, path, Playback(temporary, metadata["title"])
-        )
+        await get_voice_manager().play(event.chat_id, path, Playback(temporary, metadata["title"]))
         temporary = None
     except RECOVERABLE_ERRORS as exc:
         return None, exc, status
@@ -322,4 +320,6 @@ client.add_event_handler(cmd_stats, events.NewMessage(pattern="/stats"))
 client.add_event_handler(cmd_ban, events.NewMessage(pattern=r"/ban( \d+)?"))
 client.add_event_handler(cmd_unban, events.NewMessage(pattern=r"/unban( \d+)?"))
 client.add_event_handler(cmd_voice_play, events.NewMessage(pattern=r"^/play(?:@\w+)?(?:\s|$)"))
-client.add_event_handler(cmd_voice_control, events.NewMessage(pattern=r"^/(pause|resume|voice_stop)(?:@\w+)?$"))
+client.add_event_handler(
+    cmd_voice_control, events.NewMessage(pattern=r"^/(pause|resume|voice_stop)(?:@\w+)?$")
+)
