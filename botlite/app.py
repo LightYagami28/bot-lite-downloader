@@ -39,6 +39,11 @@ log = logging.getLogger("botlite.app")
 
 
 async def _disconnect() -> None:
+    """Shut down voice playback and disconnect the Telegram client.
+
+    Returns:
+        None.
+    """
     if VOICE_ENABLED:
         await get_voice_manager().shutdown()
     try:
@@ -49,6 +54,11 @@ async def _disconnect() -> None:
 
 
 async def _start_services() -> None:
+    """Start the Telegram client and every enabled optional service.
+
+    Returns:
+        None.
+    """
     await client.start(bot_token=BOT_TOKEN)
     if VOICE_ENABLED:
         await initialize_voice().start()
@@ -57,6 +67,11 @@ async def _start_services() -> None:
 
 
 async def _stop_extras() -> None:
+    """Stop optional services (voice playback and WebApp) before disconnecting.
+
+    Returns:
+        None.
+    """
     if VOICE_ENABLED:
         await get_voice_manager().shutdown()
     if WEBAPP_PUBLIC_URL:
@@ -64,6 +79,11 @@ async def _stop_extras() -> None:
 
 
 async def _disconnect_client() -> None:
+    """Disconnect the client and always release voice resources.
+
+    Returns:
+        None.
+    """
     try:
         await client.disconnect()
     finally:
@@ -72,6 +92,11 @@ async def _disconnect_client() -> None:
 
 
 async def _stop_services() -> None:
+    """Stop optional services first, then the client, even on failure.
+
+    Returns:
+        None.
+    """
     try:
         await _stop_extras()
     finally:
@@ -79,6 +104,11 @@ async def _stop_services() -> None:
 
 
 async def _main() -> None:
+    """Validate configuration, start services and wait for disconnection.
+
+    Returns:
+        None.
+    """
     setup_logging()
     config.validate()
     setup_signals(_disconnect)
