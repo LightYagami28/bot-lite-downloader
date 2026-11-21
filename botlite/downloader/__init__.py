@@ -17,6 +17,15 @@ MediaResult = tuple[str, dict, str]  # (filepath, meta, mediatype)
 
 
 async def _attempt(url: str, spec: tuple) -> list[MediaResult]:
+    """Try one download engine and swallow only its expected failures.
+
+    Args:
+        url: Absolute HTTP(S) URL to download.
+        spec: Engine, display name, destination directory and error tuple.
+
+    Returns:
+        Downloaded media entries, or an empty list when the engine fails.
+    """
     engine, name, subdir, errors = spec
     os.makedirs(subdir, exist_ok=True)
     try:
@@ -35,6 +44,15 @@ _NO_MEDIA = (
 
 
 async def _extract(url: str, tmpdir: str) -> list[MediaResult]:
+    """Run yt-dlp first, then gallery-dl as a fallback.
+
+    Args:
+        url: Absolute HTTP(S) URL to download.
+        tmpdir: Temporary directory that will hold both engine subfolders.
+
+    Returns:
+        Media entries produced by the first engine that succeeds.
+    """
     yt_spec = (ytdlp, "yt-dlp", os.path.join(tmpdir, "yt"), _YTDLP_ERRORS)
     gd_spec = (gallery, "gallery-dl", os.path.join(tmpdir, "gd"), _GALLERY_ERRORS)
     return await _attempt(url, yt_spec) or await _attempt(url, gd_spec)
