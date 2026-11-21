@@ -3,3 +3,6 @@ contact_links:
   - name: Segnalazione di sicurezza
     url: https://t.me/LightYagami28
     about: Non aprire issue pubbliche per vulnerabilità.
+  - name: Sicurezza (email)
+    url: mailto:developer@lightyagami.dev
+    about: Non aprire issue pubbliche per vulnerabilità.

@@ -60,8 +60,9 @@ representative at an online or offline event.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement via
-[@LightYagami28](https://t.me/LightYagami28). All complaints will be reviewed
-and investigated promptly and fairly.
+[@LightYagami28](https://t.me/LightYagami28) or by email at
+[developer@lightyagami.dev](mailto:developer@lightyagami.dev). All complaints
+will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the
 reporter of any incident.
