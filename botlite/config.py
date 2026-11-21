@@ -58,7 +58,7 @@ def _secret(name: str) -> str:
     except FileNotFoundError:
         return os.getenv(name, "")
     except OSError as exc:
-        log.warning("Cannot read secret file for %s: %s", name, exc)
+        log.warning("Unable to read mounted configuration for %s: %s", name, exc)
         return os.getenv(name, "")
 
 

@@ -48,11 +48,25 @@ days** for confirmed issues.
 
 ### Assertions in tests
 
-Bandit rule B101 flags the `assert` statements in `tests/test_*.py`. These are
-pytest assertions, not runtime checks: the suite runs without `python -O`, so
-the optimiser never removes them. Deleting them would delete the tests; no
-suppressions are added. This finding is a documented false positive and the
-test code stays unchanged.
+Bandit rule B101 (reported as `Prospector_bandit`) flags 14 `assert` statements
+in the pytest suite: `tests/test_config.py` (lines 77, 78, 85, 86, 87, 88, 95)
+and `tests/test_gallery.py` (lines 114, 115, 116, 117, 126, 133, 143).
+
+These are **pytest assertions, not runtime checks**. The suite is run by pytest
+without `python -O`, so the optimiser never removes them; `assert` is the
+assertion mechanism pytest itself uses. Rewriting them as `if ...: raise` would
+only restate the same checks less readably, and deleting them would delete the
+tests. No suppressions are added and the assertions stay unchanged. This is a
+documented false positive limited to test code.
+
+### Credential-looking log messages
+
+A logger call that contains a word such as "secret", "token" or "password"
+together with a `%s` placeholder is flagged by
+`python-logger-credential-disclosure`. The message in `botlite/config.py` was
+reworded to describe the failing operation without credential-like wording.
+It logs only the credential **name** and the `OSError` from reading the mounted
+file: never the credential value. No logging rule was disabled.
 
 ### Docker Scout workflow token
 
