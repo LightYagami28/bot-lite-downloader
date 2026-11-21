@@ -64,7 +64,7 @@ def _dashboard_button() -> list | None:
 # ── /start ────────────────────────────────────────────────────────────────────
 
 
-async def cmd_start(event):
+async def cmd_start(event: events.Event) -> None:
     """Reply to /start with the bot introduction."""
     if not group_allowed(event):
         return
@@ -99,6 +99,14 @@ _HELP_HEAD = (
 
 
 def _help_text(is_group: bool) -> str:
+    """Build the /help message for private chats and groups.
+
+    Args:
+        is_group: Whether the request comes from a group chat.
+
+    Returns:
+        Formatted help text including the active limits.
+    """
     cooldown_line = f"• Cooldown between requests: {USER_COOLDOWN}s\n" if USER_COOLDOWN else ""
     voice_line = (
         "• In allowlisted groups: `/play URL`, `/pause`, `/resume`, `/voice_stop`\n"
@@ -111,7 +119,7 @@ def _help_text(is_group: bool) -> str:
     )
 
 
-async def cmd_help(event):
+async def cmd_help(event: events.Event) -> None:
     """Reply to /help with usage, limits and cookie instructions."""
     if not group_allowed(event):
         return
@@ -126,7 +134,7 @@ async def cmd_help(event):
 # ── /status ───────────────────────────────────────────────────────────────────
 
 
-async def cmd_status(event):
+async def cmd_status(event: events.Event) -> None:
     """Reply to /status with uptime, active downloads and free disk."""
     if not group_allowed(event):
         return
@@ -145,7 +153,7 @@ async def cmd_status(event):
 # ── /stats ────────────────────────────────────────────────────────────────────
 
 
-async def cmd_stats(event):
+async def cmd_stats(event: events.Event) -> None:
     """Reply to /stats (sudo, private chat) with the download counters."""
     if not event.is_private or not is_sudo(event.sender_id):
         return
@@ -168,7 +176,7 @@ async def cmd_stats(event):
 # ── /ban ──────────────────────────────────────────────────────────────────────
 
 
-async def cmd_ban(event):
+async def cmd_ban(event: events.Event) -> None:
     """Ban a user via /ban USER_ID (sudo, private chat)."""
     if not event.is_private or not is_sudo(event.sender_id):
         return
@@ -184,7 +192,7 @@ async def cmd_ban(event):
 # ── /unban ────────────────────────────────────────────────────────────────────
 
 
-async def cmd_unban(event):
+async def cmd_unban(event: events.Event) -> None:
     """Unban a user via /unban USER_ID (sudo, private chat)."""
     if not event.is_private or not is_sudo(event.sender_id):
         return
@@ -197,7 +205,7 @@ async def cmd_unban(event):
     await event.reply(f"✅ User `{uid}` unbanned.", parse_mode="md")
 
 
-async def _voice_guard_reply(event, user_id: int) -> bool:
+async def _voice_guard_reply(event: events.Event, user_id: int) -> bool:
     """Reply and return True when the user may not start playback right now."""
     if db.is_banned(user_id):
         await event.reply("🚫 You are banned from using this bot.")
@@ -214,7 +222,7 @@ async def _voice_guard_reply(event, user_id: int) -> bool:
     return False
 
 
-async def _download_voice_audio(url: str, dir_name: str):
+async def _download_voice_audio(url: str, dir_name: str) -> tuple[str, dict]:
     """Download the audio for voice playback under the shared semaphore."""
     async with download_semaphore:
         return await download_audio(
@@ -225,13 +233,17 @@ async def _download_voice_audio(url: str, dir_name: str):
         )
 
 
-def _cleanup_voice_temporary(temporary) -> None:
+def _cleanup_voice_temporary(
+    temporary: tempfile.TemporaryDirectory[str] | None,
+) -> None:
     """Delete the temporary directory when it still owns the audio file."""
     if temporary is not None:
         temporary.cleanup()
 
 
-async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | None, Any]:
+async def _prepare_and_play(
+    event: events.Event, url: str
+) -> tuple[dict | None, Exception | None, Any]:
     """Download the audio and start playback; return (metadata, failure, status)."""
     temporary = None
     status = None
@@ -248,7 +260,13 @@ async def _prepare_and_play(event, url: str) -> tuple[dict | None, Exception | N
     return metadata, None, status
 
 
-async def _report_voice_failure(status, failure: Exception) -> None:
+async def _report_voice_failure(status: Any, failure: Exception) -> None:
+    """Edit the status message with a sanitized playback failure.
+
+    Args:
+        status: Telegram message used for progress updates.
+        failure: Exception raised while preparing playback.
+    """
     if status is None:
         log.error("Unable to prepare voice playback status: %s", failure)
         return
@@ -260,7 +278,13 @@ async def _report_voice_failure(status, failure: Exception) -> None:
     )
 
 
-async def _play_from_url(event, url: str) -> None:
+async def _play_from_url(event: events.Event, url: str) -> None:
+    """Track the user, download the audio and start playback.
+
+    Args:
+        event: Telegram command event.
+        url: Absolute HTTP(S) URL of the audio source.
+    """
     user_id = event.sender_id
     active_downloads.add(user_id)
     _user_cooldowns[user_id] = time.time()
@@ -280,11 +304,19 @@ async def _play_from_url(event, url: str) -> None:
     )
 
 
-def _voice_group_allowed(event) -> bool:
+def _voice_group_allowed(event: events.Event) -> bool:
+    """Check that voice playback is enabled and the group is allowlisted.
+
+    Args:
+        event: Telegram command event.
+
+    Returns:
+        ``True`` when the event may start or control playback.
+    """
     return VOICE_ENABLED and origin_of(event).group and group_allowed(event)
 
 
-async def cmd_voice_play(event):
+async def cmd_voice_play(event: events.Event) -> None:
     """Download and start voice playback via /play URL (allowlisted groups)."""
     if not _voice_group_allowed(event):
         return
@@ -304,7 +336,7 @@ _VOICE_CONTROLS = {
 }
 
 
-async def cmd_voice_control(event):
+async def cmd_voice_control(event: events.Event) -> None:
     """Handle /pause, /resume and /voice_stop in groups."""
     if not _voice_group_allowed(event):
         return
