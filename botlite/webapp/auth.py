@@ -130,7 +130,9 @@ def validate_init_data(init_data: str) -> dict[str, Any] | None:
     signature is missing, invalid, or the token is not configured.
     """
     params = _parse_fields(init_data) if BOT_TOKEN else None
-    received_hash = params.pop("hash", None) if params else None
+    if params is None:
+        return None
+    received_hash = params.pop("hash", None)
     if not received_hash or not _authentic(params, received_hash):
         return None
     return _parse_user(params)

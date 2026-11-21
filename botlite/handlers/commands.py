@@ -296,6 +296,9 @@ async def _play_from_url(event: events.Event, url: str) -> None:
     if failure is not None:
         await _report_voice_failure(status, failure)
         return
+    if metadata is None:
+        await _report_voice_failure(status, RuntimeError("Dati audio non disponibili"))
+        return
 
     await status.edit(
         f"🎶 Now playing: <b>{html.escape(metadata['title'])}</b>\n"
