@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 
 from aiohttp import web
@@ -147,6 +148,15 @@ async def api_unban(request: web.Request) -> web.Response:
 
 
 async def _static_response(name: str, content_type: str) -> web.Response:
+    """Read a bundled static file from disk without blocking the event loop.
+
+    Args:
+        name: File name inside the static directory.
+        content_type: MIME type sent with the response.
+
+    Returns:
+        HTTP response containing the file bytes.
+    """
     body = await asyncio.to_thread((_STATIC / name).read_bytes)
     return web.Response(body=body, content_type=content_type, charset="utf-8")
 
@@ -175,7 +185,10 @@ _SECURITY_HEADERS = {
 
 
 @web.middleware
-async def security_headers(request: web.Request, handler) -> web.StreamResponse:
+async def security_headers(
+    request: web.Request,
+    handler: Callable[[web.Request], Awaitable[web.StreamResponse]],
+) -> web.StreamResponse:
     """Set headers on every response, including framework-generated errors."""
     try:
         response = await handler(request)
