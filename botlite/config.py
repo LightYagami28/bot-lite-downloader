@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 from typing import Final
 
 log: Final[logging.Logger] = logging.getLogger(__name__)
@@ -35,6 +36,69 @@ DEFAULT_USER_COOLDOWN: Final[int] = 5
 DEFAULT_VOICE_MAX_DURATION: Final[int] = 1800
 DEFAULT_VOICE_MAX_FILE_SIZE: Final[int] = 100 * 1024 * 1024
 DEFAULT_WEBAPP_INIT_DATA_MAX_AGE: Final[int] = 3600
+
+# Kubernetes/Docker secrets are mounted as files, not injected as environment
+# variables. Each file contains a single credential value.
+_SECRET_FILES_DIR: Final[str] = "/etc/botlite-secrets"
+
+
+def _secret(name: str) -> str:
+    """Read a credential from a mounted secret file, then from the environment.
+
+    Args:
+        name: Credential name, also used as the file name.
+
+    Returns:
+        The credential value, or an empty string when it is not configured.
+    """
+    path = Path(_SECRET_FILES_DIR) / name
+    try:
+        return path.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        return os.getenv(name, "")
+    except OSError as exc:
+        log.warning("Cannot read secret file for %s: %s", name, exc)
+        return os.getenv(name, "")
+
+
+def _secret_int(name: str, default: int) -> int:
+    """Read an integer credential from a secret file or the environment.
+
+    Args:
+        name: Credential name.
+        default: Value used when the credential is missing or invalid.
+
+    Returns:
+        The parsed integer value.
+    """
+    try:
+        return int(_secret(name) or str(default), 10)
+    except ValueError:
+        log.warning("Invalid integer for %s, using default %d", name, default)
+        return default
+
+
+def _secret_id_set(name: str) -> set[int]:
+    """Parse a comma-separated set of identifiers from a secret file.
+
+    Args:
+        name: Credential name.
+
+    Returns:
+        Non-zero identifiers, ignoring malformed items.
+    """
+    values: set[int] = set()
+    for item in _secret(name).split(","):
+        stripped = item.strip()
+        if not stripped:
+            continue
+        try:
+            parsed = int(stripped, 10)
+        except ValueError:
+            continue
+        if parsed:
+            values.add(parsed)
+    return values
 
 
 def _safe_int(key: str, default: int) -> int:
@@ -117,10 +181,10 @@ def _bool(key: str, default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-API_ID: int = _int("API_ID", 0)
-API_HASH: str = os.getenv("API_HASH", "")
-BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
-SUDO_USERS: list[int] = _int_list("SUDO_USERS") or []
+API_ID: int = _secret_int("API_ID", 0)
+API_HASH: str = _secret("API_HASH")
+BOT_TOKEN: str = _secret("BOT_TOKEN")
+SUDO_USERS: list[int] = sorted(_secret_id_set("SUDO_USERS"))
 
 MAX_FILE_SIZE: int = _int("MAX_FILE_SIZE", DEFAULT_MAX_FILE_SIZE)
 MAX_CONCURRENT_DOWNLOADS: int = _int("MAX_CONCURRENT_DOWNLOADS", DEFAULT_MAX_CONCURRENT_DOWNLOADS)

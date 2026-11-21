@@ -20,6 +20,8 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
       terminationGracePeriodSeconds: 30
@@ -34,9 +36,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: bot-lite-downloader-config
-            - secretRef:
-                name: bot-lite-downloader-secrets
           volumeMounts:
+            - name: secrets
+              mountPath: /etc/botlite-secrets
+              readOnly: true
             - name: data
               mountPath: /data
             - name: tmp
@@ -79,6 +82,10 @@ spec:
             failureThreshold: 30
             periodSeconds: 5
       volumes:
+        - name: secrets
+          secret:
+            secretName: bot-lite-downloader-secrets
+            defaultMode: 0440
         - name: data
           persistentVolumeClaim:
             claimName: bot-lite-downloader-data

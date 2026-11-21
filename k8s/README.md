@@ -7,7 +7,7 @@ WebApp dashboard, backed by a PersistentVolumeClaim for the SQLite database.
 
 - `namespace.yaml` — dedicated namespace `bot-lite-downloader`
 - `configmap.yaml` — non-sensitive configuration
-- `secret.yaml` — **template** with placeholders; replace before applying
+- secrets — created outside git from the local `.env` file (see below)
 - `deployment.yaml` — Deployment with security context, resources, probes
 - `service.yaml` — ClusterIP Service (port 8080)
 - `pvc.yaml` — PersistentVolumeClaim for `/data` (SQLite)
@@ -26,13 +26,22 @@ WebApp dashboard, backed by a PersistentVolumeClaim for the SQLite database.
 
 1. Edit `configmap.yaml`:
    - set `WEBAPP_PUBLIC_URL` to your public HTTPS URL (must match the Ingress host)
-2. Edit `secret.yaml` and replace all `REPLACE_ME` values.
+2. Create the Secret from the local `.env` file (never commit it):
+
+```bash
+kubectl -n bot-lite-downloader create secret generic bot-lite-downloader-secrets \
+  --from-env-file=.env
+```
+
+   Alternatively let a secret manager (for example External Secrets Operator)
+   provision the same `bot-lite-downloader-secrets` Secret. The required keys are
+   `API_ID`, `API_HASH`, `BOT_TOKEN` and `SUDO_USERS`. No secret values or
+   placeholders are stored in this repository.
 3. Apply the manifests:
 
 ```bash
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/secret.yaml
 kubectl apply -f k8s/pvc.yaml
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
@@ -59,6 +68,8 @@ kubectl -n bot-lite-downloader logs deploy/bot-lite-downloader
 - The bot runs as a non-root user with a read-only root filesystem; an
   `emptyDir` is mounted at `/tmp` for download staging (the app uses `tempfile`).
 - The Pod does not mount a service account token: the bot needs no Kubernetes API access.
+- Credentials are mounted as read-only files under `/etc/botlite-secrets` and read
+  by the application directly; they are not injected as environment variables.
 - For Helm-based installs, package these manifests into a chart or use
   `helm create` and move the resources under `templates/`. No chart is shipped
   in this repository.

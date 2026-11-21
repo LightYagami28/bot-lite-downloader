@@ -67,6 +67,34 @@ def test_helpers_int_and_bool(monkeypatch):
     assert _bool("TEST_BOOL_UNSET", False) is False
 
 
+def test_secret_files_take_precedence_and_fall_back_to_environment(monkeypatch, tmp_path):
+    """Credentials are read from mounted files before environment variables."""
+    monkeypatch.setattr(config, "_SECRET_FILES_DIR", str(tmp_path))
+    monkeypatch.setenv("API_ID", "7")
+    monkeypatch.setenv("API_HASH", "from-env")
+    monkeypatch.setenv("SUDO_USERS", "42")
+
+    assert config._secret("API_HASH") == "from-env"
+    assert config._secret_int("API_ID", 0) == 7
+
+    (tmp_path / "API_ID").write_text("123\n", encoding="utf-8")
+    (tmp_path / "API_HASH").write_text("from-file\n", encoding="utf-8")
+    (tmp_path / "BOT_TOKEN").write_text("token-from-file\n", encoding="utf-8")
+    (tmp_path / "SUDO_USERS").write_text("-100123, 42, nope\n", encoding="utf-8")
+
+    assert config._secret("API_HASH") == "from-file"
+    assert config._secret_int("API_ID", 0) == 123
+    assert config._secret("BOT_TOKEN") == "token-from-file"
+    assert config._secret_id_set("SUDO_USERS") == {-100123, 42}
+
+    (tmp_path / "API_HASH").unlink()
+    (tmp_path / "API_HASH").mkdir()
+    assert config._secret("API_HASH") == "from-env"
+
+    (tmp_path / "API_ID").write_text("not-a-number", encoding="utf-8")
+    assert config._secret_int("API_ID", 0) == 0
+
+
 def test_validate_missing_required_fields(monkeypatch):
     """Validate missing required fields."""
     monkeypatch.setattr(config, "API_ID", 0)
