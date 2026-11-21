@@ -28,7 +28,7 @@ class Playback:
 class VoiceChatManager:
     """Own one audio stream per allowlisted group and its temporary files."""
 
-    def __init__(self, calls) -> None:
+    def __init__(self, calls: PyTgCalls) -> None:
         """Bind to *calls* and register the stream-end update listener."""
         self._calls = calls
         self._sessions: dict[int, Playback] = {}
@@ -45,6 +45,14 @@ class VoiceChatManager:
         self._started = True
 
     def _lock_for(self, chat_id: int) -> asyncio.Lock:
+        """Return the per-chat lock used to serialize lifecycle changes.
+
+        Args:
+            chat_id: Identifier of the Telegram chat.
+
+        Returns:
+            The lock associated with the chat.
+        """
         return self._locks.setdefault(chat_id, asyncio.Lock())
 
     async def play(
@@ -117,6 +125,11 @@ class VoiceChatManager:
         self._sessions.clear()
 
     async def _leave_existing(self, chat_id: int) -> None:
+        """Leave a chat's call and remove its temporary files.
+
+        Args:
+            chat_id: Identifier of the Telegram chat.
+        """
         playback = self._sessions.get(chat_id)
         if playback is None:
             return
@@ -130,6 +143,12 @@ class VoiceChatManager:
         playback.directory.cleanup()
 
     async def _on_update(self, _calls: object, update: object) -> None:
+        """Clean up temporary files when a voice stream ends naturally.
+
+        Args:
+            _calls: PyTgCalls instance emitting the update (unused).
+            update: Raw update object emitted by PyTgCalls.
+        """
         if not isinstance(update, StreamEnded):
             return
         chat_id = update.chat_id
