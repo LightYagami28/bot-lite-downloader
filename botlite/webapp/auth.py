@@ -18,6 +18,14 @@ _INIT_DATA_CLOCK_SKEW = 60  # seconds of client clock skew tolerated
 
 
 def _query_pairs(init_data: str) -> list[tuple[str, str]]:
+    """Parse initData preserving duplicate keys for explicit rejection.
+
+    Args:
+        init_data: Raw query-string sent by the Telegram Mini App.
+
+    Returns:
+        Decoded key/value pairs, or an empty list when parsing fails.
+    """
     # Telegram signs the exact decoded key/value set. Reject duplicate keys
     # instead of silently accepting whichever value happens to win in a dict;
     # this prevents parser differentials between proxies and the application.
@@ -42,6 +50,15 @@ def _parse_fields(init_data: str) -> dict[str, str] | None:
 
 
 def _signature_valid(params: dict[str, str], received_hash: str) -> bool:
+    """Verify the HMAC-SHA256 signature using constant-time comparison.
+
+    Args:
+        params: Signed fields, excluding the ``hash`` field itself.
+        received_hash: Hexadecimal hash supplied by Telegram.
+
+    Returns:
+        ``True`` when the signature matches.
+    """
     data_check = "\n".join(f"{k}={v}" for k, v in sorted(params.items()))
     secret_key = hmac.new(
         key=b"WebAppData",
@@ -57,6 +74,14 @@ def _signature_valid(params: dict[str, str], received_hash: str) -> bool:
 
 
 def _fresh(params: dict[str, str]) -> bool:
+    """Check that ``auth_date`` is recent and not too far in the future.
+
+    Args:
+        params: Parsed initData fields.
+
+    Returns:
+        ``True`` when the timestamp is within the accepted window.
+    """
     try:
         age = time.time() - int(params["auth_date"])
     except (KeyError, TypeError, ValueError):
@@ -65,6 +90,14 @@ def _fresh(params: dict[str, str]) -> bool:
 
 
 def _parse_user(params: dict[str, str]) -> dict[str, Any] | None:
+    """Parse and minimally validate the signed ``user`` object.
+
+    Args:
+        params: Parsed initData fields.
+
+    Returns:
+        The user dictionary when it contains a positive integer id.
+    """
     try:
         user = json.loads(params.get("user", "{}"))
     except (json.JSONDecodeError, TypeError):
@@ -78,6 +111,15 @@ def _parse_user(params: dict[str, str]) -> dict[str, Any] | None:
 
 
 def _authentic(params: dict[str, str], received_hash: str) -> bool:
+    """Require both a valid signature and a fresh timestamp.
+
+    Args:
+        params: Parsed initData fields.
+        received_hash: Hexadecimal hash supplied by Telegram.
+
+    Returns:
+        ``True`` when both checks pass.
+    """
     return _signature_valid(params, received_hash) and _fresh(params)
 
 
