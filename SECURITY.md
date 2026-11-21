@@ -70,3 +70,27 @@ No Secret manifest with credential values is committed. Create the
 `bot-lite-downloader-secrets` Secret from the local `.env` file or a secret
 manager, as described in `k8s/README.md`. Credentials are mounted as read-only
 files and read by the application directly.
+
+### Stato analisi statica (2026-11-21)
+
+Prima degli interventi Codacy riportava 806 finding:
+1 Error, 218 Warning, 587 Info. Non sono state aggiunte
+soppressioni ne' rimossi assert dei test.
+
+- `hard-coded-tokens` (1 Error): il falso positivo OIDC e'
+  descritto sopra. `id-token: write` e' un permesso, non un
+  valore: nessun secret puo' sostituirlo.
+- `Prospector_pydocstyle` (322): regole D213/D413/D406,
+  convenzioni di formattazione delle docstring.
+- `PyLintPython3_C0103` (83): nomi di funzioni di test
+  piu' lunghi di 30 caratteri.
+- `Prospector_vulture` (54): simboli usati solo dalle
+  fixture pytest, non codice morto di produzione.
+- `PyLintPython3_W0212` (49): i test ispezionano membri
+  protetti per verificare lo stato interno.
+- `markdownlint_MD013` (25): righe di documentazione
+  oltre 80 caratteri.
+- I restanti finding sono regole di stile JS/Python
+  (`one-var`, `no-magic-numbers`, `sort-keys`) e
+  complessita' Lizard sotto soglia: richiedono una
+  riscrittura di massa, non correzioni di sicurezza.
