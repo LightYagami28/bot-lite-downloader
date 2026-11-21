@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import Any
 
 import yt_dlp
@@ -46,6 +46,14 @@ class _Logger:
 
 
 def _guess_mtype(path: str) -> str:
+    """Guess a media kind from a downloaded file extension.
+
+    Args:
+        path: Path of the downloaded file.
+
+    Returns:
+        One of ``"video"``, ``"audio"`` or ``"photo"`` (video by default).
+    """
     ext = os.path.splitext(path)[1].lower()
     if ext in _VIDEO_EXTS:
         return "video"
@@ -57,6 +65,16 @@ def _guess_mtype(path: str) -> str:
 
 
 def _mtype_from_info(file_path: str, vcodec: str, acodec: str) -> str:
+    """Derive the media kind from yt-dlp codec metadata and extension.
+
+    Args:
+        file_path: Path of the downloaded file.
+        vcodec: Video codec reported by yt-dlp.
+        acodec: Audio codec reported by yt-dlp.
+
+    Returns:
+        The detected media kind.
+    """
     ext = os.path.splitext(file_path)[1].lower()
     if ext in _IMAGE_EXTS:
         return "photo"
@@ -67,6 +85,18 @@ def _mtype_from_info(file_path: str, vcodec: str, acodec: str) -> str:
 
 
 def _new_files(tmpdir: str, before: set[str]) -> list[str]:
+    """List non-empty files created during a yt-dlp run.
+
+    Args:
+        tmpdir: Destination directory.
+        before: File names present before the run.
+
+    Returns:
+        Paths of the newly written files.
+
+    Raises:
+        RuntimeError: When yt-dlp wrote no usable file.
+    """
     paths = [os.path.join(tmpdir, name) for name in sorted(set(os.listdir(tmpdir)) - before)]
     new_files = [path for path in paths if os.path.getsize(path) > _MIN_FILE_SIZE]
     if not new_files:
@@ -77,6 +107,17 @@ def _new_files(tmpdir: str, before: set[str]) -> list[str]:
 def _scan_new_files(
     tmpdir: str, before: set[str], meta: dict, codecs: tuple[str, str]
 ) -> list[MediaResult]:
+    """Convert newly written files into media results.
+
+    Args:
+        tmpdir: Destination directory.
+        before: File names present before the run.
+        meta: Metadata shared by every result.
+        codecs: Video and audio codecs reported by yt-dlp.
+
+    Returns:
+        One entry per supported downloaded file.
+    """
     vcodec, acodec = codecs
     results = []
     for file_path in _new_files(tmpdir, before):
@@ -92,6 +133,16 @@ _VIDEO_FORMAT = f"{_PREFERRED_VIDEO}/{_PREFERRED_MUXED}/bestvideo+bestaudio/best
 
 
 def _base_opts(tmpdir: str, cookie_file: str | None, max_filesize: int) -> dict[str, Any]:
+    """Build the shared yt-dlp option dictionary.
+
+    Args:
+        tmpdir: Destination directory.
+        cookie_file: Optional path to a cookies file.
+        max_filesize: Maximum accepted download size in bytes.
+
+    Returns:
+        yt-dlp configuration with network timeouts and retries.
+    """
     opts = {
         "outtmpl": os.path.join(tmpdir, "%(id)s.%(ext)s"),
         "noplaylist": True,
@@ -110,6 +161,15 @@ def _base_opts(tmpdir: str, cookie_file: str | None, max_filesize: int) -> dict[
 
 
 def _build_opts(tmpdir: str, cookie_file: str | None) -> dict[str, Any]:
+    """Build yt-dlp options for a generic media download.
+
+    Args:
+        tmpdir: Destination directory.
+        cookie_file: Optional path to a cookies file.
+
+    Returns:
+        yt-dlp configuration preferring 1080p MP4 with merged audio.
+    """
     return {
         **_base_opts(tmpdir, cookie_file, MAX_FILE_SIZE),
         "format": _VIDEO_FORMAT,
@@ -118,8 +178,17 @@ def _build_opts(tmpdir: str, cookie_file: str | None) -> dict[str, Any]:
     }
 
 
-def _duration_filter(max_duration: int):
+def _duration_filter(max_duration: int) -> Callable[..., str | None]:
+    """Build a match filter that rejects unbounded or too-long audio.
+
+    Args:
+        max_duration: Maximum accepted duration in seconds.
+
+    Returns:
+        A yt-dlp match-filter callable returning a rejection reason or None.
+    """
     def within_duration(info: dict, *, incomplete: bool) -> str | None:
+        """Reject unknown or excessive durations before downloading."""
         duration = info.get("duration")
         if duration is None:
             if incomplete:
@@ -132,8 +201,17 @@ def _duration_filter(max_duration: int):
     return within_duration
 
 
-def _size_hook(max_file_size: int):
+def _size_hook(max_file_size: int) -> Callable[[dict[str, Any]], None]:
+    """Build a progress hook that aborts downloads exceeding the size limit.
+
+    Args:
+        max_file_size: Maximum accepted download size in bytes.
+
+    Returns:
+        A yt-dlp progress hook callable.
+    """
     def enforce_download_size(progress: dict) -> None:
+        """Abort the download as soon as the byte limit is exceeded."""
         if progress.get("downloaded_bytes", 0) > max_file_size:
             raise DownloadError(
                 f"Audio exceeds the {max_file_size}-byte voice-chat limit"
@@ -148,6 +226,17 @@ def _build_audio_opts(
     max_file_size: int,
     max_duration: int,
 ) -> dict[str, Any]:
+    """Build yt-dlp options for a bounded voice-chat audio download.
+
+    Args:
+        tmpdir: Destination directory.
+        cookie_file: Optional path to a cookies file.
+        max_file_size: Maximum accepted download size in bytes.
+        max_duration: Maximum accepted audio duration in seconds.
+
+    Returns:
+        yt-dlp configuration with duration and size guards.
+    """
     return {
         **_base_opts(tmpdir, cookie_file, max_file_size),
         "format": "bestaudio/best",
@@ -156,7 +245,20 @@ def _build_audio_opts(
     }
 
 
-def _audio_path(ydl, info: Mapping[str, Any], tmpdir: str) -> str:
+def _audio_path(ydl: yt_dlp.YoutubeDL, info: Mapping[str, Any], tmpdir: str) -> str:
+    """Resolve the audio path produced by yt-dlp.
+
+    Args:
+        ydl: YoutubeDL instance used for the extraction.
+        info: Extracted media information.
+        tmpdir: Destination directory used as a fallback search location.
+
+    Returns:
+        Path of the downloaded audio file.
+
+    Raises:
+        RuntimeError: When the output file is ambiguous.
+    """
     path = ydl.prepare_filename(info)
     if os.path.isfile(path):
         return path
@@ -171,6 +273,19 @@ def _audio_path(ydl, info: Mapping[str, Any], tmpdir: str) -> str:
 
 
 def _checked_audio_size(path: str, max_file_size: int) -> int:
+    """Validate the size of a downloaded audio file.
+
+    Args:
+        path: Path of the audio file.
+        max_file_size: Maximum accepted size in bytes.
+
+    Returns:
+        The file size in bytes.
+
+    Raises:
+        ValueError: When the file exceeds the limit.
+        RuntimeError: When the file is empty.
+    """
     actual_size = os.path.getsize(path)
     if actual_size > max_file_size:
         raise ValueError("Downloaded audio exceeds the configured size limit")
@@ -191,6 +306,7 @@ async def download_audio(
     loop = asyncio.get_running_loop()
 
     def _run() -> tuple[str, dict]:
+        """Extract and bound the audio track inside the executor thread."""
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=True)
             if info is None:
@@ -206,6 +322,14 @@ async def download_audio(
 
 
 def _media_meta(info: Mapping[str, Any]) -> dict:
+    """Select the metadata exposed to bot users.
+
+    Args:
+        info: Raw yt-dlp information dictionary.
+
+    Returns:
+        Normalized metadata dictionary.
+    """
     return {
         "title": info.get("title"),
         "uploader": info.get("uploader") or info.get("channel"),
@@ -221,6 +345,7 @@ async def download(url: str, tmpdir: str) -> list[MediaResult]:
     loop = asyncio.get_running_loop()
 
     def _run() -> list[MediaResult]:
+        """Extract media inside the executor thread and collect new files."""
         before = set(os.listdir(tmpdir))
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=True)
