@@ -23,6 +23,14 @@ MediaResult = tuple[str, dict, str]
 
 
 def _media_type(ext: str) -> str | None:
+    """Map a lowercase file extension to a media kind.
+
+    Args:
+        ext: File extension including the leading dot.
+
+    Returns:
+        ``"video"``, ``"photo"``, ``"audio"`` or ``None`` when unsupported.
+    """
     for extensions, mtype in (
         (_VIDEO_EXTS, "video"),
         (_IMAGE_EXTS, "photo"),
@@ -34,6 +42,15 @@ def _media_type(ext: str) -> str | None:
 
 
 def _usable_result(tmpdir: str, name: str) -> MediaResult | None:
+    """Build a result for a non-empty, supported downloaded file.
+
+    Args:
+        tmpdir: Directory that holds the downloaded files.
+        name: File name to inspect.
+
+    Returns:
+        A media result, or ``None`` when the file is missing or too small.
+    """
     file_path = os.path.join(tmpdir, name)
     mtype = _media_type(os.path.splitext(name)[1].lower())
     if mtype is None or not os.path.isfile(file_path):
@@ -43,6 +60,17 @@ def _usable_result(tmpdir: str, name: str) -> MediaResult | None:
 
 
 def _scan_files(tmpdir: str) -> list[MediaResult]:
+    """Collect every usable file produced by gallery-dl.
+
+    Args:
+        tmpdir: Directory that holds the downloaded files.
+
+    Returns:
+        List of usable media results.
+
+    Raises:
+        RuntimeError: When gallery-dl produced no usable files.
+    """
     candidates = (_usable_result(tmpdir, name) for name in sorted(os.listdir(tmpdir)))
     results = [result for result in candidates if result is not None]
     if not results:
@@ -51,6 +79,15 @@ def _scan_files(tmpdir: str) -> list[MediaResult]:
 
 
 def _command(url: str, tmpdir: str) -> list[str]:
+    """Build the gallery-dl argument vector, adding cookies when available.
+
+    Args:
+        url: Absolute HTTP(S) URL to download.
+        tmpdir: Destination directory for the downloaded files.
+
+    Returns:
+        Argument vector for an exec call (never a shell string).
+    """
     command = [
         sys.executable,
         "-m",
@@ -69,6 +106,18 @@ def _command(url: str, tmpdir: str) -> list[str]:
 
 
 async def _run(command: list[str]) -> None:
+    """Execute gallery-dl with a timeout and validate its exit status.
+
+    Args:
+        command: Argument vector for ``asyncio.create_subprocess_exec``.
+
+    Returns:
+        None.
+
+    Raises:
+        TimeoutError: When the subprocess exceeds the request limit.
+        RuntimeError: When the subprocess exits with an unexpected code.
+    """
     process = await asyncio.create_subprocess_exec(
         *command,
         stdout=asyncio.subprocess.DEVNULL,
