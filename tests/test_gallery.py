@@ -95,3 +95,51 @@ def test_gallery_download_rejects_non_http_url_before_launch(tmp_path):
             raise AssertionError("non-HTTP URL was accepted")
 
     asyncio.run(exercise())
+
+
+def test_gallery_uses_static_program_prefix_and_validated_args(monkeypatch, tmp_path):
+    """Gallery uses a literal program prefix and validated argv elements."""
+    captured = {}
+
+    async def create_process(*args, **kwargs):
+        """Capture the spawn call without starting a process."""
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        return FakeProcess()
+
+    monkeypatch.setattr(gallery.asyncio, "create_subprocess_exec", create_process)
+    monkeypatch.setattr(gallery, "_scan_files", lambda _dir: [])
+    asyncio.run(gallery.download("https://example.test/gallery", str(tmp_path)))
+
+    assert captured["args"][0] == gallery.sys.executable
+    assert captured["args"][1:3] == ("-m", "gallery_dl")
+    assert captured["args"][3] == "--directory"
+    assert captured["args"][4] == str(tmp_path)
+    assert captured["args"][-1] == "https://example.test/gallery"
+
+
+def test_gallery_rejects_control_characters_and_option_like_values(tmp_path):
+    """Gallery refuses URLs and argv values containing control characters."""
+    try:
+        gallery._command("https://example.test/gallery\n--cookies evil", str(tmp_path))
+    except ValueError as exc:
+        assert "URL" in str(exc)
+    else:
+        raise AssertionError("URL with control characters was accepted")
+
+    try:
+        gallery._validated_arg("--cookies", "cookie file")
+    except ValueError as exc:
+        assert "cookie file" in str(exc)
+    else:
+        raise AssertionError("option-like argv value was accepted")
+
+
+def test_gallery_rejects_commands_outside_the_allowlist():
+    """Gallery only allows the gallery_dl module to be executed."""
+    try:
+        gallery._allow_command("os")
+    except ValueError as exc:
+        assert "not allowed" in str(exc)
+    else:
+        raise AssertionError("command outside the allowlist was accepted")
