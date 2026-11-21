@@ -56,6 +56,7 @@ def test_dashboard_button(monkeypatch):
 
 def test_cmd_start():
     """Cmd start."""
+
     async def exercise():
         """Exercise."""
         event = FakeEvent(is_private=True, is_group=False)
@@ -70,6 +71,7 @@ def test_cmd_start():
 
 def test_cmd_help(monkeypatch):
     """Cmd help."""
+
     async def exercise():
         """Exercise."""
         monkeypatch.setattr(commands, "USER_COOLDOWN", 10)
@@ -86,6 +88,7 @@ def test_cmd_help(monkeypatch):
 
 def test_cmd_status(monkeypatch):
     """Cmd status."""
+
     async def exercise():
         """Exercise."""
         monkeypatch.setattr(commands, "free_disk", lambda: 1024 * 1024 * 1024 * 10)
@@ -101,6 +104,7 @@ def test_cmd_status(monkeypatch):
 
 def test_cmd_stats(monkeypatch):
     """Cmd stats."""
+
     async def exercise():
         """Exercise."""
         monkeypatch.setattr(commands, "SUDO_USERS", [100])
@@ -130,6 +134,7 @@ def test_cmd_stats(monkeypatch):
 
 def test_cmd_ban_and_unban(monkeypatch):
     """Cmd ban and unban."""
+
     async def exercise():
         """Exercise."""
         monkeypatch.setattr(commands, "SUDO_USERS", [100])
@@ -165,6 +170,7 @@ def test_cmd_ban_and_unban(monkeypatch):
 
 def test_cmd_voice_control(monkeypatch):
     """Cmd voice control."""
+
     class FakeVoiceManager:
         """Fake voice manager."""
 
@@ -225,6 +231,7 @@ def test_cmd_voice_control(monkeypatch):
 
 def test_cmd_voice_play_guards(monkeypatch):
     """Cmd voice play guards."""
+
     async def exercise():
         """Exercise."""
         monkeypatch.setattr(commands, "VOICE_ENABLED", True)

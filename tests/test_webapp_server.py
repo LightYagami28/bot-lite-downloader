@@ -89,6 +89,7 @@ def test_api_me_authenticated(monkeypatch):
 
 def test_api_stats_sudo_and_forbidden(monkeypatch):
     """Api stats sudo and forbidden."""
+
     def fake_validate(data):
         """Fake validate."""
         if data == "sudo":

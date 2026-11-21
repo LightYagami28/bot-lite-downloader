@@ -38,6 +38,7 @@ class FakeEvent:
 
 def test_voice_command_downloads_only_for_explicitly_allowed_group(monkeypatch):
     """Voice command downloads only for explicitly allowed group."""
+
     class FakeVoiceManager:
         """Fake voice manager."""
 
@@ -83,6 +84,7 @@ def test_voice_command_downloads_only_for_explicitly_allowed_group(monkeypatch):
 
 def test_voice_command_ignores_unallowlisted_group(monkeypatch):
     """Voice command ignores unallowlisted group."""
+
     async def exercise():
         """Exercise."""
         event = FakeEvent(chat_id=-100999)

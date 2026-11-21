@@ -56,6 +56,7 @@ class FakeEvent:
 
 def test_url_handler_ignores_commands():
     """Url handler ignores commands."""
+
     async def exercise():
         """Exercise."""
         event = FakeEvent(text="/start https://example.com/video")
@@ -67,6 +68,7 @@ def test_url_handler_ignores_commands():
 
 def test_url_handler_ignores_no_url():
     """Url handler ignores no url."""
+
     async def exercise():
         """Exercise."""
         event = FakeEvent(text="Hello world, no link here!")
@@ -78,6 +80,7 @@ def test_url_handler_ignores_no_url():
 
 def test_url_handler_ignores_tme_links():
     """Url handler ignores tme links."""
+
     async def exercise():
         """Exercise."""
         event = FakeEvent(text="Check this out: https://t.me/somechannel/123")
@@ -89,6 +92,7 @@ def test_url_handler_ignores_tme_links():
 
 def test_check_guards_banned(monkeypatch):
     """Check guards banned."""
+
     async def exercise():
         """Exercise."""
         monkeypatch.setattr(url.db, "is_banned", lambda uid: True)
@@ -102,6 +106,7 @@ def test_check_guards_banned(monkeypatch):
 
 def test_check_guards_active_download(monkeypatch):
     """Check guards active download."""
+
     async def exercise():
         """Exercise."""
         monkeypatch.setattr(url.db, "is_banned", lambda uid: False)
@@ -119,6 +124,7 @@ def test_check_guards_active_download(monkeypatch):
 
 def test_check_guards_cooldown(monkeypatch):
     """Check guards cooldown."""
+
     async def exercise():
         """Exercise."""
         monkeypatch.setattr(url.db, "is_banned", lambda uid: False)
@@ -133,6 +139,7 @@ def test_check_guards_cooldown(monkeypatch):
 
 def test_check_guards_low_disk(monkeypatch):
     """Check guards low disk."""
+
     async def exercise():
         """Exercise."""
         monkeypatch.setattr(url.db, "is_banned", lambda uid: False)
@@ -148,6 +155,7 @@ def test_check_guards_low_disk(monkeypatch):
 
 def test_upload_results_skips_oversized_files(tmp_path):
     """Upload results skips oversized files."""
+
     async def exercise():
         """Exercise."""
         oversized = tmp_path / "big.mp4"
@@ -192,6 +200,7 @@ def test_upload_results_skips_oversized_files(tmp_path):
 
 def test_url_handler_success(tmp_path, monkeypatch):
     """Url handler success."""
+
     async def exercise():
         """Exercise."""
         test_file = tmp_path / "video.mp4"
@@ -233,8 +242,10 @@ def test_url_handler_success(tmp_path, monkeypatch):
 
 def test_url_handler_download_failure(monkeypatch):
     """Url handler download failure."""
+
     async def exercise():
         """Exercise."""
+
         async def mock_download(url_arg):
             """Mock download."""
             raise RuntimeError("Extraction failed completely")
@@ -258,6 +269,7 @@ def test_url_handler_download_failure(monkeypatch):
 
 def test_safe_edit():
     """Safe edit."""
+
     async def exercise():
         """Exercise."""
         msg = FakeMessage()

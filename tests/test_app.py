@@ -8,6 +8,7 @@ from botlite import app
 
 def test_app_main_lifecycle(monkeypatch):
     """App main lifecycle."""
+
     async def exercise():
         """Exercise."""
         actions = []
@@ -45,6 +46,7 @@ def test_app_main_lifecycle(monkeypatch):
 
 def test_app_main_with_voice_and_webapp(monkeypatch):
     """App main with voice and webapp."""
+
     async def exercise():
         """Exercise."""
         actions = []

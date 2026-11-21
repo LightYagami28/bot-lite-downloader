@@ -8,6 +8,7 @@ from botlite.utils.system import setup_signals
 
 def test_shutdown_signal_awaits_disconnect_and_ignores_duplicates(monkeypatch):
     """Shutdown signal awaits disconnect and ignores duplicates."""
+
     async def exercise():
         """Exercise."""
         handlers = {}

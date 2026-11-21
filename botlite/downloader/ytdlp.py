@@ -187,6 +187,7 @@ def _duration_filter(max_duration: int) -> Callable[..., str | None]:
     Returns:
         A yt-dlp match-filter callable returning a rejection reason or None.
     """
+
     def within_duration(info: dict, *, incomplete: bool) -> str | None:
         """Reject unknown or excessive durations before downloading."""
         duration = info.get("duration")
@@ -210,12 +211,11 @@ def _size_hook(max_file_size: int) -> Callable[[dict[str, Any]], None]:
     Returns:
         A yt-dlp progress hook callable.
     """
+
     def enforce_download_size(progress: dict) -> None:
         """Abort the download as soon as the byte limit is exceeded."""
         if progress.get("downloaded_bytes", 0) > max_file_size:
-            raise DownloadError(
-                f"Audio exceeds the {max_file_size}-byte voice-chat limit"
-            )
+            raise DownloadError(f"Audio exceeds the {max_file_size}-byte voice-chat limit")
 
     return enforce_download_size
 

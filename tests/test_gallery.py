@@ -29,6 +29,7 @@ class FakeProcess:
 
 def test_gallery_download_uses_exec_args_and_keeps_partial_results(monkeypatch, tmp_path):
     """Gallery download uses exec args and keeps partial results."""
+
     async def exercise():
         """Exercise."""
         captured = {}
@@ -53,6 +54,7 @@ def test_gallery_download_uses_exec_args_and_keeps_partial_results(monkeypatch, 
 
 def test_gallery_download_kills_process_on_timeout(monkeypatch, tmp_path):
     """Gallery download kills process on timeout."""
+
     async def exercise():
         """Exercise."""
         process = FakeProcess(block=True)
@@ -82,6 +84,7 @@ def test_gallery_download_kills_process_on_timeout(monkeypatch, tmp_path):
 
 def test_gallery_download_rejects_non_http_url_before_launch(tmp_path):
     """Gallery download rejects non http url before launch."""
+
     async def exercise():
         """Exercise."""
         try:

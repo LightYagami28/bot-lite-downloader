@@ -44,6 +44,7 @@ class FakeCalls:
 
 def test_voice_manager_keeps_audio_until_stop_then_removes_it():
     """Voice manager keeps audio until stop then removes it."""
+
     async def exercise():
         """Exercise."""
         calls = FakeCalls()
@@ -73,6 +74,7 @@ def test_voice_manager_keeps_audio_until_stop_then_removes_it():
 
 def test_stream_end_leaves_call_and_releases_audio():
     """Stream end leaves call and releases audio."""
+
     async def exercise():
         """Exercise."""
         from pytgcalls.types import Device, StreamEnded
@@ -98,6 +100,7 @@ def test_stream_end_leaves_call_and_releases_audio():
 
 def test_shutdown_waits_for_inflight_play_and_closes_its_session():
     """Shutdown waits for inflight play and closes its session."""
+
     class BlockingCalls(FakeCalls):
         """Blocking calls."""
 
@@ -122,7 +125,9 @@ def test_shutdown_waits_for_inflight_play_and_closes_its_session():
         audio_file = Path(directory.name) / "track.ogg"
         audio_file.write_bytes(b"audio")
 
-        play_task = asyncio.create_task(manager.play(-100123, str(audio_file), Playback(directory, "Track")))
+        play_task = asyncio.create_task(
+            manager.play(-100123, str(audio_file), Playback(directory, "Track"))
+        )
         await calls.play_entered.wait()
         shutdown_task = asyncio.create_task(manager.shutdown())
         await asyncio.sleep(0)

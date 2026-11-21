@@ -49,6 +49,7 @@ def test_config_loads_without_dotenv():
 
 def test_download_reports_error_when_gallery_dl_raises(monkeypatch):
     """Download reports error when gallery dl raises."""
+
     async def no_results(_url, _outdir):
         """No results."""
         return []
@@ -161,6 +162,7 @@ def test_gallery_download_survives_a_process_that_already_exited(monkeypatch, tm
 
 def test_gallery_download_rejects_failing_exit_code(monkeypatch, tmp_path):
     """Gallery download rejects failing exit code."""
+
     async def create_process(*_args, **_kwargs):
         """Create process."""
         return FakeProcess(returncode=2, stderr=b"boom")
@@ -304,6 +306,7 @@ def test_setup_signals_reports_a_failing_disconnect(monkeypatch, caplog):
 
     async def exercise():
         """Exercise."""
+
         async def disconnect():
             """Disconnect."""
             raise RuntimeError("disconnect failed")
@@ -323,6 +326,7 @@ def test_setup_signals_reports_a_cancelled_disconnect(monkeypatch, caplog):
 
     async def exercise():
         """Exercise."""
+
         async def disconnect():
             """Disconnect."""
             raise asyncio.CancelledError
@@ -338,6 +342,7 @@ def test_setup_signals_reports_a_cancelled_disconnect(monkeypatch, caplog):
 
 def test_setup_signals_tolerates_unregistrable_signals(monkeypatch, caplog):
     """Setup signals tolerates unregistrable signals."""
+
     def refuse(_sig, _handler):
         """Refuse."""
         raise ValueError("not in main thread")
@@ -797,6 +802,7 @@ def _directory():
 
 def test_voice_start_is_idempotent():
     """Voice start is idempotent."""
+
     async def exercise():
         """Exercise."""
         calls = Calls()
@@ -810,6 +816,7 @@ def test_voice_start_is_idempotent():
 
 def test_voice_play_requires_a_started_manager():
     """Voice play requires a started manager."""
+
     async def exercise():
         """Exercise."""
         directory, path = _directory()
@@ -823,6 +830,7 @@ def test_voice_play_requires_a_started_manager():
 
 def test_voice_play_rechecks_the_state_after_waiting_for_the_lock():
     """Voice play rechecks the state after waiting for the lock."""
+
     async def exercise():
         """Exercise."""
         manager = VoiceChatManager(Calls())
@@ -841,6 +849,7 @@ def test_voice_play_rechecks_the_state_after_waiting_for_the_lock():
 
 def test_voice_pause_and_resume_need_an_active_session():
     """Voice pause and resume need an active session."""
+
     async def exercise():
         """Exercise."""
         manager = VoiceChatManager(Calls())
@@ -859,6 +868,7 @@ def test_voice_pause_and_resume_need_an_active_session():
 
 def test_voice_shutdown_is_idempotent_and_survives_leave_failures():
     """Voice shutdown is idempotent and survives leave failures."""
+
     async def exercise():
         """Exercise."""
         calls = Calls()
@@ -877,6 +887,7 @@ def test_voice_shutdown_is_idempotent_and_survives_leave_failures():
 
 def test_voice_cleanup_after_disconnect_removes_pending_files():
     """Voice cleanup after disconnect removes pending files."""
+
     async def exercise():
         """Exercise."""
         manager = VoiceChatManager(Calls())
@@ -895,6 +906,7 @@ def test_voice_cleanup_after_disconnect_removes_pending_files():
 
 def test_voice_stop_tolerates_a_call_that_already_ended():
     """Voice stop tolerates a call that already ended."""
+
     async def exercise():
         """Exercise."""
         manager = VoiceChatManager(Calls(leave_error=NotInCallError()))
@@ -908,6 +920,7 @@ def test_voice_stop_tolerates_a_call_that_already_ended():
 
 def test_voice_updates_only_react_to_ended_streams_of_active_chats():
     """Voice updates only react to ended streams of active chats."""
+
     async def exercise():
         """Exercise."""
         calls = Calls()
@@ -1015,6 +1028,7 @@ def test_init_data_with_a_valid_signature_is_accepted(bot_token):
 
 def test_unhandled_handler_errors_become_500_with_security_headers(monkeypatch):
     """Unhandled handler errors become 500 with security headers."""
+
     async def broken(_request):
         """Broken."""
         raise RuntimeError("boom")

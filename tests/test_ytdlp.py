@@ -97,6 +97,7 @@ def test_build_opts(tmp_path):
 
 def test_download_success(tmp_path, monkeypatch):
     """Download success."""
+
     async def exercise():
         """Exercise."""
         fake_info = {
@@ -144,8 +145,10 @@ def test_download_success(tmp_path, monkeypatch):
 
 def test_download_no_info_raises(tmp_path, monkeypatch):
     """Download no info raises."""
+
     async def exercise():
         """Exercise."""
+
         class FakeYDL:
             """Fake y d l."""
 

@@ -12,6 +12,7 @@ from botlite.downloader import download
 
 def test_download_ytdlp_success(monkeypatch):
     """Download ytdlp success."""
+
     async def exercise():
         """Exercise."""
         mock_results = [("/fake/path/vid.mp4", {"title": "Test Video"}, "video")]
@@ -33,6 +34,7 @@ def test_download_ytdlp_success(monkeypatch):
 
 def test_download_ytdlp_fails_gallery_succeeds(monkeypatch):
     """Download ytdlp fails gallery succeeds."""
+
     async def exercise():
         """Exercise."""
         mock_results = [("/fake/path/pic.jpg", {"title": "Photo"}, "photo")]
@@ -59,8 +61,10 @@ def test_download_ytdlp_fails_gallery_succeeds(monkeypatch):
 
 def test_download_both_fail_cleans_up_tmpdir(monkeypatch):
     """Download both fail cleans up tmpdir."""
+
     async def exercise():
         """Exercise."""
+
         async def mock_ytdlp(url, outdir):
             """Mock ytdlp."""
             raise RuntimeError("yt-dlp failure")
