@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bot-lite-downloader-config
+  namespace: bot-lite-downloader
+data:
+  DB_FILE: /data/media_bot.db
+  WEBAPP_HOST: "0.0.0.0"
+  WEBAPP_PORT: "8080"
+  WEBAPP_PUBLIC_URL: "https://bot-lite.example.com"
+  WEBAPP_INIT_DATA_MAX_AGE: "86400"
+  MAX_FILE_SIZE: "2147483648"
+  MAX_CONCURRENT_DOWNLOADS: "3"
+  MIN_FREE_DISK: "524288000"
+  USER_COOLDOWN: "5"
+  ALLOW_GROUPS: "false"
+  ALLOWED_GROUP_IDS: ""
+  VOICE_ENABLED: "false"
+  VOICE_MAX_DURATION: "1800"
+  VOICE_MAX_FILE_SIZE: "104857600"

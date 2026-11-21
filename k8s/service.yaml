@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bot-lite-downloader
+  namespace: bot-lite-downloader
+  labels:
+    app.kubernetes.io/name: bot-lite-downloader
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: bot-lite-downloader
+  ports:
+    - name: webapp
+      port: 8080
+      targetPort: webapp
+      protocol: TCP

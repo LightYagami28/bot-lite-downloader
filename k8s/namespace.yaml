@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bot-lite-downloader
+  labels:
+    app.kubernetes.io/name: bot-lite-downloader
+    app.kubernetes.io/part-of: bot-lite-downloader
