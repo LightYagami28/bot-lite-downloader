@@ -28,3 +28,11 @@ The project is a self-hosted Telegram download bot with a dashboard. See [README
 - Supporto a gruppi Telegram aperti/non approvati (policy restrittiva con allowlist esplicita).
 
 Older test and coverage figures in `SPEC.md` are dated snapshots, not a claim about current CI. No milestones or delivery dates are committed here.
+
+## Verifica 2026-11-21
+
+Rianalisi senza soppressioni completata. Comandi: `.venv\Scripts\ruff.exe check .` e
+`.venv\Scripts\ruff.exe format --check .` (esito 0), `.venv\Scripts\python.exe -m pytest`
+(148 test superati), `.venv\Scripts\python.exe -m bandit -r botlite` (0 issue).
+Rimossi i pragma di coverage e corretti i rami non sicuri nella validazione initData
+e nella pubblicazione del brano audio; i test esistenti restano verdi.
