@@ -1,99 +1,191 @@
-"""Load all configuration from environment variables or a .env file."""
+"""Load and validate all bot configuration from environment variables."""
 
 from __future__ import annotations
 
+import logging
 import os
-import sys
+from typing import Final
 
-try:
-    from dotenv import load_dotenv
-
-    load_dotenv()
-except ImportError:
-    pass
+log: Final[logging.Logger] = logging.getLogger(__name__)
 
 
-def _int(key: str, default: int) -> int:
+def _load_environment() -> None:
+    """Populate the process environment from a ``.env`` file when available.
+
+    The dependency is optional: deployments may inject secrets directly as
+    environment variables, so a missing ``python-dotenv`` must not abort startup.
+
+    Returns:
+        None.
+    """
     try:
-        return int(os.getenv(key, default))
-    except (ValueError, TypeError):
+        from dotenv import load_dotenv
+    except ImportError:
+        log.info("python-dotenv is not installed; using process environment only")
+        return
+    load_dotenv()
+
+
+_load_environment()
+
+DEFAULT_MAX_FILE_SIZE: Final[int] = 2 * 1024 * 1024 * 1024
+DEFAULT_MAX_CONCURRENT_DOWNLOADS: Final[int] = 3
+DEFAULT_MIN_FREE_DISK: Final[int] = 500 * 1024 * 1024
+DEFAULT_USER_COOLDOWN: Final[int] = 5
+DEFAULT_VOICE_MAX_DURATION: Final[int] = 1800
+DEFAULT_VOICE_MAX_FILE_SIZE: Final[int] = 100 * 1024 * 1024
+DEFAULT_WEBAPP_INIT_DATA_MAX_AGE: Final[int] = 3600
+
+
+def _safe_int(key: str, default: int) -> int:
+    """Read an integer environment variable, falling back to the default.
+
+    Args:
+        key: Environment variable name.
+        default: Value returned when the variable is unset or invalid.
+
+    Returns:
+        Parsed integer value.
+    """
+    try:
+        return int(os.getenv(key, str(default)))
+    except (TypeError, ValueError):
+        log.warning("Invalid integer for %s, using default %d", key, default)
         return default
 
 
+def _int(key: str, default: int) -> int:
+    """Read an integer environment variable with a default fallback.
+
+    Args:
+        key: Environment variable name.
+        default: Value returned when the variable is unset or invalid.
+
+    Returns:
+        Parsed integer value.
+    """
+    return _safe_int(key, default)
+
+
 def _int_list(key: str) -> list[int]:
+    """Read a comma-separated integer list from the environment.
+
+    Args:
+        key: Environment variable name.
+
+    Returns:
+        List of parsed integers (empty list when unset or fully invalid).
+    """
     raw = os.getenv(key, "")
-    values = []
+    values: list[int] = []
     for item in raw.split(","):
+        stripped = item.strip()
+        if not stripped:
+            continue
         try:
-            values.append(int(item.strip(), 10))
+            values.append(int(stripped, 10))
         except ValueError:
             continue
     return values
 
 
 def _nonzero_int_list(key: str) -> set[int]:
-    # Telegram supergroup/channel IDs are commonly negative.
+    """Read a comma-separated integer list keeping only non-zero identifiers.
+
+    Args:
+        key: Environment variable name.
+
+    Returns:
+        Set of parsed non-zero integers.
+    """
     return {value for value in _int_list(key) if value}
 
 
 def _bool(key: str, default: bool = False) -> bool:
+    """Read a boolean environment variable.
+
+    Args:
+        key: Environment variable name.
+        default: Value returned when the variable is unset.
+
+    Returns:
+        ``True`` when the value is a truthy string, ``False`` otherwise.
+    """
     value = os.getenv(key)
     if value is None:
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-# ── Telegram ──────────────────────────────────────────────────────────────────
-API_ID = _int("API_ID", 0)
-API_HASH = os.getenv("API_HASH", "")
-BOT_TOKEN = os.getenv("BOT_TOKEN", "")
-
-# ── Admins ────────────────────────────────────────────────────────────────────
+API_ID: int = _int("API_ID", 0)
+API_HASH: str = os.getenv("API_HASH", "")
+BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
 SUDO_USERS: list[int] = _int_list("SUDO_USERS") or []
 
-# ── Limits ────────────────────────────────────────────────────────────────────
-MAX_FILE_SIZE = _int("MAX_FILE_SIZE", 2 * 1024 * 1024 * 1024)
-MAX_CONCURRENT_DOWNLOADS = _int("MAX_CONCURRENT_DOWNLOADS", 3)
-MIN_FREE_DISK = _int("MIN_FREE_DISK", 500 * 1024 * 1024)
-USER_COOLDOWN = _int("USER_COOLDOWN", 5)
-ALLOW_GROUPS = _bool("ALLOW_GROUPS", False)
-ALLOWED_GROUP_IDS = _nonzero_int_list("ALLOWED_GROUP_IDS")
-VOICE_ENABLED = _bool("VOICE_ENABLED", False)
-VOICE_MAX_DURATION = _int("VOICE_MAX_DURATION", 1800)
-VOICE_MAX_FILE_SIZE = _int("VOICE_MAX_FILE_SIZE", 100 * 1024 * 1024)
+MAX_FILE_SIZE: int = _int("MAX_FILE_SIZE", DEFAULT_MAX_FILE_SIZE)
+MAX_CONCURRENT_DOWNLOADS: int = _int("MAX_CONCURRENT_DOWNLOADS", DEFAULT_MAX_CONCURRENT_DOWNLOADS)
+MIN_FREE_DISK: int = _int("MIN_FREE_DISK", DEFAULT_MIN_FREE_DISK)
+USER_COOLDOWN: int = _int("USER_COOLDOWN", DEFAULT_USER_COOLDOWN)
+ALLOW_GROUPS: bool = _bool("ALLOW_GROUPS", False)
+ALLOWED_GROUP_IDS: set[int] = _nonzero_int_list("ALLOWED_GROUP_IDS")
+VOICE_ENABLED: bool = _bool("VOICE_ENABLED", False)
+VOICE_MAX_DURATION: int = _int("VOICE_MAX_DURATION", DEFAULT_VOICE_MAX_DURATION)
+VOICE_MAX_FILE_SIZE: int = _int("VOICE_MAX_FILE_SIZE", DEFAULT_VOICE_MAX_FILE_SIZE)
 
-# ── Storage ───────────────────────────────────────────────────────────────────
-DB_FILE = os.getenv("DB_FILE", "media_bot.db")
-
-# ── WebApp dashboard (optional) ───────────────────────────────────────────────
-# Set WEBAPP_PUBLIC_URL to enable the embedded web server and add dashboard
-# buttons to bot replies.  The URL must be HTTPS for Telegram to open it as
-# a WebApp (use a reverse proxy / Cloudflare Tunnel for self-hosted setups).
-WEBAPP_PUBLIC_URL = os.getenv("WEBAPP_PUBLIC_URL", "")
-WEBAPP_HOST = os.getenv("WEBAPP_HOST", "127.0.0.1")
-WEBAPP_PORT = _int("WEBAPP_PORT", 8080)
-WEBAPP_INIT_DATA_MAX_AGE = _int("WEBAPP_INIT_DATA_MAX_AGE", 3600)
+DB_FILE: str = os.getenv("DB_FILE", "media_bot.db")
+WEBAPP_PUBLIC_URL: str = os.getenv("WEBAPP_PUBLIC_URL", "")
+WEBAPP_HOST: str = os.getenv("WEBAPP_HOST", "127.0.0.1")
+WEBAPP_PORT: int = _int("WEBAPP_PORT", 8080)
+WEBAPP_INIT_DATA_MAX_AGE: int = _int("WEBAPP_INIT_DATA_MAX_AGE", DEFAULT_WEBAPP_INIT_DATA_MAX_AGE)
 
 
 def _credential_errors() -> list[str]:
-    missing = (("API_ID", API_ID), ("API_HASH", API_HASH), ("BOT_TOKEN", BOT_TOKEN))
+    """Collect missing credential errors.
+
+    Returns:
+        List of error messages (empty when all credentials are configured).
+    """
+    missing = (
+        ("API_ID", API_ID),
+        ("API_HASH", API_HASH),
+        ("BOT_TOKEN", BOT_TOKEN),
+    )
     return [f"{name} is not set" for name, value in missing if not value]
 
 
 def _group_errors() -> list[str]:
-    errors = []
+    """Collect group-policy related configuration errors.
+
+    Returns:
+        List of error messages (empty when the policy is consistent).
+    """
+    errors: list[str] = []
     if ALLOW_GROUPS and not ALLOWED_GROUP_IDS:
-        errors.append("ALLOW_GROUPS requires at least one non-zero ALLOWED_GROUP_IDS entry")
+        errors.append(
+            "ALLOW_GROUPS requires at least one non-zero ALLOWED_GROUP_IDS entry",
+        )
     return errors + _voice_errors()
 
 
 def _voice_errors() -> list[str]:
+    """Collect voice-playback related configuration errors.
+
+    Returns:
+        List of error messages (empty when voice playback is properly configured).
+    """
     if VOICE_ENABLED and not (ALLOW_GROUPS and ALLOWED_GROUP_IDS):
-        return ["VOICE_ENABLED requires ALLOW_GROUPS and an explicit ALLOWED_GROUP_IDS allowlist"]
+        return [
+            "VOICE_ENABLED requires ALLOW_GROUPS and an explicit ALLOWED_GROUP_IDS allowlist",
+        ]
     return []
 
 
 def _limit_errors() -> list[str]:
+    """Collect numeric limit validation errors.
+
+    Returns:
+        List of error messages (empty when all limits are positive).
+    """
     limits = (
         ("VOICE_MAX_DURATION", VOICE_MAX_DURATION),
         ("VOICE_MAX_FILE_SIZE", VOICE_MAX_FILE_SIZE),
@@ -102,6 +194,11 @@ def _limit_errors() -> list[str]:
 
 
 def _config_errors() -> list[str]:
+    """Collect every configuration error of the bot.
+
+    Returns:
+        List of human-readable error messages (empty when the config is valid).
+    """
     errors = _credential_errors()
     if WEBAPP_PUBLIC_URL and not WEBAPP_PUBLIC_URL.lower().startswith("https://"):
         errors.append("WEBAPP_PUBLIC_URL must use HTTPS")
@@ -109,10 +206,14 @@ def _config_errors() -> list[str]:
 
 
 def validate() -> None:
-    """Abort with a clear message if required credentials are missing."""
+    """Abort startup with a clear message when the configuration is invalid.
+
+    Raises:
+        SystemExit: When at least one configuration error is found.
+    """
     errors = _config_errors()
     if errors:
         for error in errors:
-            print(f"[CONFIG ERROR] {error}", file=sys.stderr)
-        print("Set these in a .env file or as environment variables.", file=sys.stderr)
-        sys.exit(1)
+            log.error("[CONFIG ERROR] %s", error)
+        log.error("Set these in a .env file or as environment variables.")
+        raise SystemExit(1)
