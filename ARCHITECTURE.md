@@ -27,7 +27,7 @@ Bot Lite Downloader is a self-hosted Telegram bot with a web dashboard. The appl
 ```
 
 | Modulo | Percorso | Ruolo |
-|---|---|---|
+| --- | --- | --- |
 | Handlers | `botlite/handlers/` | Filtraggio accessi (`access.py`), elaborazione comandi `/start`, `/help` e intercettazione link media. |
 | Downloader | `botlite/downloader/` | Motore di download via `yt-dlp`, gestione playlist, rotazione user-agent e normalizzazione audio. |
 | WebApp | `botlite/webapp/` | Server aiohttp interno per Telegram MiniApp con autenticazione crittografica sicura. |

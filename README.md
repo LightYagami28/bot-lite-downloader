@@ -355,7 +355,6 @@ Follow updates on Telegram: **[t.me/LinuxBotsNews](https://t.me/LinuxBotsNews)**
 
 [MIT](LICENSE.md) — do whatever you want, keep the attribution.
 
-
 ## Documentation
 
 - [Documentation index](docs/README.md)

@@ -18,7 +18,7 @@ siti e li invia direttamente ai DM dell'utente.
 ## Stack Tecnologico
 
 | Componente | Tech | Motivo |
-|------------|------|--------|
+| --- | --- | --- |
 | **Telegram client** | Telethon | Client API for user-level bot interaction |
 | **Download engine** | yt-dlp + gallery-dl | yt-dlp for videos/audio; gallery-dl fallback for carousels |
 | **Web server** | aiohttp | Lightweight async web server for dashboard |
@@ -102,7 +102,7 @@ python -m botlite
 ### Config Variables (Required)
 
 | Var | Source | Note |
-|-----|--------|------|
+| --- | --- | --- |
 | `API_ID` | <https://my.telegram.org/apps> | User account API ID |
 | `API_HASH` | <https://my.telegram.org/apps> | User account API hash |
 | `BOT_TOKEN` | @BotFather (Telegram) | Bot token (not user token) |
