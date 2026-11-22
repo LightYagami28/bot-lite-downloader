@@ -68,7 +68,8 @@ kubectl -n bot-lite-downloader logs deploy/bot-lite-downloader
 - The WebApp dashboard is only enabled when `WEBAPP_PUBLIC_URL` is set (HTTPS).
 - The bot runs as a non-root user with a read-only root filesystem; an
   `emptyDir` is mounted at `/tmp` for download staging (the app uses `tempfile`).
-- The Pod does not mount a service account token: the bot needs no Kubernetes API access.
+- The Pod does not mount a service account token: the bot needs no Kubernetes
+  API access.
 - Credentials are mounted as read-only files under `/etc/botlite-secrets` and read
   by the application directly; they are not injected as environment variables.
 - For Helm-based installs, package these manifests into a chart or use
