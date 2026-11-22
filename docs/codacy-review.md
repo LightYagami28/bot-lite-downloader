@@ -13,8 +13,8 @@ Rilevazione del 2026-11-22 tramite Codacy API v3:
 - `POST .../issues/search` con corpo
   `{"levels":["Error","High","Warning","Info"],"pageSize":100}`.
 
-Gli endpoint sono sotto
-`/api/v3/analysis/organizations/gh/LightYagami28/repositories/bot-lite-downloader`.
+Gli endpoint sono sotto `/api/v3/analysis/organizations/gh/LightYagami28/`
+nella sezione `repositories/bot-lite-downloader`.
 La paginazione della search è **cursor-based** (`?cursor=N`): il campo `page`
 nel corpo viene ignorato
 e restituisce sempre la prima pagina. Somma dei 13 cursor: 1244 issue, tutte
