@@ -3,8 +3,8 @@
 ## Telegram connection or authentication issues
 
 Check the bot token and Telegram client/session configuration against the
-current setup instructions in the [README](../README.md). Do not share tokens, session files, or
-browser cookies in logs or issue reports.
+current setup instructions in the [README](../README.md). Do not share
+tokens, session files, or browser cookies in logs or issue reports.
 
 ## Download failures
 

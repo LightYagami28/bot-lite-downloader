@@ -21,7 +21,7 @@ implementation.
 
 ## Current scope
 
-The project is a self-hosted Telegram download bot with a dashboard. See [README](README.md) for
+The project is a self-hosted Telegram download bot with a dashboard. See [README](README.md)for
 the current installation and usage instructions.
 
 ## Proposals recorded in SPEC

@@ -46,5 +46,5 @@ hosted service is provided by this repository.
 
 Telegram session material and browser cookies are credentials. Keep them in
 local environment/configuration storage and out of commits, logs, and issue
-attachments. For commands and supported configuration, follow the [README](README.md) and the
+attachments. For commands and supported configuration, follow the [README](README.md)and the
 code's current configuration definitions.
