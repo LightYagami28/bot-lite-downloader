@@ -73,7 +73,7 @@ file: never the credential value. No logging rule was disabled.
 Codacy rule `hard-coded-tokens` flags `id-token: write` in
 `.github/workflows/docker-scout.yml`. That line is a GitHub Actions permission
 scope, not a credential: it lets the attestation step fetch a short-lived OIDC
-token (see https://docs.github.com/en/actions/concepts/security/oidc). No token
+token (see <https://docs.github.com/en/actions/concepts/security/oidc>). No token
 value is stored in the repository; Docker Hub and GHCR credentials come from
 the `DOCKER_SCOUT_USER`, `DOCKER_SCOUT_PAT` and `GITHUB_TOKEN` secrets. This
 finding is a false positive and the permission must stay for attestations.

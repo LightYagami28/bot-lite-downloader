@@ -55,7 +55,7 @@ Or apply the whole folder at once:
 kubectl apply -f k8s/
 ```
 
-4. Verify:
+1. Verify:
 
 ```bash
 kubectl -n bot-lite-downloader get pods,svc,ingress,pvc
