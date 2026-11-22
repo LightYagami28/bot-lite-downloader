@@ -24,3 +24,6 @@ venv/
 .coverage
 coverage.xml
 coverage-js.lcov
+
+# Cache locale di sonar-scanner
+.scannerwork/
