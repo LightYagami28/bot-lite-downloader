@@ -59,6 +59,8 @@ jobs:
         run: node --experimental-vm-modules --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage-js.lcov tests/js/
       - name: Run Ruff
         run: ruff check .
+      - name: Check Ruff formatting
+        run: ruff format --check .
       - name: Run Ruff security rules
         run: ruff check botlite --select S
       - name: Run Bandit
