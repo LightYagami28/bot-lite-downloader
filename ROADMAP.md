@@ -29,7 +29,8 @@ The project is a self-hosted Telegram download bot with a dashboard. See
 - Strengthen release checks and retain a coverage threshold.
 - Add integration coverage for Telegram transport behavior.
 - Consider a persistent download queue and per-user quotas.
-- Evaluate moving the Docker image and CI to Python 3.15 now that compatible wheels are available.
+- Evaluate moving the Docker image and CI to Python 3.15 now that compatible
+  wheels are available.
 - Improve dashboard accessibility.
 
 ## Fuori ambito

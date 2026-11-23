@@ -74,7 +74,8 @@ accessible directly inside Telegram.
 
 ## Requirements
 
-- Python 3.12+ (3.14 recommended for CI and the Docker image; 3.15 also supported) or Docker
+- Python 3.12+ (3.14 recommended for CI and the Docker image; 3.15 also
+  supported) or Docker
 - ffmpeg in `PATH` (bundled in the Docker image)
 - Telegram API credentials and a bot token
 
