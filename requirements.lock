@@ -549,9 +549,9 @@ frozenlist==1.8.0 \
     # via
     #   aiohttp
     #   aiosignal
-gallery-dl==1.32.20 \
-    --hash=sha256:335792dc3af065dd70ec2908f28e46a5653ff66e35a447326be620e990d7c0f3 \
-    --hash=sha256:e09729c8f24f788ac64a663268603377fbf51d4b97818d49e2150c5d78067709
+gallery-dl==1.32.21 \
+    --hash=sha256:4a1f71cc9a95dae9098d63e79049fbdccfec44386ba9ca49c7248eb8b3b821c0 \
+    --hash=sha256:f3f3e62bf3863cae6e1635045748c50fc51d52c111ca64b068d618e9334e8811
     # via botlite (pyproject.toml)
 idna==3.20 \
     --hash=sha256:a7db850025b95ded1eae8a46181a1a6c56c92c96f0e2b005d9ff8dc0210cab44 \
@@ -933,9 +933,9 @@ rsa==4.9.1 \
     --hash=sha256:68635866661c6836b8d39430f97a996acbd61bfa49406748ea243539fe239762 \
     --hash=sha256:e7bdbfdb5497da4c07dfd35530e1a902659db6ff241e39d9953cad06ebd0ae75
     # via telethon
-telethon==1.45.0 \
-    --hash=sha256:339e24c83aedc9f12cbe389264627edc49779e4289c535aa90aafc4ce62f7972 \
-    --hash=sha256:4cb7ae269b8ab9dad9fc490b859f0bc2f885121e990f5b20407b1faa0db2a1d9
+telethon==1.46.0 \
+    --hash=sha256:8357f5719376a9c1ddf0999136a44594a5b21b453647f1e146c169483b6a67df \
+    --hash=sha256:c56e55e4a1f95fde556fe13459a542fc758e8ba501c0bf76f2fc5d8409fa81cb
     # via botlite (pyproject.toml)
 urllib3==2.8.0 \
     --hash=sha256:0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3 \
