@@ -29,7 +29,7 @@ The project is a self-hosted Telegram download bot with a dashboard. See
 - Strengthen release checks and retain a coverage threshold.
 - Add integration coverage for Telegram transport behavior.
 - Consider a persistent download queue and per-user quotas.
-- Revisit Python 3.15 support when compatible `ntgcalls` wheels are available.
+- Evaluate moving the Docker image and CI to Python 3.15 now that compatible wheels are available.
 - Improve dashboard accessibility.
 
 ## Fuori ambito
@@ -46,6 +46,6 @@ Rianalisi senza soppressioni completata. Comandi: `.venv\Scripts\ruff.exe check
 .` e
 `.venv\Scripts\ruff.exe format --check .` (esito 0), `.venv\Scripts\python.exe
 -m pytest`
-(148 test superati), `.venv\Scripts\python.exe -m bandit -r botlite` (0 issue).
+(152 test superati), `.venv\Scripts\python.exe -m bandit -r botlite` (0 issue).
 Rimossi i pragma di coverage e corretti i rami non sicuri nella validazione initData
 e nella pubblicazione del brano audio; i test esistenti restano verdi.

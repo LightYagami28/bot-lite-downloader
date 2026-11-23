@@ -7,7 +7,7 @@ estratti da centinaia di piattaforme compatibili.
 
 ## Quali sono i requisiti di sistema?
 
-- Python 3.12, 3.13 o 3.14.
+- Python 3.12, 3.13, 3.14 o 3.15. Per CI e immagine Docker è usato 3.14.
 - `ffmpeg` installato e disponibile nel PATH di sistema (necessario per
   estrazione e transcodifica audio).
 

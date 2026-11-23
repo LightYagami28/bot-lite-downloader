@@ -73,7 +73,7 @@ Bot Lite Downloader/
 
 ### Prerequisiti
 
-- **Python 3.12+** (or Docker)
+- **Python 3.12+** (3.14 in CI/Docker; 3.15 supported) (or Docker)
 - **ffmpeg** in PATH (for audio extraction)
 - **Telegram account** + API credentials
 

@@ -15,16 +15,17 @@ MIT, repo pubblico, derivato da BotLite (vedi README, «Origin & Credits»).
 
 | Componente | Versione | File |
 | --- | --- | --- |
-| Python | immagine `python:3.14-slim-trixie` (digest fissato); `requires-python >=3.12`; CI su 3.14 | `Dockerfile`, `pyproject.toml`, `sonarqube-linux.yml` |
-| Telethon | 1.45.0 | `requirements.txt` |
+| Python | immagine `python:3.14-slim-trixie` (digest fissato); `requires-python >=3.12`; CI su 3.14, test verificati anche su 3.15 | `Dockerfile`, `pyproject.toml`, `sonarqube-linux.yml` |
+| Telethon | 1.46.0 | `requirements.txt` |
 | yt-dlp | 2026.10.26 | `requirements.txt` |
-| gallery-dl | 1.32.19 | `requirements.txt` |
+| gallery-dl | 1.32.21 | `requirements.txt` |
 | aiohttp | 3.14.5 | `requirements.txt` |
-| py-tgcalls | 3.0.0 | `requirements.txt` |
-| ntgcalls | 3.0.6 | `requirements.txt` |
+| cryptg | 0.6.1 | `requirements.txt` |
+| py-tgcalls | 3.0.1 | `requirements.txt` |
+| ntgcalls | 3.0.7 | `requirements.txt` |
 | python-dotenv | 1.2.4 | `requirements.txt` |
 | pytest / pytest-cov | 9.2.0 / 7.1.0 | `requirements-dev.txt` |
-| ruff | 0.17.4 | `requirements-dev.txt` |
+| ruff | 0.17.6 | `requirements-dev.txt` |
 | pip-audit | 2.10.1 | `requirements-dev.txt` |
 
 Le dipendenze sono bloccate con hash (`requirements.lock`,
@@ -45,8 +46,8 @@ anche `sonarqube-macos.yml`, `sonarqube-windows.yml` e `docker-scout.yml`
 
 Incongruenze trovate:
 
-- Il vecchio SPEC indicava ntgcalls 3.0.5 e ruff 0.17.3; i file dei requisiti
-  hanno 3.0.6 e 0.17.4.
+- Il vecchio SPEC indicava ntgcalls 3.0.6 e ruff 0.17.4; i file dei requisiti
+  hanno 3.0.7 e 0.17.6.
 - `README.md` rimanda a `LICENSE.md` nel badge, il file nel repo è `LICENSE`.
 - `CLAUDE.md` e `README.md` sono in lingue diverse (italiano e inglese); lo SPEC
   è la fonte di verità.
@@ -160,8 +161,9 @@ Interfacce:
 - Il supporto dei siti dipende da yt-dlp e gallery-dl; i contenuti privati
   richiedono cookie forniti dall'utente.
 - Istanza singola, solo SQLite.
-- Python 3.15 non adottato finché ntgcalls non pubblica ruote compatibili (da
-  riconfermare sulla versione corrente).
+- Python 3.15: le ruote compatibili di `ntgcalls`, `py-tgcalls` e `cryptg` sono
+  disponibili e la suite di test è stata eseguita con successo su 3.15; la
+  versione CI e l'immagine Docker restano su 3.14.
 
 ## Roadmap
 
@@ -171,7 +173,7 @@ Interfacce:
    dopo aver raggiunto il 100%.
 3. Test di integrazione con trasporto Telegram simulato.
 4. Coda di download persistente e quote per utente.
-5. Passare a Python 3.15 quando ntgcalls pubblica ruote compatibili.
+5. Valutare il passaggio dell'immagine Docker e della CI a Python 3.15.
 6. Verifica di accessibilità della dashboard.
 
 ## Fuori ambito
