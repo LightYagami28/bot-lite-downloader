@@ -24,14 +24,14 @@ Python package and supported runtime are declared in `pyproject.toml`.
 |          botlite.downloader          |
 |  - ytdlp.py (Estrazione media)       |
 |  - gallery.py (Scraper album)        |
-|  - voice.py (Transcodifica audio)    |
+|  (voice.py resta in botlite/)         |
 +--------------------------------------+
 ```
 
 | Modulo | Percorso | Ruolo |
 | --- | --- | --- |
 | Handlers | `botlite/handlers/` | Filtraggio accessi (`access.py`), elaborazione comandi `/start`, `/help` e intercettazione link media. |
-| Downloader | `botlite/downloader/` | Motore di download via `yt-dlp`, gestione playlist, rotazione user-agent e normalizzazione audio. |
+| Downloader | `botlite/downloader/` | Motore di download via `yt-dlp` e `gallery-dl` per gli album; cookie e normalizzazione audio in `botlite/voice.py`. |
 | WebApp | `botlite/webapp/` | Server aiohttp interno per Telegram MiniApp con autenticazione crittografica sicura. |
 | Config & DB | `botlite/config.py`, `db.py` | Caricamento configurazioni `.env` tipizzate e persistenza metadati SQLite. |
 
