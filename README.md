@@ -81,9 +81,10 @@ accessible directly inside Telegram.
 ## Tests
 
 ```bash
-uv sync --frozen
-uv run pytest -W error::DeprecationWarning --cov=botlite
-uv run ruff check .
+python -m pip install -r requirements-dev.txt
+python -W error::DeprecationWarning -m pytest -q
+python -m ruff check .
+python -m pip_audit -r requirements.txt
 ```
 
 Design and stack details: [`SPEC.md`](SPEC.md).
