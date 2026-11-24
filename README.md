@@ -4,7 +4,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](https://python.org)
 [![Version](https://img.shields.io/badge/version-1.2.0-f97316?logo=git&logoColor=white)](https://github.com/LightYagami28/bot-lite-downloader/releases)
-[![License: MIT](https://img.shields.io/badge/license-MIT-22c55e?logo=opensourceinitiative&logoColor=white)](LICENSE.md)
+[![License: MIT](https://img.shields.io/badge/license-MIT-22c55e?logo=opensourceinitiative&logoColor=white)](LICENSE)
 [![Telegram](https://img.shields.io/badge/channel-LinuxBotsNews-26A5E4?logo=telegram&logoColor=white)](https://t.me/LinuxBotsNews)
 
 <!-- ── Row 2 — CI ────────────────────────────────────────────────────────── -->
@@ -354,7 +354,7 @@ Follow updates on Telegram: **[t.me/LinuxBotsNews](https://t.me/LinuxBotsNews)**
 
 ## License
 
-[MIT](LICENSE.md) — do whatever you want, keep the attribution.
+[MIT](LICENSE) — do whatever you want, keep the attribution.
 
 ## Documentation
 

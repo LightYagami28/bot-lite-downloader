@@ -5,8 +5,7 @@ Questo repository contiene il codice sorgente e i servizi del bot Telegram `bot-
 ## 1. Titolarità del Software
 
 - **Autore e Manutentore**: Alessandro Maule (Light Yagami).
-- **Licenza**: GNU General Public License v3.0 (GPL-3.0), vedi LICENSE per il
-  testo completo.
+- **Licenza**: MIT License, vedi LICENSE per il testo completo.
 
 ## 2. Componenti di Terze Parti
 
